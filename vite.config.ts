@@ -10,8 +10,13 @@ export default defineConfig({
   },
   // コミット時に、ステージされたファイルへ fmt / lint / typecheck を掛ける。
   // docs/ は guide からの逐語引用なので対象パターンに含めない（fmt.ignorePatterns と同じ理由）。
+  //
+  // --fix は付けない。このリポジトリのパスに「ドキュメント」が含まれ、$PWD が NFC・
+  // ファイルシステムが NFD という正規化の食い違いがあるため、lint-staged が修正後に
+  // 絶対パスで git add し直す段階で "is outside repository" で失敗する。
+  // 検査だけなら再ステージが走らないので問題にならない。直すのは `vp check --fix` を手で。
   staged: {
-    "*.{ts,tsx,mts,cts,js,jsx,css,json,yaml,yml}": "vp check --fix",
+    "*.{ts,tsx,mts,cts,js,jsx,css,json,yaml,yml}": "vp check",
   },
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
