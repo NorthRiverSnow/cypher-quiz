@@ -1,0 +1,3 @@
+# pnpm は workspace をこのファイルで定義する（package.json の "workspaces" は読まない）
+packages:
+  - 'packages/*'

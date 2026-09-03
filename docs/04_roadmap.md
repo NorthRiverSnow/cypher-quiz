@@ -87,7 +87,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 ### 見た目
 
-1. `npm run storybook` で DB も API も無しに全コンポーネントが見え、**light / dark 両方**で崩れない
+1. `pnpm storybook` で DB も API も無しに全コンポーネントが見え、**light / dark 両方**で崩れない
 
 ### 環境
 
@@ -131,15 +131,15 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 ### 境界とテスト
 
-15. `npm run lint` が MVC / FP 境界違反を検出する
+15. `pnpm lint` が MVC / FP 境界違反を検出する
     - `view/` から `../model/` を import してみて赤くなるか
     - `model/` に `class` を書いてみて赤くなるか
-16. `npm test` — `model/` と `toPlainJson` のユニットテスト
+16. `pnpm test` — `model/` と `toPlainJson` のユニットテスト
     - 誤答肢が正解と重複しない
     - 同じシードで出題順が一致する
     - Leitner の遷移
     - Neo4j 型の変換
-17. `npm run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに走らせると **落ちる**
+17. `pnpm openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに走らせると **落ちる**
 
 ### 再現性
 

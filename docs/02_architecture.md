@@ -16,7 +16,7 @@
 | スキーマ / 検証 | Zod（`@hono/zod-openapi` 経由） | 型・実行時検証・OpenAPI の唯一の真実にできる |
 | DB ドライバ | `neo4j-driver` v5 | |
 | dev 環境 | Docker Compose | 指定。環境差をなくす |
-| 構成 | npm workspaces のモノレポ | `shared` の Zod を web と api の両方から参照するため |
+| 構成 | pnpm workspaces のモノレポ | `shared` の Zod を web と api の両方から参照するため |
 
 ---
 
@@ -215,7 +215,8 @@ export type Sample = Readonly<{
 cypher-quiz/
 ├─ docs/                            # このドキュメント
 ├─ docker-compose.yml
-├─ package.json                     # workspaces: packages/*
+├─ package.json                     # スクリプトのみ（workspace 定義は別ファイル）
+├─ pnpm-workspace.yaml              # packages/* — pnpm はここで workspace を定義する
 ├─ tsconfig.base.json
 ├─ openapi/openapi.json             # 生成物。乖離を CI で検出
 ├─ seed/dataset/                    # nordwind-workshop/dataset/ のスナップショット

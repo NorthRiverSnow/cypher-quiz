@@ -83,7 +83,7 @@ NordWind ワークショップの Cypher 教材を、読むだけの資料から
 | セッション | **httpOnly クッキー。フロントは識別子を持たない** |
 | DB ドライバ | `neo4j-driver` v5 |
 | dev 環境 | Docker Compose |
-| 構成 | npm workspaces のモノレポ |
+| 構成 | pnpm workspaces のモノレポ |
 | 境界の担保 | ESLint（規約ではなく機械で落とす） |
 
 ---
