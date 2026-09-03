@@ -1,4 +1,11 @@
 #!/bin/sh
-# ステージされたファイルに fmt / lint / typecheck を掛ける。
-# 設定は vite.config.ts の staged。
-vp staged
+# コミット前に fmt + lint + typecheck を掛ける。
+#
+# vp staged（lint-staged）は使わない。このリポジトリのパスに「ドキュメント」が
+# 含まれており、$PWD が NFC・ファイルシステムが NFD という正規化の食い違いがある。
+# lint-staged は絶対パスで git add し直すため、そのパスが NFC 側になり git が
+# "is outside repository" と判定して失敗する（--fix の有無に関係なく発生）。
+# stash と復元を挟む処理なので、部分ステージ時に失う余地もある。
+#
+# 代わりにプロジェクト全体を検査する。ステージ分だけより広いが 1 秒未満で終わる。
+exec vp check
