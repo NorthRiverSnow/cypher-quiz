@@ -2,12 +2,16 @@
   "name": "cypher-quiz",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.13.0",
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "web": "pnpm --filter @cypher-quiz/web"
-  }
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.13.0"
 }
