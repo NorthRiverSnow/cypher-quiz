@@ -53,8 +53,8 @@ const route = createRoute({
 
 | コマンド | 動作 |
 |---|---|
-| `pnpm openapi:write` | アプリを import してドキュメントを `openapi/openapi.json` に書き出す |
-| `pnpm openapi:check` | 再生成して差分を取り、ズレていたら **exit 1** |
+| `vp run openapi:write` | アプリを import してドキュメントを `openapi/openapi.json` に書き出す |
+| `vp run openapi:check` | 再生成して差分を取り、ズレていたら **exit 1** |
 
 これで「スキーマを変えたのに `openapi.json` を更新し忘れる」が起きなくなる。
 

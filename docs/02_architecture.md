@@ -10,13 +10,16 @@
 |---|---|---|
 | 言語 | TypeScript（全層） | 指定 |
 | 設計様式 | **関数型。クラスを使わない** | 指定 |
+| ツールチェーン | **Vite+ 0.3.0**（`vp`） | 指定。vite 8 / vitest 4 / oxlint 1 / oxfmt / rolldown / tsdown が 1 依存に収まる |
 | フロント | Vite + React | 指定 |
 | コンポーネント開発 | **Storybook**（`@storybook/react-vite`） | 指定。ここから着手する |
 | バックエンド | **Hono** + `@hono/zod-openapi` | 指定。OpenAPI がルート定義から導出される |
 | スキーマ / 検証 | Zod（`@hono/zod-openapi` 経由） | 型・実行時検証・OpenAPI の唯一の真実にできる |
 | DB ドライバ | `neo4j-driver` v5 | |
 | dev 環境 | Docker Compose | 指定。環境差をなくす |
-| 構成 | pnpm workspaces のモノレポ | `shared` の Zod を web と api の両方から参照するため |
+| lint / format | **Oxlint / Oxfmt**（`vp lint` / `vp fmt`） | Vite+ 同梱。`typeAware` で型情報を使うルールも効く |
+| テスト | **Vitest**（`vp test`） | Vite+ 同梱 |
+| 構成 | pnpm workspaces のモノレポ | `shared` の Zod を web と api の両方から参照するため。Vite+ が pnpm を検出してそのまま使う |
 
 ---
 
@@ -106,32 +109,34 @@ export type Result<T, E> =
 
 ## 3. 境界を機械で守る
 
-**規約ではなく ESLint で落とす。** React は View と Controller が混ざりやすいので、人の注意力に頼らない。
+**規約ではなく `vp lint`（Oxlint）で落とす。** React は View と Controller が混ざりやすいので、人の注意力に頼らない。設定は root の `vite.config.ts` 1 箇所に置く。
 
-```js
-// packages/web/.eslintrc.cjs（抜粋）
-overrides: [
-  {
-    files: ['src/model/**'],
-    rules: {
-      'no-restricted-imports': ['error', {
-        patterns: ['react', 'react-dom', '../view/*', '../controller/*'],
-      }],
-      'no-restricted-globals': ['error', 'document', 'window'],
-      'functional/no-classes':     'error',
-      'functional/immutable-data': 'error',
-      'functional/no-let':         'error',
+```ts
+// vite.config.ts（抜粋）
+lint: {
+  options: { typeAware: true, typeCheck: true },
+  overrides: [
+    {
+      files: ["packages/web/src/model/**"],
+      rules: {
+        // Model は React も DOM も知らない
+        "no-restricted-imports": ["error", {
+          patterns: ["react", "react-dom", "../view/*", "../controller/*"],
+        }],
+        "prefer-const": "error",
+      },
     },
-  },
-  {
-    files: ['src/view/**'],
-    rules: {
-      'no-restricted-imports': ['error', {
-        patterns: ['../model/*', '../controller/*'],
-      }],
+    {
+      files: ["packages/web/src/view/**"],
+      rules: {
+        // View はロジックを知らない。型は @cypher-quiz/shared から取る
+        "no-restricted-imports": ["error", {
+          patterns: ["../model/*", "../controller/*"],
+        }],
+      },
     },
-  },
-]
+  ],
+}
 ```
 
 ### 各層の禁止事項
@@ -142,9 +147,20 @@ overrides: [
 | **View** | `model/` と `controller/` の import、`fetch`、`useEffect` | ローカルな入力エコー用の `useState` のみ |
 | **Controller** | — | Model と View の両方を知ってよい唯一の層 |
 
-### `functional/*` の適用範囲
+### 何を機械が守り、何を守らないか
 
-**`model/**` にだけ強く掛ける。** View の JSX や api の I/O 境界にまで `no-let` を強制すると、得るものより摩擦のほうが大きい。api 側は `functional/no-classes` のみ全域に掛ける。
+**ESLint は使わない。** Vite+ が同梱する Oxlint で足り、2 つ目の linter とその依存を抱える価値がない。ただし `eslint-plugin-functional` にあった規則の一部は Oxlint に無いので、担保の手段が変わる。
+
+| 守りたいこと | 手段 | 状態 |
+|---|---|---|
+| 層境界（Model ↛ React、View ↛ Model） | Oxlint `no-restricted-imports` + `overrides` | **実測で動作確認済み** |
+| 不要な `let` | Oxlint `prefer-const` | **実測で動作確認済み** |
+| 不変性 | **TypeScript の `Readonly<>` / `readonly`** | 型で落ちる。lint 警告より強い |
+| クラス禁止 | — | **機械では守らない**（下記） |
+
+**クラス禁止だけは機械化していない。** Oxlint に該当ルールが無く、クラスは「うっかり書く」ものではないので、レビューで足りると判断した。どうしても止めたければ Oxlint の JS プラグイン（`vite.config.ts` の `lint.jsPlugins`。Vite+ 自身も 1 つ登録している）で `ClassDeclaration` を弾く 15 行程度のプラグインを書けば済む。
+
+不変性を型に任せるのは妥協ではなく改善で、`QuizState` を `Readonly<{...}>` と `readonly` 配列で定義すれば、破壊的変更は**コンパイルエラー**になる。`functional/immutable-data` の lint 警告より確実。
 
 ### 型は共有、ロジックは非共有
 
@@ -215,8 +231,9 @@ export type Sample = Readonly<{
 cypher-quiz/
 ├─ docs/                            # このドキュメント
 ├─ docker-compose.yml
-├─ package.json                     # スクリプトのみ（workspace 定義は別ファイル）
-├─ pnpm-workspace.yaml              # packages/* — pnpm はここで workspace を定義する
+├─ package.json                     # スクリプトと vite-plus 依存
+├─ pnpm-workspace.yaml              # packages/* と catalog（vite → vite-plus-core）
+├─ vite.config.ts                   # ★ Vite+ の fmt / lint 設定。境界ルールもここ
 ├─ tsconfig.base.json
 ├─ openapi/openapi.json             # 生成物。乖離を CI で検出
 ├─ seed/dataset/                    # nordwind-workshop/dataset/ のスナップショット

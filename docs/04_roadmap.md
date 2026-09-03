@@ -26,7 +26,7 @@ D. 結線
 
 | # | やること | 備考 |
 |---:|---|---|
-| 1 | モノレポの足場 | workspaces / `tsconfig.base.json` / ESLint |
+| 1 | モノレポの足場 | pnpm workspaces / `tsconfig.base.json` / Vite+ の lint 境界ルール |
 | 2 | `styles/tokens.css` | guides の `:root` 3 ブロックを移植（light / `prefers-color-scheme` / `[data-theme]`） |
 | 3 | Storybook セットアップ | **light / dark を切り替えるツールバー**を decorator で入れる |
 | 4 | `fixtures/` | サンプルの Card / Question / 実行結果。**実データを使う**（`OPTIONAL MATCH` と Killua Zoldyck の例） |
@@ -87,7 +87,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 ### 見た目
 
-1. `pnpm storybook` で DB も API も無しに全コンポーネントが見え、**light / dark 両方**で崩れない
+1. `vp run storybook` で DB も API も無しに全コンポーネントが見え、**light / dark 両方**で崩れない
 
 ### 環境
 
@@ -131,15 +131,17 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 ### 境界とテスト
 
-15. `pnpm lint` が MVC / FP 境界違反を検出する
+15. `vp check`（fmt + lint + typecheck）が MVC 境界違反を検出する
     - `view/` から `../model/` を import してみて赤くなるか
-    - `model/` に `class` を書いてみて赤くなるか
-16. `pnpm test` — `model/` と `toPlainJson` のユニットテスト
+    - `model/` で `react` を import してみて赤くなるか
+    - `model/` の `Readonly<>` な状態を書き換えてみて**型エラー**になるか
+    （`class` は機械では止めない。[理由](./02_architecture.md#何を機械が守り何を守らないか)）
+16. `vp test` — `model/` と `toPlainJson` のユニットテスト
     - 誤答肢が正解と重複しない
     - 同じシードで出題順が一致する
     - Leitner の遷移
     - Neo4j 型の変換
-17. `pnpm openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに走らせると **落ちる**
+17. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに走らせると **落ちる**
 
 ### 再現性
 
@@ -154,7 +156,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
 | # | 判断 | 理由 | 代替案 |
 |---:|---|---|---|
 | 1 | `Result` は自前 30 行 | 必要な合成が浅い | `neverthrow` |
-| 2 | `eslint-plugin-functional` の強制は `model/**` に限定 | 全域に `no-let` を掛けると摩擦のほうが大きい | 全域に掛ける |
+| 2 | **ESLint を入れず Oxlint だけにする** | 層境界は `no-restricted-imports` で守れ、不変性は `Readonly<>` で型が守る。クラス禁止だけ機械化を諦めた | Oxlint の JS プラグインで `ClassDeclaration` を弾く |
 | 3 | フロントは OpenAPI からコード生成しない | 同じ Zod が源なので `z.infer` で足りる | `openapi-typescript` |
 | 4 | 書き込み系 5 枚は実行させない | 接続先で挙動が変わると説明が難しい | Docker のローカル DB のときだけ書き込ませる |
 | 5 | UI 言語は日本語のみ | 英語版 guide が存在しないため、英語化は翻訳ではなく書き下ろしになる | ja / en 切替 |

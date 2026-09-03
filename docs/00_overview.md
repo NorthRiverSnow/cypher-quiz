@@ -76,6 +76,7 @@ NordWind ワークショップの Cypher 教材を、読むだけの資料から
 | 言語 | TypeScript（全層） |
 | 設計様式 | **関数型。クラスを使わない** |
 | 層の分離 | **MVC**（Model / View / Controller）を関数型で実現 |
+| ツールチェーン | **Vite+**（`vp`）。vite / vitest / oxlint / oxfmt / rolldown / tsdown を単一 CLI に束ねる |
 | フロント | Vite + React |
 | コンポーネント開発 | **Storybook。ここから着手する** |
 | バックエンド | **Hono** + `@hono/zod-openapi` |
@@ -83,8 +84,8 @@ NordWind ワークショップの Cypher 教材を、読むだけの資料から
 | セッション | **httpOnly クッキー。フロントは識別子を持たない** |
 | DB ドライバ | `neo4j-driver` v5 |
 | dev 環境 | Docker Compose |
-| 構成 | pnpm workspaces のモノレポ |
-| 境界の担保 | ESLint（規約ではなく機械で落とす） |
+| 構成 | pnpm workspaces のモノレポ（Vite+ が pnpm をそのまま使う） |
+| 境界の担保 | **Oxlint + TypeScript**（規約ではなく機械で落とす） |
 
 ---
 
