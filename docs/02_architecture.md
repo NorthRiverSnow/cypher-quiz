@@ -136,9 +136,31 @@ lint: {
         }],
       },
     },
+    // アトミックデザインの層。下の層しか import できない
+    {
+      files: ["packages/web/src/view/atoms/**"],
+      rules: {
+        "no-restricted-imports": ["error", {
+          patterns: ["**/molecules/**", "**/organisms/**", "**/templates/**", "**/pages/**"],
+        }],
+      },
+    },
+    {
+      files: ["packages/web/src/view/molecules/**"],
+      rules: {
+        "no-restricted-imports": ["error", {
+          patterns: ["**/organisms/**", "**/templates/**", "**/pages/**"],
+        }],
+      },
+    },
+    // organisms は templates / pages を、templates は pages を禁止（以下同様）
   ],
 }
 ```
+
+`**/molecules/**` のような glob が `../../molecules/Note` のような相対 import にも効くことは実測済み。
+**4 方向すべて確認した**——atoms→molecules は落ち、molecules→atoms は通り、
+organisms→molecules は通り、organisms→pages は落ちる。
 
 ### 各層の禁止事項
 
@@ -147,6 +169,36 @@ lint: {
 | **Model** | `react` / `react-dom` の import、`document` / `window`、クラス、`let`、破壊的変更 | `localStorage` は `progress.ts` の 1 ファイルのみ |
 | **View** | `model/` と `controller/` の import、`fetch`、`useEffect` | ローカルな入力エコー用の `useState` のみ |
 | **Controller** | — | Model と View の両方を知ってよい唯一の層 |
+
+### View の中の層（アトミックデザイン）
+
+**上の層は下の層だけを import できる。** 横（同じ層どうし）も禁止。
+
+| 層 | 何を置くか | 判断の目安 |
+|---|---|---|
+| **atoms** | それ以上割れない見た目 | 状態を持たない。`Icon` / `Chip` / `ProgressBar` / `CodeBlock` |
+| **molecules** | atoms を組んだ 1 つの役割 | 名前を付けると 1 語で言える。`Note` / `ChoiceList` / `ResultTable` |
+| **organisms** | 画面の中の意味のあるかたまり | 単体で「何の部品か」が分かる。`FlashCard` / `CardBack` |
+| **templates** | 配置だけ | データを一切知らない。`QuizLayout` |
+| **pages** | 全状態を props で受ける | `QuizScreen` のみ |
+| **catalog** | 意匠の確認用 | 層の外。アプリに出ないので上下の制約を受けない |
+
+`catalog/` を層に入れないのは、`TokenCatalog` が全トークンを並べる**資料**であって
+アプリの部品ではないため。ここを `pages/` に置くと、アプリの画面と資料が同じ棚に並んでしまう。
+
+### story はコンポーネントを定義しない
+
+**`*.stories.tsx` には story だけを書く。** コンポーネントは同じ階層の実体ファイルから import する。
+
+```
+view/atoms/Icon/
+├─ Icon.tsx           # 実体
+└─ Icon.stories.tsx   # import { Icon } from "./Icon"
+```
+
+story の中で JSX を組むと、そのコンポーネントは**アプリから使えないまま Storybook にだけ存在する**。
+見た目を決めてから中身を作る進め方（フェーズ A）では、ここが崩れると
+「Storybook では出来ているのにアプリに無い」状態が量産される。
 
 ### 何を機械が守り、何を守らないか
 
@@ -308,26 +360,35 @@ cypher-quiz/
          │  └─ progress.ts          # localStorage はここだけ
          │
          ├─ view/                   # ★ 純関数。props in / callback out
-         │  ├─ primitives/
-         │  │  ├─ CodeBlock.tsx     # guides の .kw/.rel/.hl/.cm 体系
-         │  │  ├─ ResultTable.tsx
-         │  │  ├─ Chip.tsx
-         │  │  └─ ProgressBar.tsx
-         │  ├─ FlashCard.tsx
-         │  ├─ ChoiceList.tsx
-         │  ├─ CardBack.tsx
-         │  ├─ QueryEditor.tsx
-         │  ├─ ConnectForm.tsx
-         │  ├─ Summary.tsx
-         │  └─ screens/
-         │     └─ QuizScreen.tsx    # 画面まるごと純関数
+         │  │                       #   アトミックデザイン。下の層しか import できない
+         │  ├─ atoms/               # 最小単位。状態を持たない
+         │  │  ├─ Icon/             # Material Symbols のラッパ
+         │  │  ├─ Chip/
+         │  │  ├─ ProgressBar/
+         │  │  └─ CodeBlock/        # guides の .kw/.rel/.hl/.cm 体系
+         │  ├─ molecules/           # atoms の組み合わせ。1 つの役割
+         │  │  ├─ Note/             # Icon + 本文。注意・補足
+         │  │  ├─ ChoiceList/
+         │  │  ├─ ResultTable/
+         │  │  └─ QueryEditor/
+         │  ├─ organisms/           # 意味のあるかたまり
+         │  │  ├─ FlashCard/
+         │  │  ├─ CardBack/
+         │  │  ├─ ConnectForm/
+         │  │  └─ Summary/
+         │  ├─ templates/           # 配置だけ。データを知らない
+         │  │  └─ QuizLayout/
+         │  ├─ pages/               # 全状態を props で受ける
+         │  │  └─ QuizScreen/       # 画面まるごと純関数
+         │  └─ catalog/             # 意匠の確認用。アプリには出ない（層の外）
+         │     └─ TokenCatalog/
          │
          ├─ controller/
          │  ├─ useQuiz.ts
          │  └─ useConnection.ts
          │
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
-         ├─ styles/
+         ├─ styles/                 # css と、その入口の index.ts だけ
          │  ├─ tokens.css
          │  └─ app.css
          └─ api/client.ts           # fetch のみ

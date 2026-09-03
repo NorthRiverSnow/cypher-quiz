@@ -1,0 +1,185 @@
+/* デザイントークン。
+ *
+ * 出発点は guides の意匠（docs/05_reference.md#パレット の実測値）だが、
+ * 値は意図的に調整してある。guide のままではないので、
+ * docs/05_reference.md は「guide の実測値」として据え置き、こちらが quiz の値。
+ *
+ * 調整は OKLCH（知覚均等空間）で測って決めた。要件は 2 つ。
+ *
+ *   - 同時に画面に出る色は OKLab 距離 0.12 以上離す
+ *   - 文字として出る色は --panel-2 の上で AA（4.5:1）を満たす
+ *
+ * guide から変えた点:
+ *
+ *   1. 彩度が低く濁っていた
+ *      guide の light は --accent C=0.089 に対し --engineer C=0.215 で、
+ *      彩度が倍以上ばらけていた。前者が濁って見える原因。
+ *
+ *   2. キーワードの水色が、リレーション型の緑とコメントの灰に埋もれていた
+ *      sRGB はシアンの彩度が狭く、この明度では C=0.10 前後が上限で、
+ *      灰（C=0.036）との差が出ない。色相を振っても上限は変わらない。
+ *      --accent を青（H=258.9 / C=0.217）へ移し、衝突する --engineer を
+ *      紫（H=310）へ動かした。キーワード↔リレーション型は 0.059 → 0.337。
+ *
+ *   3. 「正解」を名乗るトークンが 2 つあった
+ *      guide の --trace（金）は「根拠パス」、--keep（緑）は「通過して残る行」で、
+ *      quiz ではどちらも正解に割り当ててしまっていた。
+ *      金は AA を保つ限り C=0.114 が上限（#8f6d00 が既に天井）で、
+ *      この彩度の金はオリーブに見えて正解にならない。そこで
+ *      --trace を --warn に改名してワーニング（罠）専任にし、正解は緑へ一本化した。
+ *
+ *   4. 緑は 1 本しか置けない
+ *      緑帯で AA を満たしつつ互いに 0.12 以上離れる緑は、sRGB に 2 つ取れない
+ *      （ティールへの退避も C=0.094 が上限で、灰から 0.071 しか離れず不可）。
+ *      よってコード中のリレーション型と正解は同じ --keep を使う。
+ *
+ *   5. guide にあった同色の衝突を解いた
+ *      --service と --keep が完全に同一（両方 #047857）、
+ *      --incident と --alarm がほぼ同色（H=29.0 と 28.7）だった。
+ *      カード裏でコードブロックと結果表が同時に出るため分けた。
+ *
+ *   6. --team が茶色に見えていた
+ *      guide の #b45309 は H=58 で、この色相は AA を保つと C=0.134 が上限。
+ *      その彩度の橙は茶になる。しかも --warn（金 H=87）と 0.065 しか離れず、
+ *      カード裏で注意の注記と Team チップが並ぶと紛らわしかった。
+ *      色相環を掃いて light と dark の彩度が同時に最大になる H=45 付近を選び、
+ *      煉瓦色（light C 0.134 → 0.160、dark 0.165 → 0.162）にした。
+ *      --warn との衝突も消え、最小は --alarm との 0.091 になった。
+ *
+ * 意味色は本文・罫線として出るので互いに 0.12 以上離してある（実測の最小は
+ * --keep ↔ --warn の 0.150）。エンティティ色は結果表のチップにしか出ないので
+ * 群内でのみ 0.12 を要件にする（最小は dark の --team ↔ --incident の 0.122）。
+ * 群を跨いだ最小は --incident ↔ --alarm の 0.077（light）/ 0.050（dark）で、
+ * これは guide 由来の組。--team ↔ --alarm は 0.091（light）/ 0.074（dark）。
+ *
+ * 3 ブロック構成の理由:
+ *   :root                                 light を既定にする
+ *   @media (prefers-color-scheme: dark)   OS 設定に追従。[data-theme="light"] で打ち消せる
+ *   :root[data-theme="dark"]              手動切替を OS 設定より優先させる
+ */
+
+:root {
+  /* 面と文字。guide より僅かに明るく、わずかに青みを持たせている */
+  --ground: #eef5fa;
+  --panel: #ffffff;
+  --panel-2: #f4f8fb;
+  --ink: #15232f;
+  --ink-soft: #394f65;
+  --muted: #647789;
+  --rule: #c8d6e2;
+  --rule-soft: #e0e9f1;
+
+  /* 意味色。すべて --panel-2 上で AA（4.5:1）を満たす。
+   *
+   * ただし *-bg の上に自色を載せると light では 3.92〜4.18 で AA に届かない
+   * （淡い面が --panel-2 より暗いぶんコントラストが落ちる。dark は 7.4〜8.2 で問題ない）。
+   * 淡い面に文字を置くときは --ink / --ink-soft を使う。自色はアイコンと罫線に限る
+   * ——非テキストなので要件は 3:1（WCAG 1.4.11）で、そちらは満たしている。 */
+  --accent: #006bf0; /* 構造・キーワード → 選択中の肢、進捗バー */
+  --accent-bg: #dbe9ff;
+  --keep: #008509; /* 正解 → 正答の罫線、正しい肢、コード中のリレーション型 */
+  --keep-bg: #dcf5d5;
+  --alarm: #de1f2d; /* 誤り → 誤答の罫線、誤った肢 */
+  --alarm-bg: #ffe3e1;
+  --warn: #8f6d00; /* 注意 → 罠、引っかけの注記 */
+  --warn-bg: #faeed1;
+
+  /* エンティティ色。結果表のノード種別チップ */
+  --team: #bf5000;
+  --engineer: #a144d8;
+  --service: #008076;
+  --incident: #da1d69;
+
+  --shadow: 0 1px 2px rgba(15, 26, 36, 0.06), 0 8px 24px -16px rgba(15, 26, 36, 0.35);
+
+  /* 版面 */
+  --col: 40rem; /* 本文の measure */
+  --wide: 62rem; /* コンテナ幅 */
+
+  /* 書体 */
+  --font-serif: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+  --font-sans: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Zen Kaku Gothic New", ui-monospace, monospace;
+  --font-icon: "Material Symbols Rounded";
+}
+
+/* dark は light と同じ色相を使う。揃えないとテーマ切替で色味が飛ぶ
+ * （色相のずれは最大 4.5°）。暗い面の上なので明度は高く取り、
+ * コントラストは 7.0〜8.7 になる。 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0a1119;
+    --panel: #111c28;
+    --panel-2: #16222f;
+    --ink: #dce7f1;
+    --ink-soft: #b3c4d3;
+    --muted: #8ba0b5;
+    --rule: #27384a;
+    --rule-soft: #1d2c3b;
+
+    --accent: #86baff;
+    --accent-bg: #0d2444;
+    --keep: #44d94e;
+    --keep-bg: #082c0c;
+    --alarm: #ff938b;
+    --alarm-bg: #3c1614;
+    --warn: #e3af00;
+    --warn-bg: #302200;
+
+    --team: #ff8d44;
+    --engineer: #d798ff;
+    --service: #00d4c5;
+    --incident: #ff8dab;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0a1119;
+  --panel: #111c28;
+  --panel-2: #16222f;
+  --ink: #dce7f1;
+  --ink-soft: #b3c4d3;
+  --muted: #8ba0b5;
+  --rule: #27384a;
+  --rule-soft: #1d2c3b;
+
+  --accent: #86baff;
+  --accent-bg: #0d2444;
+  --keep: #44d94e;
+  --keep-bg: #082c0c;
+  --alarm: #ff938b;
+  --alarm-bg: #3c1614;
+  --warn: #e3af00;
+  --warn-bg: #302200;
+
+  --team: #ff8d44;
+  --engineer: #d798ff;
+  --service: #00d4c5;
+  --incident: #ff8dab;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16.5px;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "palt" 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -20,6 +20,18 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 
 **設計を変えるときは docs も直す。** 実装と docs が食い違ったら docs が正。
 
+## コメントは "why" だけ
+
+**コードを読めば分かることは書かない。** 名前と型で説明する。書くのは次の 2 つだけ。
+
+- **なぜこの値・この手段なのか**（例: `opsz` を 20 で固定している理由）
+- **なぜ書かなかったのか**（意図的な不在。コードに現れないので唯一これでしか残せない）
+
+行頭に `why:` と書くと、後から読む人が「消してよいコメント」と区別できる。
+
+**経緯は書かない。** 「以前は X だったが Y にした」は git log の役目。
+設計の判断は `docs/`、作業の手順は `.claude/skills/` に置く。
+
 ## 進め方
 
 **1 ステップ = 1 レビュー。各ステップの終わりで止まる。**
@@ -29,6 +41,35 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 
 前のステップで固めたものを後のステップで黙って変えない。変える必要が出たら、
 それは前のステップの設計ミスとして報告する。
+
+## コンポーネントはアトミックデザインで置く
+
+```
+packages/web/src/view/
+  atoms/  molecules/  organisms/  templates/  pages/   ← 上は下だけ import できる
+  catalog/                                             ← 意匠の確認用。層の外
+```
+
+層を跨ぐ import は `vite.config.ts` の `lint.overrides` で落ちる（4 方向とも実測済み）。
+判断の目安は `docs/02_architecture.md` の「View の中の層」。
+
+**`*.stories.tsx` には story だけを書く。コンポーネントは実体ファイルから import する。**
+
+```
+view/atoms/Icon/
+├─ Icon.tsx           # 実体
+└─ Icon.stories.tsx   # import { Icon } from "./Icon"
+```
+
+story の中で JSX を組むと、アプリから使えないまま Storybook にだけ存在する部品ができる。
+
+**atoms / molecules / organisms は必ず story を作る。** ここまでが単体で見て判断できる粒度。
+`templates` と `pages` は必要に応じて（`QuizScreen` は全状態を並べるので作る）。
+
+## 見た目は自分で確認する
+
+**見た目を変えたら、聞く前に撮って確認する。** 判断を仰ぐのは「どちらが好みか」だけに絞る。
+手順は Skill の `storybook-shot`（Chrome を headless で叩く。依存の追加は不要）。
 
 ## コマンドは `vp`（Vite+）
 

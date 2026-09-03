@@ -1,9 +1,20 @@
 # pnpm は workspace をこのファイルで定義する（package.json の "workspaces" は読まない）
 packages:
   - "packages/*"
+# esbuild の install スクリプトを許可する。バイナリは @esbuild/darwin-arm64 が
+# 提供済みで、スクリプトは検証用。Storybook の builder が依存する。
+allowBuilds:
+  esbuild: true
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.3.0
   vite-plus: 0.3.0
+minimumReleaseAgeExclude:
+  - "@storybook/addon-themes@10.6.0"
+  - "@storybook/builder-vite@10.6.0"
+  - "@storybook/react-dom-shim@10.6.0"
+  - "@storybook/react-vite@10.6.0"
+  - "@storybook/react@10.6.0"
+  - storybook@10.6.0
 overrides:
   vite@*: "catalog:"
 peerDependencyRules:

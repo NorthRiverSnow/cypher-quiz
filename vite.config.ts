@@ -12,5 +12,38 @@ export default defineConfig({
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
     rules: { "vite-plus/prefer-vite-plus-imports": "error" },
     options: { typeAware: true, typeCheck: true },
+    overrides: [
+      {
+        // atoms は他の層を知らない
+        files: ["packages/web/src/view/atoms/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            { patterns: ["**/molecules/**", "**/organisms/**", "**/templates/**", "**/pages/**"] },
+          ],
+        },
+      },
+      {
+        files: ["packages/web/src/view/molecules/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            { patterns: ["**/organisms/**", "**/templates/**", "**/pages/**"] },
+          ],
+        },
+      },
+      {
+        files: ["packages/web/src/view/organisms/**"],
+        rules: {
+          "no-restricted-imports": ["error", { patterns: ["**/templates/**", "**/pages/**"] }],
+        },
+      },
+      {
+        files: ["packages/web/src/view/templates/**"],
+        rules: {
+          "no-restricted-imports": ["error", { patterns: ["**/pages/**"] }],
+        },
+      },
+    ],
   },
 });
