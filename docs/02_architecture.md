@@ -45,10 +45,11 @@ export type QuizState = Readonly<{
   revealed: boolean;
 }>;
 
+// イベントは dispatch で作ってすぐ消える短命な値なので readonly は付けない
 export type QuizEvent =
-  | { readonly type: 'answered';  readonly choiceIndex: number }
-  | { readonly type: 'advanced' }
-  | { readonly type: 'restarted'; readonly scope: 'all' | 'wrong-only' };
+  | { type: 'answered'; choiceIndex: number }
+  | { type: 'advanced' }
+  | { type: 'restarted'; scope: 'all' | 'wrong-only' };
 
 export const initQuiz   = (deck: Deck, opts: QuizOptions): QuizState => ...;
 export const reduceQuiz = (state: QuizState, event: QuizEvent): QuizState => ...;
@@ -67,12 +68,12 @@ export const progressOf      = (s: QuizState): Progress => ...;
 ```ts
 // packages/api/src/neo4j/driverStore.ts
 
-export type DriverStore = Readonly<{
+export type DriverStore = {
   open:  (creds: Credentials) => Promise<Result<SessionId, ConnectError>>;
   get:   (id: SessionId) => Option<Driver>;
   close: (id: SessionId) => Promise<void>;
   sweep: () => Promise<number>;
-}>;
+};
 
 // クラスではない。Map への変更はこの関数の中だけに閉じる
 export const createDriverStore = (deps: StoreDeps): DriverStore => { ... };
@@ -92,8 +93,8 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => { ... };
 ```ts
 // packages/shared/src/result.ts
 export type Result<T, E> =
-  | { readonly ok: true;  readonly value: T }
-  | { readonly ok: false; readonly error: E };
+  | { ok: true;  value: T }
+  | { ok: false; error: E };
 ```
 
 > `neverthrow` も候補だが、必要な合成が浅いので依存を増やさない。
@@ -155,12 +156,46 @@ lint: {
 |---|---|---|
 | 層境界（Model ↛ React、View ↛ Model） | Oxlint `no-restricted-imports` + `overrides` | **実測で動作確認済み** |
 | 不要な `let` | Oxlint `prefer-const` | **実測で動作確認済み** |
-| 不変性 | **TypeScript の `Readonly<>` / `readonly`** | 型で落ちる。lint 警告より強い |
+| 不変性 | **TypeScript の `Readonly<>` / `readonly`** | 型で落ちる。ただし付けた所だけ・浅くだけ（下記） |
 | クラス禁止 | — | **機械では守らない**（下記） |
 
 **クラス禁止だけは機械化していない。** Oxlint に該当ルールが無く、クラスは「うっかり書く」ものではないので、レビューで足りると判断した。どうしても止めたければ Oxlint の JS プラグイン（`vite.config.ts` の `lint.jsPlugins`。Vite+ 自身も 1 つ登録している）で `ClassDeclaration` を弾く 15 行程度のプラグインを書けば済む。
 
-不変性を型に任せるのは妥協ではなく改善で、`QuizState` を `Readonly<{...}>` と `readonly` 配列で定義すれば、破壊的変更は**コンパイルエラー**になる。`functional/immutable-data` の lint 警告より確実。
+### `Readonly` は付ける場所を選ぶ
+
+**`Readonly` は「ここは共有され、書き換えたら壊れる」という設計上の宣言として使う。`const` で足りる所には付けない。** 全部に機械的に付けると、本当に不変であるべき箇所が埋もれて意味を失う。
+
+付ける（共有され、書き換えると他所に波及する）:
+
+| 型 | なぜ |
+|---|---|
+| `QuizState` とその中身 | reducer の状態。`(state, event) => state` で回すので、書き換えると React の変更検知と Model の純粋性が同時に壊れる |
+| `Card` / `Sample` | `deck.generated.ts` はモジュール共有データ。1 箇所で書き換えると全出題に波及する |
+
+付けない（短命、または誰も書き換えない）:
+
+| 型 | なぜ |
+|---|---|
+| `QuizEvent` | dispatch で作ってすぐ消える |
+| `Result<T, E>` | 関数の戻り値 |
+| `DriverStore` | ファクトリが 1 度作るクロージャの束。メソッドを再代入する者はいない |
+| `SECTION_LABELS` | ただの定数表。`const` で足りる |
+| `ConnectionStatus` | React state。丸ごと差し替えるだけ |
+
+### 型による不変性の限界を 2 つ
+
+**浅い。** `Readonly<>` は 1 段目しか守らない。付けるなら**全階層に付ける**必要がある。
+
+```ts
+Readonly<{ nested: { deep: number } }>            // nested の差し替えは禁止、中身は書き換え自由
+Readonly<{ nested: Readonly<{ deep: number }> }>  // これで中身も守られる
+```
+
+`QuizState` が `queue: readonly QuestionKey[]` と `boxes: Readonly<Record<...>>` まで書いてあるのはこの理由。**付け忘れると静かに穴が開く** — ここが `functional/immutable-data` に対して弱い点で、lint と違って「付け忘れ」自体は誰も検出してくれない。
+
+**コンパイル時だけ。** 実行時の保護は無い。`as unknown as` で外せるし、`JSON.parse` の戻りは型が付いていない。ただし `model/` は純関数で新しい状態を返す設計なので、そもそも書き換えるコードを書かない。実行時まで固めたければ dev 限定で `Object.freeze` を挟む余地はある。
+
+落ちたときの効果は lint 警告より強い（**ビルドが止まる**）が、「付け忘れには弱い」。そこは等価な置き換えではない。
 
 ### 型は共有、ロジックは非共有
 
@@ -181,7 +216,7 @@ export type SectionId =
   | 'skeleton' | 'patterns' | 'shaping' | 'lists' | 'writing' | 'subqueries';
 
 // 値は guide 03 の h2 見出しそのまま
-export const SECTION_LABELS: Readonly<Record<SectionId, string>> = {
+export const SECTION_LABELS: Record<SectionId, string> = {
   skeleton:   '読み取りの骨格',
   patterns:   'パターンの書き方',
   shaping:    '結果の整形',

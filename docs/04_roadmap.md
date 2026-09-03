@@ -134,7 +134,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
 15. `vp check`（fmt + lint + typecheck）が MVC 境界違反を検出する
     - `view/` から `../model/` を import してみて赤くなるか
     - `model/` で `react` を import してみて赤くなるか
-    - `model/` の `Readonly<>` な状態を書き換えてみて**型エラー**になるか
+    - `QuizState` を書き換えてみて**型エラー**になるか（`Readonly` を付けた所だけが対象。[運用ルール](./02_architecture.md#readonly-は付ける場所を選ぶ)）
     （`class` は機械では止めない。[理由](./02_architecture.md#何を機械が守り何を守らないか)）
 16. `vp test` — `model/` と `toPlainJson` のユニットテスト
     - 誤答肢が正解と重複しない
@@ -156,7 +156,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
 | # | 判断 | 理由 | 代替案 |
 |---:|---|---|---|
 | 1 | `Result` は自前 30 行 | 必要な合成が浅い | `neverthrow` |
-| 2 | **ESLint を入れず Oxlint だけにする** | 層境界は `no-restricted-imports` で守れ、不変性は `Readonly<>` で型が守る。クラス禁止だけ機械化を諦めた | Oxlint の JS プラグインで `ClassDeclaration` を弾く |
+| 2 | **ESLint を入れず Oxlint だけにする** | 層境界は `no-restricted-imports` で守れ、不変性は `Readonly<>` で型が守る（付けた所だけ・浅くだけ）。クラス禁止だけ機械化を諦めた | Oxlint の JS プラグインで `ClassDeclaration` を弾く |
 | 3 | フロントは OpenAPI からコード生成しない | 同じ Zod が源なので `z.infer` で足りる | `openapi-typescript` |
 | 4 | 書き込み系 5 枚は実行させない | 接続先で挙動が変わると説明が難しい | Docker のローカル DB のときだけ書き込ませる |
 | 5 | UI 言語は日本語のみ | 英語版 guide が存在しないため、英語化は翻訳ではなく書き下ろしになる | ja / en 切替 |

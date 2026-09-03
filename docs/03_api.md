@@ -162,9 +162,10 @@ if (plan.summary.queryType !== 'r') {
 フロントが持つ接続状態は、識別子ではなく**表示用の情報だけ**：
 
 ```ts
+// React state として丸ごと差し替えるだけなので readonly は付けない
 type ConnectionStatus =
-  | { readonly connected: false }
-  | { readonly connected: true; readonly uri: string; readonly mode: 'manual' | 'dev-auto' };
+  | { connected: false }
+  | { connected: true; uri: string; mode: 'manual' | 'dev-auto' };
 ```
 
 クッキーの属性: `HttpOnly` / `SameSite=Strict` / `Path=/api` / 本番では `Secure` / **`Max-Age` を付けない**（セッションクッキー。タブを閉じれば消える）。
