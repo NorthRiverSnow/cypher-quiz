@@ -1,0 +1,4 @@
+#!/bin/sh
+# ステージされたファイルに fmt / lint / typecheck を掛ける。
+# 設定は vite.config.ts の staged。
+vp staged

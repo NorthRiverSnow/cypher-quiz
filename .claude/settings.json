@@ -24,6 +24,17 @@
             "statusMessage": "docs のリンクを検証中"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/vp-check.py\"",
+            "timeout": 130,
+            "statusMessage": "vp check を実行中"
+          }
+        ]
       }
     ]
   }
