@@ -3,10 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "vp run -F './packages/*' typecheck",
-    "web": "vp run -F @cypher-quiz/web",
+    "build-storybook": "vp -C packages/web run build-storybook",
     "storybook": "vp -C packages/web run storybook",
-    "build-storybook": "vp -C packages/web run build-storybook"
+    "test": "vp test run",
+    "test:web": "vp -C packages/web run test",
+    "typecheck": "vp run -F './packages/*' typecheck",
+    "web": "vp run -F @cypher-quiz/web"
   },
   "devDependencies": {
     "vite": "catalog:",

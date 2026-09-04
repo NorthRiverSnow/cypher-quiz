@@ -12,7 +12,6 @@ export type ChoiceListProps = {
 };
 
 export const ChoiceList = ({ choices, kind, selected, onSelect }: ChoiceListProps) => {
-  /* why: 肢ごとにクロージャを作らず、番号は data 属性から読む */
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     onSelect(Number(event.currentTarget.dataset["index"]));
   };

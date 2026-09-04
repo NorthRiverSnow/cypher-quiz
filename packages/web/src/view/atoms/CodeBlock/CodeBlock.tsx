@@ -21,8 +21,7 @@ const LINE: CSSProperties = {
   display: "block",
   minHeight: "1.75em",
   whiteSpace: "pre-wrap",
-  /* why: 折り返した続きを 2 字下げる。下げないと折り返しが次の句に見えて誤読する。
-     guide の実データで折り返すのは 153 行中 4 本だが、そこが最も長く読みにくい行になる */
+  /* why: 折り返した続きを 2 字下げる。下げないと行頭が揃い、折り返しが次の句に見える */
   paddingLeft: "2ch",
   textIndent: "-2ch",
 };
@@ -32,7 +31,7 @@ const toLines = (code: readonly CodeSegment[]): CodeSegment[][] => {
   for (const segment of code) {
     segment.text.split("\n").forEach((text, i) => {
       if (i > 0) lines.push([]);
-      if (text !== "") lines[lines.length - 1]?.push({ ...segment, text });
+      lines[lines.length - 1]?.push({ ...segment, text });
     });
   }
   return lines;
@@ -49,9 +48,9 @@ export const CodeBlock = ({ code }: CodeBlockProps) => (
       borderRadius: 3,
       padding: "0.75rem 0.85rem",
       margin: 0,
-      /* why: 空白の無いパターン連鎖だけは折り返せない。実データの最長は 41 字幅で
-         収まるが、逃げ道として残す。ここが scroll container になるおかげで
-         min-width: auto が 0 に解決され、親を突き抜けてページが横スクロールすることもない */
+      /* why: 空白の無いパターン連鎖は折り返せないので、溢れたらここで横に流す。
+         scroll container になることで min-width: auto が 0 に解決され、
+         親を突き抜けてページ全体が横スクロールすることもなくなる */
       overflowX: "auto",
     }}
   >

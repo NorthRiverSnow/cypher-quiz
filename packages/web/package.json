@@ -8,7 +8,8 @@
     "preview": "vp preview",
     "typecheck": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "vp test run"
   },
   "dependencies": {
     "react": "^19.2.8",
