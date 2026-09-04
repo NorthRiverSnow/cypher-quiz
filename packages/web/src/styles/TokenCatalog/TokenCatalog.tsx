@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { CodeBlock, type CodeSegment } from "../../view/atoms/CodeBlock/CodeBlock";
 import { Note } from "../../view/molecules/Note/Note";
 import { ENTITIES, INKS, SEMANTIC, SURFACES, TINTS, type Token } from "./tokenList";
 
@@ -28,7 +29,20 @@ const HEADING: CSSProperties = {
   color: "var(--accent)",
 };
 
-const KEYWORD: CSSProperties = { color: "var(--accent)", fontWeight: 600 };
+const SAMPLE_QUERY: CodeSegment[] = [
+  { text: "// 全エンジニアと、対応した件数", kind: "cm" },
+  { text: "\n" },
+  { text: "MATCH", kind: "kw" },
+  { text: " (e:Engineer)\n" },
+  { text: "OPTIONAL MATCH", kind: "kw" },
+  { text: " (e)-[:" },
+  { text: "RESPONDED_TO", kind: "rel" },
+  { text: "]->(i:Incident)\n" },
+  { text: "RETURN", kind: "kw" },
+  { text: " e.name, count(i) " },
+  { text: "AS", kind: "kw" },
+  { text: " n" },
+];
 
 const Swatch = ({ name, role }: Token) => (
   <div style={ROW}>
@@ -121,31 +135,7 @@ export const TokenCatalog = () => (
         <p style={{ margin: "0 0 0.4rem" }}>
           本文は Zen Kaku Gothic New。OPTIONAL MATCH を使うのはどういうときか。
         </p>
-        <pre
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.795rem",
-            lineHeight: 1.75,
-            background: "var(--panel-2)",
-            border: "1px solid var(--rule-soft)",
-            borderRadius: 3,
-            padding: "0.75rem 0.85rem",
-            margin: "0 0 0.9rem",
-            overflowX: "auto",
-          }}
-        >
-          <span style={{ color: "var(--muted)" }}>{"// 全エンジニアと、対応した件数\n"}</span>
-          <span style={KEYWORD}>MATCH</span>
-          {" (e:Engineer)\n"}
-          <span style={KEYWORD}>OPTIONAL MATCH</span>
-          {" (e)-[:"}
-          <span style={{ color: "var(--keep)", fontWeight: 600 }}>RESPONDED_TO</span>
-          {"]->(i:Incident)\n"}
-          <span style={KEYWORD}>RETURN</span>
-          {" e.name, count(i) "}
-          <span style={KEYWORD}>AS</span>
-          {" n"}
-        </pre>
+        <CodeBlock code={SAMPLE_QUERY} />
         <div
           style={{
             fontFamily: "var(--font-mono)",

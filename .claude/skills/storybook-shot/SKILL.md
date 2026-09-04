@@ -57,6 +57,25 @@ done
 - 起動時に `CVDisplayLinkCreateWithCGDisplay failed` などが出るが**無害**
 - 出力は scratchpad に置く。リポジトリを汚さない
 
+## 3.5 狭い幅は `--window-size` では試せない
+
+**Chrome headless のレイアウト幅は 500 CSS px より下がらない。** `--window-size=390` を渡しても
+`document.documentElement.clientWidth` は 500 のままで、**スクリーンショットが 390 で切られるだけ**。
+切れた絵を見て「溢れている」と誤診する。
+
+本当に狭い幅を見るには、scratchpad に**幅を固定した iframe で囲むページ**を作って撮る。
+
+```html
+<iframe src="http://localhost:6006/iframe.html?id=<id>" style="width:360px;height:460px"></iframe>
+```
+
+溢れの有無は目視ではなく数値で確かめる。検証用ページに次を仕込んで撮れば一目で分かる。
+
+```js
+document.documentElement.scrollWidth > document.documentElement.clientWidth; // ページが横スクロール
+pre.scrollWidth > pre.clientWidth; // ブロック内で横スクロール
+```
+
 ## 4. 細部は切り出して拡大する
 
 **この環境に PIL は無い。** `sips` を使う。
@@ -80,6 +99,6 @@ tokens.css の値とフォントの link をコピーして貼る。`--force-dev
 ## 見るべきこと
 
 - light と dark の**両方**で崩れていないか
-- 幅を狭めてページ全体が横スクロールしないか（`--window-size` の幅を変えて撮る）
+- 幅を狭めてページ全体が横スクロールしないか（§3.5 の iframe で測る。`--window-size` では試せない）
 - 書体が当たっているか（フォールバックだと字面が変わる）
 - アイコンやチップが本文と光学的に揃っているか
