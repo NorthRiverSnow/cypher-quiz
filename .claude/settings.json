@@ -70,6 +70,18 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/guide-sync.py\"",
+            "timeout": 15,
+            "statusMessage": "guide と docs のずれを確認中"
+          }
+        ]
+      }
     ]
   }
 }

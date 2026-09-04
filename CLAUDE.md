@@ -9,14 +9,15 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 
 ## 仕様と設計の正は `docs/`
 
-| ファイル                  | 内容                                               |
-| ------------------------- | -------------------------------------------------- |
-| `docs/00_overview.md`     | 背景・決定事項の一覧                               |
-| `docs/01_spec.md`         | 仕様のみ（技術要素を含まない）                     |
-| `docs/02_architecture.md` | 関数型で MVC、境界の強制、ディレクトリ             |
-| `docs/03_api.md`          | OpenAPI 自動追従、読み取り専用の多層防御、資格情報 |
-| `docs/04_roadmap.md`      | フェーズ A〜D、検証項目、置いた判断                |
-| `docs/05_reference.md`    | データセット、30 枚のカード、意匠の実値            |
+| ファイル                  | 内容                                                         |
+| ------------------------- | ------------------------------------------------------------ |
+| `docs/00_overview.md`     | 背景・決定事項の一覧                                         |
+| `docs/01_spec.md`         | 仕様のみ（技術要素を含まない）                               |
+| `docs/02_architecture.md` | 関数型で MVC、境界の強制、ディレクトリ                       |
+| `docs/03_api.md`          | OpenAPI 自動追従、読み取り専用の多層防御、資格情報           |
+| `docs/04_roadmap.md`      | フェーズ A〜D、検証項目、置いた判断                          |
+| `docs/05_reference.md`    | データセット、30 枚のカード、意匠の実値                      |
+| `docs/06_deck.md`         | guide 03 の本文。**生成物**（`tools/extract_guide_docs.py`） |
 
 **設計を変えるときは docs も直す。** 実装と docs が食い違ったら docs が正。
 
