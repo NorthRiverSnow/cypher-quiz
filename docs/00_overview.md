@@ -85,7 +85,7 @@ NordWind ワークショップの Cypher 教材を、読むだけの資料から
 | DB ドライバ | `neo4j-driver` v5 |
 | dev 環境 | Docker Compose |
 | 構成 | pnpm workspaces のモノレポ（Vite+ が pnpm をそのまま使う） |
-| 境界の担保 | **Oxlint + TypeScript**（規約ではなく機械で落とす） |
+| 境界の担保 | **Oxlint + TypeScript**（規約ではなく機械でエラーにする） |
 
 ---
 

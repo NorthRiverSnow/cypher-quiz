@@ -151,7 +151,7 @@ export const TokenCatalog = () => (
           <b style={{ color: "var(--keep)" }}>0</b>
         </div>
         <Note tone="warn" icon="warning" iconLabel="注意">
-          DISTINCT を落として{" "}
+          DISTINCT を外して{" "}
           <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem" }}>count(t)</code>{" "}
           にすると、13 が 20 になる。
         </Note>

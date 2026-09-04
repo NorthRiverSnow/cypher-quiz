@@ -6,7 +6,7 @@ description: Storybook の story を Chrome headless で撮って自分で見る
 # Storybook を自分で見る
 
 **見た目を変えたら、聞く前に撮る。** ユーザーに確認を頼むのは「どちらが好みか」に絞る。
-アイコンの位置合わせのようにマジックナンバーを詰める作業は、自分で見ないと収束しない。
+アイコンの位置合わせのようにマジックナンバーを調整する作業は、自分で見ないと収束しない。
 
 ## 1. Storybook が上がっているか確認する
 
@@ -21,7 +21,7 @@ lsof -nP -iTCP:6006 -sTCP:LISTEN
 vp run storybook
 ```
 
-`.storybook/main.ts` と `.storybook/preview*` は設定ファイルなので **HMR で拾われない。**
+`.storybook/main.ts` と `.storybook/preview*` は設定ファイルなので **HMR の対象外。**
 触ったら再起動する（`kill <pid>` → 6006 の解放を待ってから起動）。
 
 ## 2. story id を取る

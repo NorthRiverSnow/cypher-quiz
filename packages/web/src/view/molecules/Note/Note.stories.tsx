@@ -4,9 +4,9 @@ import { Note, type NoteTone } from "./Note";
 
 const TONES: NoteTone[] = ["warn", "keep", "alarm", "accent"];
 
-const SHORT = "DISTINCT を落とすと 13 が 20 になる。";
+const SHORT = "DISTINCT を外すと 13 が 20 になる。";
 const LONG =
-  "DISTINCT を落として count(t) にすると、13 が 20 になる。集約は重複を数えるので、" +
+  "DISTINCT を外して count(t) にすると、13 が 20 になる。集約は重複を数えるので、" +
   "同じチームを複数回たどった分だけ値が膨らむ。";
 
 const meta = {

@@ -6,7 +6,7 @@ import { ChoiceList } from "./ChoiceList";
 
 const CHOICES = ["MATCH", "OPTIONAL MATCH", "WHERE", "WITH"];
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が走らない */
+/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 const checkedFlags = () =>

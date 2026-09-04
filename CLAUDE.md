@@ -47,6 +47,21 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 **当然の疑問に先回りする。** 「中身が空なら高さ 0 では？」に答えていないと、
 その処理が成立している理由が読めない。`min-height` が高さを与える、まで書いて閉じる。
 
+### 多義語を使わない
+
+コメント・docs・チャットのすべてで、**複数の意味に取れる語を避ける。**
+とくに「落とす」は禁止——lint がエラーにするのか、要素を削除するのか、値を下げるのかが区別できない。
+
+```
+✗ lint で落とす        ○ lint エラーにする
+✗ テストが落ちる        ○ テストが失敗する
+✗ 空行を落とす          ○ 空行を削除する
+✗ コントラストが落ちる   ○ コントラストが下がる
+✗ HMR で拾われない      ○ HMR の対象外
+✗ テストを流す          ○ テストを実行する
+✗ ルールが効く          ○ ルールが適用される
+```
+
 ## 進め方
 
 **1 ステップ = 1 レビュー。各ステップの終わりで止まる。**
@@ -65,29 +80,19 @@ packages/web/src/view/
 ```
 
 トークンの一覧は層に属さないので `styles/TokenCatalog/`（`tokens.css` と co-locate）。
+層を跨ぐ import は `vite.config.ts` の `lint.overrides` が lint エラーにする。
+層の判断と見た目の書き方（インライン style と CSS Modules の使い分け）は `docs/02_architecture.md`。
 
-層を跨ぐ import は `vite.config.ts` の `lint.overrides` で落ちる（4 方向とも実測済み）。
-判断の目安は `docs/02_architecture.md` の「View の中の層」。
+**story を作れるのは、`*.stories.tsx` の外の `.tsx` で定義・export された React コンポーネントだけ。**
+**Storybook にしか存在しないコンポーネントを許さない。**
 
-**`*.stories.tsx` には story だけを書く。コンポーネントは実体ファイルから import する。**
+story ファイルに書いてよいのは、被写体の並べ方（`render`）・配置（`decorators`）・
+サンプルデータだけ。JSX を書くこと自体は禁じていない。
 
-```
-view/atoms/Icon/
-├─ Icon.tsx           # 実体
-└─ Icon.stories.tsx   # import { Icon } from "./Icon"
-```
+**atoms / molecules / organisms は必ず story を作る。** `templates` と `pages` は必要に応じて。
 
-story の中で JSX を組むと、アプリから使えないまま Storybook にだけ存在する部品ができる。
-
-**見た目はインライン style が既定。`:hover` などの擬似クラスが要るものだけ CSS Modules**
-（実体の隣に `X.module.css`）。詳細は `docs/02_architecture.md` の「見た目の書き方」。
-
-**atoms / molecules / organisms は必ず story を作る。** ここまでが単体で見て判断できる粒度。
-`templates` と `pages` は必要に応じて（`QuizScreen` は全状態を並べるので作る）。
-
-**story は `既定` から始め、あとは見せる状態か比較軸に名前を付ける。**
-全部を並べただけの `すべて` は作らない——状態でも軸でもないので、他の story の重複にしかならない。
-比較したいなら `色調` `大きさ` のように軸を名前にする。`styles/トークン` はカタログなので例外。
+**story は `既定` から始め、見せる状態か比較軸に名前を付ける。** `すべて` は作らない
+——状態でも軸でもなく、他の story の重複にしかならない。
 
 ## 見た目は自分で確認する
 
@@ -98,20 +103,22 @@ story の中で JSX を組むと、アプリから使えないまま Storybook �
 
 `npm` / `pnpm` を直接叩かない（hook で `npm` は禁止してある）。
 
-**Vite+ はパッケージマネージャではない。** `vp pm`（Forward a command to the package manager）が
-示すとおり pnpm に委譲している。依存操作は `vp add` / `vp install` などで足りるが、
-**`pnpm-lock.yaml` と `pnpm-workspace.yaml` は消さない。** 後者は catalog の定義そのもので、
-`"vite": "catalog:"` が 4 か所から参照している。消すと vite / vite-plus 自身が解決できなくなる。
-
 ```
+export PATH="$HOME/.local/share/vite-plus/bin:$PATH"   # vp はシェル関数。実体に PATH が要る
+
 vp check                     fmt + lint + typecheck
-vp -C packages/web build     root では対象パッケージが必要
-vp run -F './packages/*' <t> packages 配下だけ
 vp run test                  Vitest（root から全パッケージ）
 vp run test:web              Vitest（フロントエンドだけ）
-vp dlx <pkg>                 npx の代わり
 vp run storybook             Storybook（6006）
+vp -C packages/web build     root では対象パッケージが必要
+vp run -F './packages/*' <t> packages 配下だけ（`-r` は root も選ぶので使わない）
+vp dlx <pkg>                 npm 同梱の実行コマンドの代わり
 ```
+
+**`pnpm-lock.yaml` と `pnpm-workspace.yaml` は消さない。** Vite+ は pnpm に委譲していて、
+後者は catalog（`"vite": "catalog:"`）の定義そのもの。消すと vite / vite-plus が解決できなくなる。
+
+`brew` と `gh` は素で引ける（`/opt/homebrew/bin`）。`gh` は認証済み。
 
 ## テストは Vitest
 
@@ -121,42 +128,20 @@ vp run storybook             Storybook（6006）
 **見た目だけの部品には書かない。** 色・字送り・折り返しは happy-dom では検証できず、
 story を撮ったほうが速く正確に判断できる。書いても「描画されたこと」しか言えない。
 
-**書いたら壊して確かめる。** わざと壊して落ちなければ、そのテストは何も守っていない。
-実際、絶対パスを渡していた `vp test related` のフックは、5 ケース全部が「成功」に見えて
-1 件もテストが走っていなかった。落ちるはずのケースを試して初めて分かる。
+**書いたら壊して確かめる。** わざと壊してテストが失敗しなければ、そのテストは何も守っていない。
 
 `vp test run` で root から全パッケージ。DOM が要るものは各パッケージの `vite.config.ts` で
 `test.environment` を指定する（root は `test.projects` で各設定を使わせているだけ）。
 
-**`vitest` からではなく `vite-plus/test` から import する**（`vp lint` が落とす）。
-`@testing-library/react` の自動 cleanup は globals を切っていると走らないので `afterEach(cleanup)` を書く。
+**`vitest` からではなく `vite-plus/test` から import する**（`vp lint` がエラーにする）。
+`@testing-library/react` の自動 cleanup は globals を切っていると実行されないので `afterEach(cleanup)` を書く。
 
 **検証できるのは DOM の構造とイベントの結線まで。** happy-dom はレイアウトも描画もしないので、
 `:hover` や配色は Skill の `storybook-shot` で撮って確かめる。
 
-編集後は hook が `vp test related` で**影響範囲だけ**流す（全件だとテストが増えるほど重くなる）。
+編集後は hook が `vp test related` で**影響範囲だけ**実行する（全件だとテストが増えるほど重くなる）。
 **`related` に渡すパスは root からの相対。** 絶対パスだと `No test files found` で
-何も走らないまま exit 0 になり、通ったように見える。
-
-**スクリプトはバイナリを直接叩かず `vp run` から呼ぶ。**
-`node_modules/.bin/` を直に使うと package.json と実行内容がずれる。
-
-**`-r` は root のパッケージも選ぶ。** root に同名スクリプトがあると二重に走り、
-そのスクリプト自身が `vp run -r` を呼んでいると再帰する。root から全体に流したいときは
-`-F './packages/*'` を使う。
-
-**裸のタスク名は「今いるパッケージ」に対して解決される。** 別パッケージのスクリプトを
-root から呼びたいときは、root の package.json に `vp -C <dir> run <script>` を足して橋渡しする
-（`storybook` はそうしてある）。`vp run <pkg>#<script>` と書いてもよい。
-
-**`vp` はシェル関数で、実体のバイナリは PATH を通す必要がある。**
-通っていないと関数の中で `command not found: vp` になる。
-
-```
-export PATH="$HOME/.local/share/vite-plus/bin:$PATH"
-```
-
-`brew` と `gh` は素で引ける（`/opt/homebrew/bin`）。`gh` は認証済み。
+1 件も実行されないまま exit 0 になり、通ったように見える。
 
 ## git
 

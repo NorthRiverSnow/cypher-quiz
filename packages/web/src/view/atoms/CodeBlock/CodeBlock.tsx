@@ -48,7 +48,7 @@ export const CodeBlock = ({ code }: CodeBlockProps) => (
       borderRadius: 3,
       padding: "0.75rem 0.85rem",
       margin: 0,
-      /* why: 空白の無いパターン連鎖は折り返せないので、溢れたらここで横に流す。
+      /* why: 空白の無いパターン連鎖は折り返せないので、溢れたらここで横スクロールさせる。
          scroll container になることで min-width: auto が 0 に解決され、
          親を突き抜けてページ全体が横スクロールすることもなくなる */
       overflowX: "auto",

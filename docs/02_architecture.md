@@ -17,7 +17,7 @@
 | スキーマ / 検証 | Zod（`@hono/zod-openapi` 経由） | 型・実行時検証・OpenAPI の唯一の真実にできる |
 | DB ドライバ | `neo4j-driver` v5 | |
 | dev 環境 | Docker Compose | 指定。環境差をなくす |
-| lint / format | **Oxlint / Oxfmt**（`vp lint` / `vp fmt`） | Vite+ 同梱。`typeAware` で型情報を使うルールも効く |
+| lint / format | **Oxlint / Oxfmt**（`vp lint` / `vp fmt`） | Vite+ 同梱。`typeAware` で型情報を使うルールも使える |
 | テスト | **Vitest**（`vp test`） | Vite+ 同梱 |
 | 構成 | pnpm workspaces のモノレポ | `shared` の Zod を web と api の両方から参照するため。Vite+ が pnpm を検出してそのまま使う |
 
@@ -110,7 +110,7 @@ export type Result<T, E> =
 
 ## 3. 境界を機械で守る
 
-**規約ではなく `vp lint`（Oxlint）で落とす。** React は View と Controller が混ざりやすいので、人の注意力に頼らない。設定は root の `vite.config.ts` 1 箇所に置く。
+**規約ではなく `vp lint`（Oxlint）でエラーにする。** React は View と Controller が混ざりやすいので、人の注意力に頼らない。設定は root の `vite.config.ts` 1 箇所に置く。
 
 ```ts
 // vite.config.ts（抜粋）
@@ -158,9 +158,9 @@ lint: {
 }
 ```
 
-`**/molecules/**` のような glob が `../../molecules/Note` のような相対 import にも効くことは実測済み。
-**4 方向すべて確認した**——atoms→molecules は落ち、molecules→atoms は通り、
-organisms→molecules は通り、organisms→pages は落ちる。
+`**/molecules/**` のような glob が `../../molecules/Note` のような相対 import にも一致することは実測済み。
+**4 方向すべて確認した**——atoms→molecules はエラーになり、molecules→atoms は通り、
+organisms→molecules は通り、organisms→pages はエラーになる。
 
 ### 各層の禁止事項
 
@@ -193,7 +193,7 @@ organisms→molecules は通り、organisms→pages は落ちる。
 **既定はインライン style。** トークンを `var(--accent)` でそのまま参照でき、部品が 1 ファイルで完結する。
 
 **擬似クラスとアットルールが要るものだけ CSS Modules。** `:hover` `:focus-visible` `:active`
-`@media` はインライン style では書けない。実体の隣に `X.module.css` を置く。
+`@media` はインライン style では書けない。コンポーネントの `.tsx` の隣に `X.module.css` を置く。
 
 ```
 view/molecules/ChoiceList/
@@ -203,7 +203,7 @@ view/molecules/ChoiceList/
 ```
 
 `useState` で hover を持つ方法は採らない。`:focus-visible` を再現できず、
-キーボード操作の見た目が落ちるため。
+キーボード操作時の表示が劣るため。
 
 **`*.module.css` の型宣言は `*.css` より先に書く**（`src/css.d.ts`）。
 どちらもワイルドカードの接頭辞が空なので、後に書くと中身が空の `*.css` に食われて
@@ -214,17 +214,20 @@ class 名が引けなくなる（実測）。
 
 ### story はコンポーネントを定義しない
 
-**`*.stories.tsx` には story だけを書く。** コンポーネントは同じ階層の実体ファイルから import する。
+**story を作れるのは、`*.stories.tsx` の外の `.tsx` で定義・export された React コンポーネントだけ。**
+**Storybook にしか存在しないコンポーネントを許さない。**
 
 ```
 view/atoms/Icon/
-├─ Icon.tsx           # 実体
+├─ Icon.tsx           # コンポーネントはここで定義して export する
 └─ Icon.stories.tsx   # import { Icon } from "./Icon"
 ```
 
-story の中で JSX を組むと、そのコンポーネントは**アプリから使えないまま Storybook にだけ存在する**。
+story ファイルに書いてよいのは、被写体の並べ方（`render`）・配置（`decorators`）・
+サンプルデータだけ。JSX を書くこと自体は禁じていない。
+
 見た目を決めてから中身を作る進め方（フェーズ A）では、ここが崩れると
-「Storybook では出来ているのにアプリに無い」状態が量産される。
+「Storybook では出来ているのにアプリに無い」部品が量産される。
 
 ### 何を機械が守り、何を守らないか
 
@@ -234,10 +237,10 @@ story の中で JSX を組むと、そのコンポーネントは**アプリか�
 |---|---|---|
 | 層境界（Model ↛ React、View ↛ Model） | Oxlint `no-restricted-imports` + `overrides` | **実測で動作確認済み** |
 | 不要な `let` | Oxlint `prefer-const` | **実測で動作確認済み** |
-| 不変性 | **TypeScript の `Readonly<>` / `readonly`** | 型で落ちる。ただし付けた所だけ・浅くだけ（下記） |
+| 不変性 | **TypeScript の `Readonly<>` / `readonly`** | 型エラーになる。ただし付けた所だけ・浅くだけ（下記） |
 | クラス禁止 | — | **機械では守らない**（下記） |
 
-**クラス禁止だけは機械化していない。** Oxlint に該当ルールが無く、クラスは「うっかり書く」ものではないので、レビューで足りると判断した。どうしても止めたければ Oxlint の JS プラグイン（`vite.config.ts` の `lint.jsPlugins`。Vite+ 自身も 1 つ登録している）で `ClassDeclaration` を弾く 15 行程度のプラグインを書けば済む。
+**クラス禁止だけは機械化していない。** Oxlint に該当ルールが無く、クラスは「うっかり書く」ものではないので、レビューで足りると判断した。どうしても止めたければ Oxlint の JS プラグイン（`vite.config.ts` の `lint.jsPlugins`。Vite+ 自身も 1 つ登録している）で `ClassDeclaration` を検出してエラーにする 15 行程度のプラグインを書けば済む。
 
 ### `Readonly` は付ける場所を選ぶ
 
@@ -273,7 +276,7 @@ Readonly<{ nested: Readonly<{ deep: number }> }>  // これで中身も守られ
 
 **コンパイル時だけ。** 実行時の保護は無い。`as unknown as` で外せるし、`JSON.parse` の戻りは型が付いていない。ただし `model/` は純関数で新しい状態を返す設計なので、そもそも書き換えるコードを書かない。実行時まで固めたければ dev 限定で `Object.freeze` を挟む余地はある。
 
-落ちたときの効果は lint 警告より強い（**ビルドが止まる**）が、「付け忘れには弱い」。そこは等価な置き換えではない。
+エラーになったときの効果は lint 警告より強い（**ビルドが止まる**）が、「付け忘れには弱い」。そこは等価な置き換えではない。
 
 ### 型は共有、ロジックは非共有
 
