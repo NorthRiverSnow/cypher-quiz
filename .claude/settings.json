@@ -59,18 +59,6 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/review-step.py\"",
-            "timeout": 260,
-            "statusMessage": "別セッションで変更をレビュー中"
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [

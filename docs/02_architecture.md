@@ -309,6 +309,14 @@ export const SECTION_LABELS: Record<SectionId, string> = {
 
 View は日本語を直書きせず `SECTION_LABELS` 経由で引く。
 
+出題の向きも同じ理由で型にする。View は設問と肢の書体をこの 1 つから決める——`promptKind` と `choiceKind` を別々に受けると、構文の設問に構文の肢が並ぶ組み合わせを作れてしまう。
+
+```ts
+export type Direction = 'forward' | 'reverse';   // 正順（構文 → 目的）/ 逆順（目的 → 構文）
+```
+
+習熟度は向きごとに別々に数える（[`01_spec.md` §2](./01_spec.md#2-出題形式)）。
+
 ```ts
 export type Card = Readonly<{
   id:       CardId;      // 'optional-match'
