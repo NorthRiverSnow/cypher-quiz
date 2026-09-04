@@ -1,0 +1,35 @@
+.button {
+  padding: 0.55rem 1.4rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: var(--accent);
+  /* why: 文字色を --panel にする。light では白（4.82:1）、dark では暗色（8.59:1）になり
+     両テーマで AA を満たす。--ground だと light が 4.37:1 で届かない */
+  color: var(--panel);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+/* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
+@media (hover: hover) {
+  .button:not(:disabled):hover {
+    /* why: --ink 側へ混ぜると light では暗く、dark では明るくなる。
+       テーマごとに値を書き分けずに済み、文字とのコントラストはどちらも上がる */
+    background: color-mix(in oklch, var(--accent) 86%, var(--ink));
+  }
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  /* why: 塗りは有効時と同じまま色だけを --muted にする。罫線だけの姿にすると
+     押せる二次ボタンに見えて、無効だと分からない。
+     文字は --panel のままで AA を満たす（light 4.62:1 / dark 6.38:1） */
+  background: var(--muted);
+  cursor: not-allowed;
+}
