@@ -1,0 +1,60 @@
+.choice {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--panel);
+  /* why: 淡い面に載る文字なので自色にしない。light で AA に届かない */
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 120ms,
+    background 120ms;
+}
+
+/* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
+@media (hover: hover) {
+  .choice:hover {
+    border-color: var(--accent);
+    background: var(--panel-2);
+  }
+}
+
+.choice:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* why: 選択状態は aria-checked が既に持っている。class を二重に持たない。
+   hover より後に書いて、選択中の面が hover に上書きされないようにする */
+.choice[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.ordinal {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.choice[aria-checked="true"] .ordinal {
+  color: var(--accent);
+}
+
+.syntax {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  line-height: 1.9;
+}
+
+.prose {
+  line-height: 1.75;
+}

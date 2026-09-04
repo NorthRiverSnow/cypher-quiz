@@ -188,6 +188,30 @@ organisms→molecules は通り、organisms→pages は落ちる。
 部品を specimen として import してよい——色は文脈に置かないと判断できないため
 （コードブロックに並べて初めて青と緑の紛らわしさが分かった）。
 
+### 見た目の書き方——インライン style と CSS Modules
+
+**既定はインライン style。** トークンを `var(--accent)` でそのまま参照でき、部品が 1 ファイルで完結する。
+
+**擬似クラスとアットルールが要るものだけ CSS Modules。** `:hover` `:focus-visible` `:active`
+`@media` はインライン style では書けない。実体の隣に `X.module.css` を置く。
+
+```
+view/molecules/ChoiceList/
+├─ ChoiceList.tsx
+├─ ChoiceList.module.css   # :hover / :focus-visible / @media (hover: hover)
+└─ ChoiceList.stories.tsx
+```
+
+`useState` で hover を持つ方法は採らない。`:focus-visible` を再現できず、
+キーボード操作の見た目が落ちるため。
+
+**`*.module.css` の型宣言は `*.css` より先に書く**（`src/css.d.ts`）。
+どちらもワイルドカードの接頭辞が空なので、後に書くと中身が空の `*.css` に食われて
+class 名が引けなくなる（実測）。
+
+**選択状態は `aria-checked` を CSS のセレクタにも使う。** `[aria-checked="true"]` で引けば、
+状態を class と属性の二重に持たずに済む。`:hover` より後に書いて、選択中の面が上書きされないようにする。
+
 ### story はコンポーネントを定義しない
 
 **`*.stories.tsx` には story だけを書く。** コンポーネントは同じ階層の実体ファイルから import する。

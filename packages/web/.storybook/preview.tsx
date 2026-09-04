@@ -16,7 +16,10 @@ const preview: Preview = {
   ],
   parameters: {
     layout: "fullscreen",
-    controls: { expanded: true },
+    /* why: Controls の「Update story」は story ファイルを書き換える。
+       args をいじって試すのは自由でよいが、ソースに書き戻されると
+       身に覚えのない差分になるので UI を出さない */
+    controls: { expanded: true, disableSaveFromUI: true },
     options: {
       /* why: 既定の辞書順だと pages が templates より前に来てアトミックの順序が崩れる。
          styles を先頭に置くのは、部品より先にトークンを見て判断するため */

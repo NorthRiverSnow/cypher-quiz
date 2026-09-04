@@ -8,6 +8,11 @@ export default defineConfig({
     // ため対象外にする。表の桁揃えは魅力的だが、代償が大きい。
     ignorePatterns: ["docs/**"],
   },
+  test: {
+    /* why: 各パッケージの vite.config.ts を使わせる。root で束ねると
+       packages/web の test.environment（happy-dom）が効かず DOM が無いまま走る */
+    projects: ["packages/*"],
+  },
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
     rules: { "vite-plus/prefer-vite-plus-imports": "error" },

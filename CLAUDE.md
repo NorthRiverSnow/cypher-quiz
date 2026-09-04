@@ -64,6 +64,9 @@ view/atoms/Icon/
 
 story の中で JSX を組むと、アプリから使えないまま Storybook にだけ存在する部品ができる。
 
+**見た目はインライン style が既定。`:hover` などの擬似クラスが要るものだけ CSS Modules**
+（実体の隣に `X.module.css`）。詳細は `docs/02_architecture.md` の「見た目の書き方」。
+
 **atoms / molecules / organisms は必ず story を作る。** ここまでが単体で見て判断できる粒度。
 `templates` と `pages` は必要に応じて（`QuizScreen` は全状態を並べるので作る）。
 
@@ -89,10 +92,25 @@ story の中で JSX を組むと、アプリから使えないまま Storybook �
 vp check                     fmt + lint + typecheck
 vp -C packages/web build     root では対象パッケージが必要
 vp run -F './packages/*' <t> packages 配下だけ
-vp test                      Vitest
+vp test run                  Vitest（root から全パッケージ）
 vp dlx <pkg>                 npx の代わり
 vp run storybook             Storybook（6006）
 ```
+
+## テストは Vitest
+
+`vp test run` で root から全パッケージ。DOM が要るものは各パッケージの `vite.config.ts` で
+`test.environment` を指定する（root は `test.projects` で各設定を使わせているだけ）。
+
+**`vitest` からではなく `vite-plus/test` から import する**（`vp lint` が落とす）。
+`@testing-library/react` の自動 cleanup は globals を切っていると走らないので `afterEach(cleanup)` を書く。
+
+**検証できるのは DOM の構造とイベントの結線まで。** happy-dom はレイアウトも描画もしないので、
+`:hover` や配色は Skill の `storybook-shot` で撮って確かめる。
+
+編集後は hook が `vp test related` で**影響範囲だけ**流す（全件だとテストが増えるほど重くなる）。
+**`related` に渡すパスは root からの相対。** 絶対パスだと `No test files found` で
+何も走らないまま exit 0 になり、通ったように見える。
 
 **スクリプトはバイナリを直接叩かず `vp run` から呼ぶ。**
 `node_modules/.bin/` を直に使うと package.json と実行内容がずれる。
