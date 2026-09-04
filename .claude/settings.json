@@ -35,6 +35,17 @@
             "statusMessage": "vp check を実行中"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/storybook-index.py\"",
+            "timeout": 15,
+            "statusMessage": "Storybook の索引を確認中"
+          }
+        ]
       }
     ]
   }

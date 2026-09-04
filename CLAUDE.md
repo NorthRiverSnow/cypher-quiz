@@ -47,8 +47,9 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 ```
 packages/web/src/view/
   atoms/  molecules/  organisms/  templates/  pages/   ← 上は下だけ import できる
-  catalog/                                             ← 意匠の確認用。層の外
 ```
+
+トークンの一覧は層に属さないので `styles/TokenCatalog/`（`tokens.css` と co-locate）。
 
 層を跨ぐ import は `vite.config.ts` の `lint.overrides` で落ちる（4 方向とも実測済み）。
 判断の目安は `docs/02_architecture.md` の「View の中の層」。
@@ -75,13 +76,30 @@ story の中で JSX を組むと、アプリから使えないまま Storybook �
 
 `npm` / `pnpm` を直接叩かない（hook で `npm` は禁止してある）。
 
+**Vite+ はパッケージマネージャではない。** `vp pm`（Forward a command to the package manager）が
+示すとおり pnpm に委譲している。依存操作は `vp add` / `vp install` などで足りるが、
+**`pnpm-lock.yaml` と `pnpm-workspace.yaml` は消さない。** 後者は catalog の定義そのもので、
+`"vite": "catalog:"` が 4 か所から参照している。消すと vite / vite-plus 自身が解決できなくなる。
+
 ```
 vp check                     fmt + lint + typecheck
 vp -C packages/web build     root では対象パッケージが必要
-vp run -r build              全パッケージ
+vp run -F './packages/*' <t> packages 配下だけ
 vp test                      Vitest
 vp dlx <pkg>                 npx の代わり
+vp run storybook             Storybook（6006）
 ```
+
+**スクリプトはバイナリを直接叩かず `vp run` から呼ぶ。**
+`node_modules/.bin/` を直に使うと package.json と実行内容がずれる。
+
+**`-r` は root のパッケージも選ぶ。** root に同名スクリプトがあると二重に走り、
+そのスクリプト自身が `vp run -r` を呼んでいると再帰する。root から全体に流したいときは
+`-F './packages/*'` を使う。
+
+**裸のタスク名は「今いるパッケージ」に対して解決される。** 別パッケージのスクリプトを
+root から呼びたいときは、root の package.json に `vp -C <dir> run <script>` を足して橋渡しする
+（`storybook` はそうしてある）。`vp run <pkg>#<script>` と書いてもよい。
 
 **`vp` はシェル関数で、実体のバイナリは PATH を通す必要がある。**
 通っていないと関数の中で `command not found: vp` になる。

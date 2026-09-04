@@ -14,10 +14,11 @@ description: Storybook の story を Chrome headless で撮って自分で見る
 lsof -nP -iTCP:6006 -sTCP:LISTEN
 ```
 
-いなければ上げる。**バックグラウンドで動かす。**
+いなければ上げる。**package.json のスクリプト経由で、バックグラウンドで動かす。**
+`node_modules/.bin/` を直接叩かない。
 
 ```
-cd packages/web && ./node_modules/.bin/storybook dev -p 6006 --no-open
+vp run storybook
 ```
 
 `.storybook/main.ts` と `.storybook/preview*` は設定ファイルなので **HMR で拾われない。**

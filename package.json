@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "pnpm -r typecheck",
-    "web": "pnpm --filter @cypher-quiz/web"
+    "typecheck": "vp run -F './packages/*' typecheck",
+    "web": "vp run -F @cypher-quiz/web",
+    "storybook": "vp -C packages/web run storybook",
+    "build-storybook": "vp -C packages/web run build-storybook"
   },
   "devDependencies": {
     "vite": "catalog:",

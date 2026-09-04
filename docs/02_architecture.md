@@ -181,10 +181,12 @@ organisms→molecules は通り、organisms→pages は落ちる。
 | **organisms** | 画面の中の意味のあるかたまり | 単体で「何の部品か」が分かる。`FlashCard` / `CardBack` |
 | **templates** | 配置だけ | データを一切知らない。`QuizLayout` |
 | **pages** | 全状態を props で受ける | `QuizScreen` のみ |
-| **catalog** | 意匠の確認用 | 層の外。アプリに出ないので上下の制約を受けない |
 
-`catalog/` を層に入れないのは、`TokenCatalog` が全トークンを並べる**資料**であって
-アプリの部品ではないため。ここを `pages/` に置くと、アプリの画面と資料が同じ棚に並んでしまう。
+トークンの一覧（`styles/TokenCatalog/`）はこの層に入れない。**どの部品にも属さないので
+部品の story に置けず、アプリの画面でもないので `pages/` にも置けない。**
+`tokens.css` の story として、対象と同じ `styles/` に co-locate する。
+部品を specimen として import してよい——色は文脈に置かないと判断できないため
+（コードブロックに並べて初めて青と緑の紛らわしさが分かった）。
 
 ### story はコンポーネントを定義しない
 
@@ -378,19 +380,18 @@ cypher-quiz/
          │  │  └─ Summary/
          │  ├─ templates/           # 配置だけ。データを知らない
          │  │  └─ QuizLayout/
-         │  ├─ pages/               # 全状態を props で受ける
-         │  │  └─ QuizScreen/       # 画面まるごと純関数
-         │  └─ catalog/             # 意匠の確認用。アプリには出ない（層の外）
-         │     └─ TokenCatalog/
+         │  └─ pages/               # 全状態を props で受ける
+         │     └─ QuizScreen/       # 画面まるごと純関数
          │
          ├─ controller/
          │  ├─ useQuiz.ts
          │  └─ useConnection.ts
          │
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
-         ├─ styles/                 # css と、その入口の index.ts だけ
+         ├─ styles/
          │  ├─ tokens.css
-         │  └─ app.css
+         │  ├─ app.css
+         │  └─ TokenCatalog/        # tokens.css の story。層の外なので view に置かない
          └─ api/client.ts           # fetch のみ
 ```
 

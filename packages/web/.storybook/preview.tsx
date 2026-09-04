@@ -17,6 +17,13 @@ const preview: Preview = {
   parameters: {
     layout: "fullscreen",
     controls: { expanded: true },
+    options: {
+      /* why: 既定の辞書順だと pages が templates より前に来てアトミックの順序が崩れる。
+         styles を先頭に置くのは、部品より先にトークンを見て判断するため */
+      storySort: {
+        order: ["styles", "atoms", "molecules", "organisms", "templates", "pages"],
+      },
+    },
   },
 };
 
