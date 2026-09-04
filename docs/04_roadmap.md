@@ -24,21 +24,38 @@ D. 結線
 
 **固定データだけで画面を組み、雰囲気を調整する。** DB も API もモデルも要らない。
 
-| # | やること | 備考 |
-|---:|---|---|
-| 1 | モノレポの足場 | pnpm workspaces / `tsconfig.base.json` / Vite+ の lint 境界ルール |
-| 2 | `styles/tokens.css` | guides の `:root` 3 ブロックを移植（light / `prefers-color-scheme` / `[data-theme]`） |
-| 3 | Storybook セットアップ | **light / dark を切り替えるツールバー**を decorator で入れる |
-| 4 | `fixtures/` | サンプルの Card / Question / 実行結果。**実データを使う**（`OPTIONAL MATCH` と Killua Zoldyck の例） |
-| 5 | プリミティブ | `CodeBlock` → `ResultTable` → `Chip` → `ProgressBar` |
-| 6 | コンポーネント | `FlashCard` / `ChoiceList` / `CardBack` / `QueryEditor` / `ConnectForm` / `Summary` |
-| 7 | `screens/QuizScreen` | 画面まるごと。全状態を props で受ける |
+**1 ステップ = 1 レビュー。** 各ステップの終わりで止まり、その時点の story を見て判断をもらう（[CLAUDE.md](../CLAUDE.md) の「進め方」）。
+
+| # | やること | story で見る state |
+|---|---|---|
+| A-0 | `docs/` の章 ID を [`SectionId`](./02_architecture.md#4-デッキ生成) に揃える。**コードは書かない** | — |
+| A-1 | モノレポの足場（lint の層境界）/ `styles/tokens.css`（`:root` 3 ブロック）/ Storybook / `styles/TokenCatalog/` | light / dark |
+| A-2 | `CodeBlock` / `Icon` / `Note` | 語句の種別、横に溢れる行、注記の色調 |
+| A-3 | `Card` / `Button` / `ChoiceList` / `FlashCard`。**まだ裏面は作らない** | 正順 / 逆順、未選択 / 選択中、回答ボタンの有効 / 無効 |
+| A-4 | `CardBack` / `fixtures/` | 正答 / 誤答、罠のあるカード |
+| A-5 | `ResultTable` / `Chip` | 1 行、複数列、日付を含む表 |
+| A-6 | `QueryEditor` | 通常 / 編集済み / 実行中 / 実行エラー / 書き込みで拒否 / 未接続 |
+| A-7 | `ProgressBar` / `ConnectForm` / `Summary` | 未入力 / 入力中 / 接続中 / 接続失敗 / dev 自動接続中 |
+| A-8 | `pages/QuizScreen` で結合 | 下の一覧 |
 
 ### なぜ light / dark の切替を最初に入れるのか
 
 guides は**両方のパレットを持っている**（JS がないため切替 UI だけが無い）。両方を見ながら調整しないと、片方で破綻する。
 
-### 7 でできるようになること
+### `fixtures/` を A-4 で作る理由
+
+`fixtures/` は Storybook とテストが共有するサンプルデータなので、**共有する相手が 2 つ以上になってから形が決まる。**
+A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカードを使う A-4 で切り出す。
+
+中身は [`06_deck.md`](./06_deck.md) から引くが、**手で書く。** 抽出器（B-2）を先に作ると、
+雰囲気を見る前にデータ形式が固まる。
+
+### A-7 で決めること
+
+**サマリに章別の成績を出すか。** 章（`section`）は誤答肢を同じ章から引くために必ず使うが、
+画面に出すかは別の判断。カードの表には出している（`§ 読み取りの骨格`）。
+
+### A-8 でできるようになること
 
 `QuizScreen` が全状態を props で受ける純関数なので、Storybook で以下を**並べて見比べられる**。
 
@@ -54,9 +71,9 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 | # | やること |
 |---:|---|
-| 8 | `shared/schema/` の Zod と `result.ts` |
-| 9 | `tools/extract_deck.ts` → `deck.generated.ts`（30 枚） |
-| 10 | `question.ts` / `leitner.ts` / `quiz.ts` / `rng.ts` / `progress.ts` |
+| B-1 | `shared/schema/` の Zod と `result.ts` |
+| B-2 | `tools/extract_deck.ts` → `deck.generated.ts`（30 枚） |
+| B-3 | `question.ts` / `leitner.ts` / `quiz.ts` / `rng.ts` / `progress.ts` |
 
 **全て純関数なので、React 抜きでユニットテストが書ける。**
 
@@ -66,11 +83,11 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 | # | やること | 備考 |
 |---:|---|---|
-| 11 | Docker Compose（`neo4j` + `seed`）+ `.env` / `.env.example` | 投入後に 73 / 153 を確認 |
-| 12 | **`readOnly.ts` と実測** | **下の検証 8 をここで通す。通らなければ先に進まない** |
-| 13 | `driverStore` / `/api/connect`（GET / POST / DELETE）/ `/api/run` / ログ抑制 / `toPlainJson` | クッキーは httpOnly。**フロントに識別子を渡さない** |
-| 14 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
-| 15 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
+| C-1 | Docker Compose（`neo4j` + `seed`）+ `.env` / `.env.example` | 投入後に 73 / 153 を確認 |
+| C-2 | **`readOnly.ts` と実測** | **下の検証 8 をここで通す。通らなければ先に進まない** |
+| C-3 | `driverStore` / `/api/connect`（GET / POST / DELETE）/ `/api/run` / ログ抑制 / `toPlainJson` | クッキーは httpOnly。**フロントに識別子を渡さない** |
+| C-4 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
+| C-5 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
 
 ---
 
@@ -78,8 +95,8 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 | # | やること |
 |---:|---|
-| 15 | `controller/` で model と view を繋ぐ。**View は一切変えない**（変える必要が出たらフェーズ A の設計ミス） |
-| 16 | 通し確認 |
+| D-1 | `controller/` で model と view を繋ぐ。**View は一切変えない**（変える必要が出たらフェーズ A の設計ミス） |
+| D-2 | 通し確認 |
 
 ---
 
