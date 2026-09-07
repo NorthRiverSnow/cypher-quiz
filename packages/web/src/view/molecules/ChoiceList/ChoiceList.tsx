@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react";
 
+import { Text } from "../../atoms/Text/Text";
 import styles from "./ChoiceList.module.css";
 
 export type ChoiceKind = "syntax" | "prose";
@@ -28,8 +29,12 @@ export const ChoiceList = ({ choices, kind, selected, onSelect }: ChoiceListProp
           className={styles.choice}
           onClick={handleClick}
         >
-          <span className={styles.ordinal}>{i + 1}</span>
-          <span className={styles[kind]}>{choice}</span>
+          {/* why: 番号の色だけ props で決める。tone はインライン style になるので、
+              面と同じように [aria-checked] のセレクタでは塗れない */}
+          <Text variant="numeral" tone={selected === i ? "accent" : "muted"}>
+            {i + 1}
+          </Text>
+          <Text variant={kind}>{choice}</Text>
         </button>
       ))}
     </div>

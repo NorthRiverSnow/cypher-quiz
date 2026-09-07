@@ -37,24 +37,3 @@
   border-color: var(--accent);
   background: var(--accent-bg);
 }
-
-.ordinal {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  line-height: 1.9;
-  color: var(--muted);
-}
-
-.choice[aria-checked="true"] .ordinal {
-  color: var(--accent);
-}
-
-.syntax {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  line-height: 1.9;
-}
-
-.prose {
-  line-height: 1.75;
-}

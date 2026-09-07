@@ -212,6 +212,9 @@ class 名が引けなくなる（実測）。
 **選択状態は `aria-checked` を CSS のセレクタにも使う。** `[aria-checked="true"]` で引けば、
 状態を class と属性の二重に持たずに済む。`:hover` より後に書いて、選択中の面が上書きされないようにする。
 
+**ただし `Text` が色を付ける要素はこの方法で塗れない。** `tone` はインライン style になり、
+CSS Modules に勝つため。その場合は色を props で決める（`ChoiceList` の肢の番号）。
+
 ### story はコンポーネントを定義しない
 
 **story を作れるのは、`*.stories.tsx` の外の `.tsx` で定義・export された React コンポーネントだけ。**

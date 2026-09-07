@@ -16,8 +16,8 @@ export const TEXT = {
        和文のラベルには何も起きないので、和文専用に外す必要はない */
     textTransform: "uppercase",
   },
-  /* why: 行送りだけ code と違う。肢の本文（syntax / prose）と同じ 1.9 にすることで、
-     折り返した肢でも番号が 1 行目に揃う */
+  /* why: 行送りだけ code より広い。番号の行box が高くなって肢の 1 行目に寄る。
+     字の大きさが違うので box は一致しない——寄せるだけ */
   numeral: { fontFamily: "var(--font-mono)", fontSize: "0.8rem", lineHeight: 1.9 },
   code: { fontFamily: "var(--font-mono)", fontSize: "0.8rem", lineHeight: 1.75 },
   annotation: { fontSize: "0.875rem", lineHeight: 1.75 },
