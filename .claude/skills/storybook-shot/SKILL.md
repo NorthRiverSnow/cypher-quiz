@@ -69,12 +69,38 @@ done
 <iframe src="http://localhost:6006/iframe.html?id=<id>" style="width:360px;height:460px"></iframe>
 ```
 
-溢れの有無は目視ではなく数値で確かめる。検証用ページに次を仕込んで撮れば一目で分かる。
+### iframe だと「準備中」が残ることがある
+
+story を足した直後や HMR のあと、**iframe の中で Storybook の準備中オーバーレイが消えず、
+中身を覆ったまま写る。** `--virtual-time-budget` を伸ばしても消えない。
+
+部品が壊れているのか覆われているだけなのかは `--dump-dom` で分かる。
+
+```
+"$CH" --headless=new --disable-gpu --no-sandbox --virtual-time-budget=12000 \
+  --dump-dom "http://localhost:6006/iframe.html?id=<id>&viewMode=story" \
+  | grep -o 'storybook-root.\{0,200\}'
+```
+
+中身が出ているなら覆われているだけ。**幅を測る必要が無いときは iframe で囲まず、
+story の URL を直接撮る。**
+
+### 数値で測るなら CSS を写したページを作る
+
+**`file://` のページから `localhost` の iframe の中は読めない**（cross-origin）。
+`scrollWidth` を測りたいときは、scratchpad に CSS を写したページを作ってそこで測る。
 
 ```js
 document.documentElement.scrollWidth > document.documentElement.clientWidth; // ページが横スクロール
-pre.scrollWidth > pre.clientWidth; // ブロック内で横スクロール
+el.scrollWidth > el.clientWidth; // ブロック内で横スクロール
 ```
+
+**写すときは書体まで写す。** `ui-monospace` は headless で別の書体に落ちることがあり、
+字幅が変わって数値がずれる（実測で 1 字 7.9px が 6.4px になり、溢れないと誤診した）。
+`--font-mono` の実値をそのまま書く。
+
+**ブロック要素の `getBoundingClientRect().width` は器の幅を返す。** 中身の幅ではない。
+文字の実幅は `Range` で測る。
 
 ## 4. 細部は切り出して拡大する
 
