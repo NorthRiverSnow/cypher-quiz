@@ -83,26 +83,9 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 別セッションにレビューさせたいときは `python3 tools/review_step.py`。
 **自動では走らない。** 指示されたときだけ実行する。
 
-## コンポーネントはアトミックデザインで置く
+## 部品を触る前に Skill を読む
 
-```
-packages/web/src/view/
-  atoms/  molecules/  organisms/  templates/  pages/   ← 上は下だけ import できる
-```
-
-トークンの一覧は層に属さないので `styles/TokenCatalog/`（`tokens.css` と co-locate）。
-層を跨ぐ import は `vite.config.ts` の `lint.overrides` が lint エラーにする。
-層の判断と見た目の書き方（インライン style と CSS Modules の使い分け）は `docs/02_architecture.md`。
-
-**文字の型は `view/atoms/Text` の段階表だけが持つ。** コンポーネントに `font-size` /
-`line-height` / `letter-spacing` / `font-family` を書かない。色・幅・影は `styles/tokens.css`。
-
-**インライン style は CSS Modules に勝つ。** 状態で色が変わる要素に、atom から色を書かない。
-
-**story を作れるのは、`*.stories.tsx` の外の `.tsx` で定義・export された React コンポーネントだけ。**
-**Storybook にしか存在しないコンポーネントを許さない。**
-
-**部品を作る手順は Skill の `component-new`。** 層の決め方、story の名前、テストの範囲まで。
+`view/` のコンポーネントを作る・直すときは `component-new`。
 
 ## 見た目は自分で確認する
 

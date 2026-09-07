@@ -52,10 +52,13 @@ const ICON_BOX = `calc(${TEXT.annotation.fontSize} * ${TEXT.annotation.lineHeigh
 
 ## 4. story
 
+- **被写体は `*.stories.tsx` の外で定義・export された React コンポーネントだけ。**
+  Storybook にしか存在するコンポーネントを作らない
 - **`既定` から始める。** `すべて` は作らない
 - 見せる**状態**か**比較軸**に名前を付ける
 - `atoms` / `molecules` / `organisms` は必ず作る
 - 書いてよいのは並べ方（`render`）・配置（`decorators`）・サンプルデータだけ
+- 層の境界と見た目の書き方は `docs/02_architecture.md`、意匠の実値は `docs/07_design.md`
 
 ## 5. テスト
 
