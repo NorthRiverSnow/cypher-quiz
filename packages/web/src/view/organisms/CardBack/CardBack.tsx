@@ -20,8 +20,8 @@ export type CardBackProps = {
   expected?: string;
   note?: string;
   warn?: string;
-  /* why: 渡さなければボタンを出さない。書き込み系 5 枚と構文列挙のみの 5 枚は
-     実行させない（docs/01_spec.md#4-クエリの実行と編集） */
+  /* why: 渡さなければ道具を出さない。実行させないカードがある
+     （docs/01_spec.md#4-クエリの実行と編集） */
   onRun?: () => void;
   onReset?: () => void;
   runDisabled?: boolean;
@@ -98,8 +98,7 @@ export const CardBack = ({
         <SectionLabel>{SECTION_LABELS[section]}</SectionLabel>
 
         <div style={GROUP}>
-          {/* why: 正しい肢を「誤答」の見出しの下に置かない。判定と肢が混ざって、
-              どちらが正解か読み取れなくなる */}
+          {/* why: 誤答のときは肢が 2 つ並ぶので、正解の側にも見出しを付ける */}
           {/* why: 文字を出さず記号だけにする。読み上げには label が要る */}
           <Icon
             name={isCorrect ? "radio_button_unchecked" : "close"}

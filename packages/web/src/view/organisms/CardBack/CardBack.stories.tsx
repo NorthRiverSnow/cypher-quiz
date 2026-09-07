@@ -16,7 +16,7 @@ const meta = {
     code: OPTIONAL_MATCH.code,
     expected: OPTIONAL_MATCH.expected,
     note: OPTIONAL_MATCH.note,
-    /* 30 枚のうち 22 枚は実行できる。出るのが標準（docs/01_spec.md#実行可能性の内訳実測） */
+    /* 実行できるのが標準。出ないほうが例外 */
     onRun: fn(),
     onReset: fn(),
   },
@@ -65,12 +65,12 @@ export const 逆順で解説だけ: Story = {
   },
 };
 
-/* 書き込み系 5 枚と構文列挙のみの 5 枚。実行させないので道具を出さない */
+/* 実行させないカード。道具を出さない */
 export const 実行不可: Story = {
   args: { onRun: undefined, onReset: undefined },
 };
 
-/* 未接続。押せないが、なぜ押せないかは A-6 の QueryEditor が受け持つ */
+/* 未接続。実行だけ押せない */
 export const 未接続: Story = { args: { runDisabled: true } };
 
 /* まだ編集していないのでリセットできない */
