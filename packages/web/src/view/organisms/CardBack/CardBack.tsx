@@ -28,23 +28,23 @@ export type CardBackProps = {
   resetDisabled?: boolean;
 };
 
-const STACK: CSSProperties = { display: "grid", gap: "1.15rem" };
+const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
 
-const GROUP: CSSProperties = { display: "grid", gap: "0.4rem" };
+const GROUP: CSSProperties = { display: "grid", gap: "var(--space-xs)" };
 
-const MARKED: CSSProperties = { display: "flex", alignItems: "flex-start", gap: "0.4rem" };
+const MARKED: CSSProperties = { display: "flex", alignItems: "flex-start", gap: "var(--space-xs)" };
 
 const QUERY: CSSProperties = { position: "relative" };
 
 const TOOLS: CSSProperties = {
   position: "absolute",
-  top: "0.3rem",
-  right: "0.3rem",
+  top: "var(--space-xs)",
+  right: "var(--space-xs)",
   display: "flex",
-  gap: "0.1rem",
+  gap: "var(--space-2xs)",
   /* why: コードに重なるので面を敷く。敷かないと字がアイコンの下を通って読めなくなる */
   background: "var(--panel-sunken)",
-  borderRadius: "3px",
+  borderRadius: "var(--radius)",
 };
 
 type AnswerProps = {

@@ -7,13 +7,13 @@ import { Note } from "../../view/molecules/Note/Note";
 import { ENTITIES, INKS, SEMANTIC, SURFACES, TINTS, type Token } from "./tokenList";
 
 /* このファイルの style は見本を並べるためのものだけ。字の型は Text が持つ
-   （docs/07_design.md#4-文字の段階） */
+   （docs/07_design.md#5-文字の段階） */
 
 const PAGE: CSSProperties = {
   background: "var(--ground)",
   color: "var(--ink)",
   minHeight: "100vh",
-  padding: "2.5rem 1.5rem 4rem",
+  padding: "var(--space-xl) var(--space-lg)",
 };
 
 const COLUMN: CSSProperties = { maxWidth: "var(--wide)", margin: "0 auto" };
@@ -22,17 +22,17 @@ const ROW: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "3.5rem 11rem 1fr",
   alignItems: "center",
-  gap: "0.9rem",
-  padding: "0.3rem 0",
+  gap: "var(--space-sm)",
+  padding: "var(--space-xs) 0",
 };
 
 const CHIP: CSSProperties = {
   height: "2.2rem",
-  borderRadius: 3,
-  border: "1px solid var(--rule)",
+  borderRadius: "var(--radius)",
+  border: "var(--border-width) solid var(--rule)",
 };
 
-const HEAD: CSSProperties = { marginBottom: "0.6rem" };
+const HEAD: CSSProperties = { marginBottom: "var(--space-sm)" };
 
 const SAMPLE_QUERY: CodeSegment[] = [
   { text: "// 全エンジニアと、対応した件数", kind: "cm" },
@@ -89,7 +89,7 @@ const TintSwatch = ({ name, role }: Token) => (
 type GroupProps = { title: string; tokens: Token[]; tint?: boolean };
 
 const Group = ({ title, tokens, tint = false }: GroupProps) => (
-  <section style={{ marginBottom: "2.25rem" }}>
+  <section style={{ marginBottom: "var(--space-xl)" }}>
     <div style={HEAD}>
       <Text variant="micro" tone="accent">
         {title}
@@ -104,17 +104,17 @@ const Group = ({ title, tokens, tint = false }: GroupProps) => (
 export const TokenCatalog = () => (
   <div style={PAGE}>
     <div style={COLUMN}>
-      <div style={{ marginBottom: "1rem" }}>
+      <div style={{ marginBottom: "var(--space-md)" }}>
         <Text variant="micro" tone="accent">
           NordWind · Cypher Quiz · Design Tokens
         </Text>
       </div>
-      <div style={{ marginBottom: "1.25rem" }}>
+      <div style={{ marginBottom: "var(--space-md)" }}>
         <Text as="h1" variant="display">
           意匠の実値
         </Text>
       </div>
-      <div style={{ maxWidth: "var(--col)", marginBottom: "2.5rem" }}>
+      <div style={{ maxWidth: "var(--col)", marginBottom: "var(--space-xl)" }}>
         <Text variant="prose" tone="soft">
           ツールバーの Theme で light / dark を切り替えて、guides を隣に開いて見比べる。
         </Text>
@@ -127,21 +127,21 @@ export const TokenCatalog = () => (
       <Group title="§ Entities — 結果表のチップ" tokens={ENTITIES} />
 
       <section>
-        <div style={{ marginBottom: "0.9rem" }}>
+        <div style={{ marginBottom: "var(--space-sm)" }}>
           <Text variant="micro" tone="accent">
             § Typography
           </Text>
         </div>
-        <div style={{ marginBottom: "0.4rem" }}>
+        <div style={{ marginBottom: "var(--space-xs)" }}>
           <Text variant="display">見出しは Zen Old Mincho</Text>
         </div>
-        <div style={{ marginBottom: "0.4rem" }}>
+        <div style={{ marginBottom: "var(--space-xs)" }}>
           <Text variant="prose">
             本文は Zen Kaku Gothic New。OPTIONAL MATCH を使うのはどういうときか。
           </Text>
         </div>
         <CodeBlock code={SAMPLE_QUERY} />
-        <div style={{ marginBottom: "0.9rem" }}>
+        <div style={{ marginBottom: "var(--space-sm)" }}>
           <ResultBlock>
             {"Killua Zoldyck   "}
             <b style={{ color: "var(--keep)" }}>0</b>

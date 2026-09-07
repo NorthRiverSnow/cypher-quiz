@@ -1,13 +1,13 @@
 .choice {
   display: grid;
   grid-template-columns: 1.4rem 1fr;
-  gap: 0.7rem;
+  gap: var(--space-sm);
   align-items: start;
   width: 100%;
   text-align: left;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
+  padding: var(--space-sm);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
   background: var(--panel);
   /* why: 淡い面に載る文字なので自色にしない。light で AA に届かない */
   color: var(--ink);

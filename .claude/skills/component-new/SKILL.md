@@ -23,6 +23,8 @@ description: view/ にコンポーネントを新しく作る手順。層の決�
 
 - **文字** → `atoms/Text` の variant。`font-family` / `font-size` / `line-height` /
   `letter-spacing` を部品に書かない
+- **余白** → `--space-2xs` 〜 `--space-xl` の 6 段。`gap` / `padding` / `margin` に rem を書かない
+- **罫線と角丸** → `--border-width` / `--border-width-bold` / `--radius` / `--radius-card` / `--radius-pill`
 - **色・幅・影** → `tokens.css` の `var(--*)`
 - 新しい数値が要ると思ったら、**まず段階表に無いか見る。**
   足すなら `docs/07_design.md` も直す（docs が正）

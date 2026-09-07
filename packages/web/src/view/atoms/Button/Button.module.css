@@ -1,7 +1,7 @@
 .button {
-  padding: 0.55rem 1.4rem;
-  border: 1px solid transparent;
-  border-radius: 3px;
+  padding: var(--space-xs) var(--space-lg);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
   background: var(--accent);
   /* why: 文字色を --panel にする。light では白（4.82:1）、dark では暗色（8.59:1）になり
      両テーマで AA を満たす。--ground だと light が 4.37:1 で届かない */

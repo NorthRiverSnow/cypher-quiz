@@ -21,9 +21,9 @@ const SEGMENT: Record<CodeKind, CSSProperties> = {
 
 const SURFACE: CSSProperties = {
   background: "var(--panel-sunken)",
-  border: "1px solid var(--rule-soft)",
-  borderRadius: 3,
-  padding: "0.75rem 0.85rem",
+  border: "var(--border-width) solid var(--rule-soft)",
+  borderRadius: "var(--radius)",
+  padding: "var(--space-sm)",
   margin: 0,
   /* why: 空白の無いパターン連鎖は折り返せないので、溢れたらここで横スクロールさせる。
      scroll container になることで min-width: auto が 0 に解決され、

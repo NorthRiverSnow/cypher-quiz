@@ -38,6 +38,21 @@
   --col: 40rem; /* 本文の measure */
   --wide: 62rem; /* コンテナ幅 */
 
+  /* 罫線と角丸 */
+  --border-width: 1px;
+  --border-width-bold: 2px; /* 左の帯、フォーカスリング */
+  --radius: 3px; /* 部品 */
+  --radius-card: 4px;
+  --radius-pill: 999px;
+
+  /* 余白。gap / padding / margin はこの 6 段から選ぶ */
+  --space-2xs: 0.15rem;
+  --space-xs: 0.4rem;
+  --space-sm: 0.7rem;
+  --space-md: 1.15rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+
   /* 書体 */
   --font-serif: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
   --font-sans: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
@@ -119,8 +134,8 @@ body {
 /* why: 要素を列挙しない。列挙すると後から足した input や summary が漏れる。
  * :where() で詳細度 0 なので、部品側から上書きできる */
 :where(:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: var(--border-width-bold) solid var(--accent);
+  outline-offset: var(--border-width-bold);
 }
 
 /* why: 標準プロパティと ::-webkit-scrollbar の両方を書く。前者は Firefox が読み、
@@ -142,7 +157,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--rule);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   /* why: 溝は 12px のまま、透明な罫線で見え幅だけ細くする。掴む的は溝の幅で決まる */
   border: 4px solid transparent;
   background-clip: padding-box;

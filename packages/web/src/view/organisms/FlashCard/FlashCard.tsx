@@ -22,11 +22,11 @@ export type FlashCardProps = {
 const PROMPT: Record<Direction, TextVariant> = { forward: "title", reverse: "titleProse" };
 const CHOICE_KIND: Record<Direction, ChoiceKind> = { forward: "prose", reverse: "syntax" };
 
-const STACK: CSSProperties = { display: "grid", gap: "1.15rem" };
+const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
 
 /* why: ラベルと中身を STACK の間隔より狭くまとめる。同じ間隔だと、
    ラベルがどちらに属するのか読めない */
-const GROUP: CSSProperties = { display: "grid", gap: "0.4rem" };
+const GROUP: CSSProperties = { display: "grid", gap: "var(--space-xs)" };
 
 const ACTIONS: CSSProperties = { display: "flex", justifyContent: "flex-end" };
 

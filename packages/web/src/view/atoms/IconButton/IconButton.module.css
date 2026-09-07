@@ -4,8 +4,8 @@
   width: 1.9rem;
   height: 1.9rem;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: 3px;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
   /* why: 面を塗らない。コードブロックの上に重ねるので、塗ると本文を隠す */
   background: transparent;
   color: var(--muted);

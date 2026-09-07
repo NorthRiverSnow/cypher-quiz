@@ -31,10 +31,10 @@ export const Note = ({ tone, icon, iconLabel, children }: NoteProps) => {
       style={{
         display: "flex",
         alignItems: "flex-start",
-        gap: "0.35rem",
+        gap: "var(--space-xs)",
         background: `var(${bg})`,
-        borderLeft: `2px solid var(${fg})`,
-        padding: "0.5rem 0.7rem",
+        borderLeft: `var(--border-width-bold) solid var(${fg})`,
+        padding: "var(--space-xs) var(--space-sm)",
       }}
     >
       {/* why: 本文の行box と同じ高さの箱に入れて中央寄せすると、1 行目に揃いつつ

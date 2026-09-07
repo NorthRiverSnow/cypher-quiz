@@ -5,9 +5,9 @@ export type CardProps = {
 };
 
 const CARD: CSSProperties = {
-  padding: "1.4rem 1.5rem 1.6rem",
-  border: "1px solid var(--rule)",
-  borderRadius: "4px",
+  padding: "var(--space-lg)",
+  border: "var(--border-width) solid var(--rule)",
+  borderRadius: "var(--radius-card)",
   background: "var(--panel)",
   boxShadow: "var(--shadow)",
 };

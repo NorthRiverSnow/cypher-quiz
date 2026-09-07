@@ -5,8 +5,8 @@ import { Text } from "../Text/Text";
 export type ResultBlockProps = { children: ReactNode };
 
 const BLOCK: CSSProperties = {
-  borderLeft: "2px solid var(--keep)",
-  padding: "0.1rem 0 0.1rem 0.7rem",
+  borderLeft: "var(--border-width-bold) solid var(--keep)",
+  padding: "var(--space-2xs) 0 var(--space-2xs) var(--space-sm)",
   /* why: 桁を空白で揃えてあるので折り返さない。折り返すと列がずれる。
      white-space は継承されるので、Text ではなくここに置く */
   whiteSpace: "pre",

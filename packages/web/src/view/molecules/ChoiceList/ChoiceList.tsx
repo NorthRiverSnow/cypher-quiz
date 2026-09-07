@@ -18,7 +18,7 @@ export const ChoiceList = ({ choices, kind, selected, onSelect }: ChoiceListProp
   };
 
   return (
-    <div role="radiogroup" aria-label="選択肢" style={{ display: "grid", gap: "0.5rem" }}>
+    <div role="radiogroup" aria-label="選択肢" style={{ display: "grid", gap: "var(--space-xs)" }}>
       {choices.map((choice, i) => (
         <button
           key={choice}

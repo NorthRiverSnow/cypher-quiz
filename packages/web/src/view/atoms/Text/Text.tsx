@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
-/* 文字の型はこの表だけが持つ。小さい順。一覧は docs/07_design.md#4-文字の段階 */
+/* 文字の型はこの表だけが持つ。小さい順。一覧は docs/07_design.md#5-文字の段階 */
 export const TEXT = {
   micro: {
     fontFamily: "var(--font-mono)",
