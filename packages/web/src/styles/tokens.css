@@ -61,6 +61,12 @@
   --font-sans: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "Zen Kaku Gothic New", ui-monospace, monospace;
   --font-icon: "Material Symbols Rounded";
+
+  /* 字の太さ */
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 900;
 }
 
 @media (prefers-color-scheme: dark) {

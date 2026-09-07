@@ -20,9 +20,6 @@ export type CardBackProps = {
   expected?: string;
   note?: string;
   warn?: string;
-  /* why: 実行できるカードだけ渡す。渡さなければ枠付きのコードを出すだけにする。
-     構文列挙のみの 5 枚と書き込み系の 5 枚は実行させない
-     （docs/01_spec.md#4-クエリの実行と編集） */
   editor?: Omit<QueryEditorProps, "code">;
 };
 
@@ -80,8 +77,7 @@ export const CardBack = ({
         <SectionLabel>{SECTION_LABELS[section]}</SectionLabel>
 
         <div style={GROUP}>
-          {/* why: 誤答のときは肢が 2 つ並ぶので、正解の側にも見出しを付ける */}
-          {/* why: 文字を出さず記号だけにする。読み上げには label が要る */}
+          {/* why: 記号だけなので、読み上げの名前を label で与える */}
           <Icon
             name={isCorrect ? "radio_button_unchecked" : "close"}
             label={isCorrect ? "正答" : "誤答"}

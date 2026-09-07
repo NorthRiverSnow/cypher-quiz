@@ -9,7 +9,6 @@
   border: var(--border-width) solid var(--rule);
   border-radius: var(--radius);
   background: var(--panel);
-  /* why: 淡い面に載る文字なので自色にしない。light で AA に届かない */
   color: var(--ink);
   font: inherit;
   cursor: pointer;
@@ -26,8 +25,6 @@
   }
 }
 
-/* why: 選択状態は aria-checked が既に持っている。class を二重に持たない。
-   hover より後に書いて、選択中の面が hover に上書きされないようにする */
 .choice[aria-checked="true"] {
   border-color: var(--accent);
   background: var(--accent-bg);

@@ -194,6 +194,7 @@ organisms→molecules は通り、organisms→pages はエラーになる。
 
 **文字は [`atoms/Text`](../packages/web/src/view/atoms/Text/Text.tsx) から引く。**
 `font-family` / `font-size` / `line-height` / `letter-spacing` を部品に書かない。
+太さは `tokens.css` の `--weight-*` で選ぶ。
 段階表は `Text.tsx` の `TEXT` で、値の一覧は [`07_design.md`](./07_design.md) にある。
 
 `Text` は `style` も `className` も受け取らない——受け取れる口を作ると、そこから値が再び散る。

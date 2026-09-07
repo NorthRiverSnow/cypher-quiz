@@ -22,14 +22,26 @@ description: view/ にコンポーネントを新しく作る手順。層の決�
 ## 2. 値は引く。書かない
 
 - **文字** → `atoms/Text` の variant。`font-family` / `font-size` / `line-height` /
-  `letter-spacing` を部品に書かない
+  `letter-spacing` を部品に書かない。太さは `--weight-*` を使う（数値を書かない）
 - **余白** → `--space-2xs` 〜 `--space-xl` の 6 段。`gap` / `padding` / `margin` に rem を書かない
 - **罫線と角丸** → `--border-width` / `--border-width-bold` / `--radius` / `--radius-card` / `--radius-pill`
 - **色・幅・影** → `tokens.css` の `var(--*)`
 - 新しい数値が要ると思ったら、**まず段階表に無いか見る。**
   足すなら `docs/07_design.md` も直す（docs が正）
 
-## 3. インライン style が既定
+## 3. コメントは技術的な why だけ
+
+**仕様は docs に書く。コードには書かない。**
+
+| 書く場所 | 内容                                                 | 例                                                     |
+| -------- | ---------------------------------------------------- | ------------------------------------------------------ |
+| `docs/`  | 何をどう見せるか、いつ何を出すか、色と余白の割り当て | 「完了が左から伸びる」「拒否の文言は歯止めとして書く」 |
+| コード   | ブラウザ・CSS・DOM・型の挙動から来る理由             | 「`em` は `Text` の外では body の字で解決される」      |
+| コード   | 意図的な不在（コードに現れない）                     | 「`autoComplete` を渡す口を作っていない」              |
+
+**docs に書いたことをコードで繰り返さない。** 直すときに片方だけ古くなる。
+
+## 4. インライン style が既定
 
 **`:hover` `:active` `@media` が要るときだけ `X.module.css`** を隣に置く。
 
@@ -52,7 +64,7 @@ description: view/ にコンポーネントを新しく作る手順。層の決�
 const ICON_BOX = `calc(${TEXT.annotation.fontSize} * ${TEXT.annotation.lineHeight})`;
 ```
 
-## 4. story
+## 5. story
 
 - **被写体は `*.stories.tsx` の外で定義・export された React コンポーネントだけ。**
   Storybook にしか存在するコンポーネントを作らない
@@ -62,7 +74,7 @@ const ICON_BOX = `calc(${TEXT.annotation.fontSize} * ${TEXT.annotation.lineHeigh
 - 書いてよいのは並べ方（`render`）・配置（`decorators`）・サンプルデータだけ
 - 層の境界と見た目の書き方は `docs/02_architecture.md`、意匠の実値は `docs/07_design.md`
 
-## 5. テスト
+## 6. テスト
 
 **書くのは振る舞い。** イベントの結線、状態の反映、データの変換——
 壊れても画面を見ただけでは気づけないもの。
@@ -77,7 +89,7 @@ const ICON_BOX = `calc(${TEXT.annotation.fontSize} * ${TEXT.annotation.lineHeigh
 - **例外**: 消えても画面で気づけない指定は 1 件だけ置いてよい（`CodeBlock` の `overflowX`）。
   そのときは**テスト名に「指定が残っている」と書く**——効果を検証していないことを明示する
 
-## 6. 壊して確かめる
+## 7. 壊して確かめる
 
 **わざと壊してテストが失敗しなければ、そのテストは何も守っていない。**
 
@@ -90,6 +102,6 @@ exit 0 になり、通ったように見える。
 
 編集後はフックが `vp test related` で影響範囲だけ実行する（全件だとテストが増えるほど重くなる）。
 
-## 7. 撮る
+## 8. 撮る
 
 Skill の `storybook-shot`。**light / dark の両方。** 聞く前に自分で見る。

@@ -1,6 +1,7 @@
 /* why: ligature 名（"warning"）で書くとフォント到着前に文字列が見えるため、コードポイントで持つ */
 export const ICONS = {
   warning: "\uf083",
+  info: "\ue88e",
   radio_button_unchecked: "\ue836",
   close: "\ue5cd",
   play_arrow: "\ue037",
@@ -15,7 +16,6 @@ export type IconProps = {
   size?: string;
   color?: string;
   fill?: 0 | 1;
-  weight?: number;
 };
 
 export const Icon = ({
@@ -24,7 +24,6 @@ export const Icon = ({
   size = "1.25rem",
   color = "currentColor",
   fill = 0,
-  weight = 500,
 }: IconProps) => (
   <span
     role={label === undefined ? undefined : "img"}
@@ -33,7 +32,8 @@ export const Icon = ({
     style={{
       fontFamily: "var(--font-icon)",
       /* why: opsz は描画 px に合わせる軸。本文脇の 20px 相当に固定している */
-      fontVariationSettings: `"FILL" ${fill}, "wght" ${weight}, "opsz" 20`,
+      fontVariationSettings: `"FILL" ${fill}, "opsz" 20`,
+      fontWeight: "var(--weight-medium)",
       fontSize: size,
       lineHeight: 1,
       color,

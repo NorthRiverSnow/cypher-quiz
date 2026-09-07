@@ -10,9 +10,7 @@ const ROW: CSSProperties = {
      道具の有無で下の器の位置が動く */
   minHeight: "var(--tool-size)",
   padding: "var(--space-2xs)",
-  /* why: 面を --ground にして、下に続く本文の面と沈み方を変える */
   background: "var(--ground)",
-  /* why: 枠は親が持つ。ここは本文との仕切りだけを引く */
   borderBottom: "var(--border-width) solid var(--rule-soft)",
 };
 

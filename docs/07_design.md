@@ -86,8 +86,8 @@
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL@20,400..700,0..1&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@400;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&display=block">
 ```
 
 `Material Symbols` は `display=block` にする。`swap` だと**フォント到着前にコードポイントが
@@ -145,6 +145,8 @@ OKLCH（知覚均等空間）で測る。
 | 誤答 | `--alarm` |
 | 注意・罠 | `--warn` |
 | 進捗バー | box 0 は `--rule`、box 1 は `--accent`、box 2（完了）は `--keep` |
+
+**進捗バーは完了 → 1 回正答 → まだの順に区画を置く。** 完了が左から伸びる。
 | 結果表のノード種別チップ | `--team` / `--engineer` / `--service` / `--incident` |
 
 **「正解」を名乗る色は `--keep` だけ。** 金（`--warn`）は注意・罠の専任で、正解には使わない。
@@ -155,23 +157,57 @@ OKLCH（知覚均等空間）で測る。
 
 `view/atoms/Text/Text.tsx` の `TEXT` がこの表を持つ。**小さい順。この順序を崩さない。**
 
-**コンポーネントに `font-size` / `line-height` / `letter-spacing` を書かない。**
+**コンポーネントに `font-size` / `line-height` / `letter-spacing` を書かない。
+太さも数値では書かない**（下の「太さ」）。
 段階を跨ぐ差だけが意図で、段の中の差は事故として扱う。
 
 | variant | 書体 | 大きさ | 太さ | 行送り | 字送り | 用途 |
 |---|---|---|---|---|---|---|
-| `micro` | mono | `0.72rem` | 400 | 1.6 | `0.14em` | 章ラベル、`問題`、`選択肢`、カタログの見出し |
-| `numeral` | mono | `0.8rem` | 400 | 1.9 | — | 肢の番号 |
-| `code` | mono | `0.8rem` | 400 | 1.75 | — | コード、トークン名、実行結果、入力欄 |
-| `annotation` | sans | `0.875rem` | 400 | 1.75 | — | `Note` の本文、補足 |
-| `prose` | sans | `1rem` | 400 | 1.75 | — | 肢の散文、本文 |
-| `syntax` | mono | `1rem` | 600 | 1.9 | — | 肢の構文 |
-| `titleProse` | serif | `1.125rem` | 400 | 1.75 | — | 逆順の設問 |
-| `title` | mono | `1.3rem` | 600 | 1.5 | — | 正順の設問 |
-| `display` | serif | `1.9rem` | 900 | 1.32 | — | カタログの見出し |
+| `micro` | mono | `0.72rem` | regular | 1.6 | `0.14em` | 章ラベル、`問題`、`選択肢`、カタログの見出し |
+| `numeral` | mono | `0.8rem` | regular | 1.9 | — | 肢の番号 |
+| `code` | mono | `0.8rem` | regular | 1.75 | — | コード、トークン名、実行結果、入力欄 |
+| `annotation` | sans | `0.875rem` | regular | 1.75 | — | `Note` の本文、補足 |
+| `prose` | sans | `1rem` | regular | 1.75 | — | 肢の散文、本文 |
+| `syntax` | mono | `1rem` | semibold | 1.9 | — | 肢の構文 |
+| `titleProse` | serif | `1.125rem` | regular | 1.75 | — | 逆順の設問 |
+| `title` | mono | `1.3rem` | semibold | 1.5 | — | 正順の設問 |
+| `display` | serif | `1.9rem` | black | 1.32 | — | カタログの見出し |
 
 `micro` は `text-transform: uppercase` を持つ（guide の大文字マイクロラベルの型）。
 和文のラベルには何も起きない。
+
+**入力欄も `code`。** 入れるのは URI や識別子で、`l` と `1`、`O` と `0` を読み分けられる字が要る。
+
+### 太さ
+
+**数値を書かない。** `tokens.css` のトークンで面の名前を指す。
+
+| トークン | 値 | 使う書体 | 用途 |
+|---|---|---|---|
+| （既定） | 400 | 全て | 本文、コード、ラベル |
+| `--weight-medium` | 500 | sans、アイコン | アイコンの `wght` 軸 |
+| `--weight-semibold` | 600 | mono | 肢の構文、正順の設問、コードの語句 |
+| `--weight-bold` | 700 | sans | 主ボタンの文字 |
+| `--weight-black` | 900 | serif | カタログの見出し |
+
+**太いほうの面は書体ごとに 1 つずつしか読み込んでいない。** そしてその番号が書体で違う。
+
+| 書体 | 読み込んでいる面 | 「太字」に当たる面 |
+|---|---|---|
+| IBM Plex Mono | 400 / 600 | **600** |
+| Zen Kaku Gothic New（sans） | 400 / 500 / 700 | **700**（600 の面を持たない書体） |
+| Zen Old Mincho（serif） | 400 / 900 | **900** |
+| Material Symbols Rounded | 400〜700 の可変 | 任意の値が出る |
+
+**持っていない番号を書くと近い面に丸められる。** sans に `600` と書くと 700 で描かれ、
+serif に `500` と書くと 400 で描かれる。**書いた数値と出る字が食い違うので、名前で選ぶ。**
+
+アイコンは可変書体で、`wght` 軸が `font-weight` で動く。太さだけ `font-variation-settings` から
+出して、他の段と同じトークンで選べるようにしている（`FILL` と `opsz` は軸のまま）。
+**アイコンは medium。** regular にすると本文と並べたときに線が細く見える。
+
+入力できない欄は不透明度で薄くする。色を別に用意しないのは、一時的に止めているだけで
+`--alarm` のような意味を持たせたくないため。
 
 **`Text` は `tone` を渡さないかぎり `color` を書かない。** インライン style は CSS Modules に
 勝つので、常に書くと親の状態で色を変える規則が効かなくなる。
@@ -193,14 +229,14 @@ font-feature-settings: "palt" 1;
 
 | トークン | 値 | 用途 |
 |---|---|---|
-| `--space-2xs` | `0.15rem` | 記号と文字の間、道具の隙間 |
+| `--space-2xs` | `0.15rem` | 記号と文字の間、道具の隙間、ボタンの上下 |
 | `--space-xs` | `0.4rem` | ラベルと中身、アイコンと本文、肢の間 |
 | `--space-sm` | `0.7rem` | 器の内側（コード・注記・肢） |
 | `--space-md` | `1.15rem` | 塊と塊の間 |
 | `--space-lg` | `1.5rem` | カードの内側 |
 | `--space-xl` | `2.5rem` | 節と節の間、ページの余白 |
 
-**幅と高さはこの段階に含めない。** `IconButton` の 1.9rem 角のような寸法は部品が持つ。
+**幅と高さはこの段階に含めない。** `--tool-size` の角や進捗バーの帯の太さは部品の寸法。
 
 ---
 
@@ -212,11 +248,11 @@ font-feature-settings: "palt" 1;
 
 | 種別 | 色 | 太さ | 意味 |
 |---|---|---|---|
-| `kw` | `--accent` | 600 | キーワード |
-| `rel` | `--keep` | 600 | リレーション型 |
-| `hl` | `--warn` | 600 | 強調・リテラル |
-| `bad` | `--alarm` | 600 | 誤り |
-| `cm` | `--muted` | 400 | コメント |
+| `kw` | `--accent` | semibold | キーワード |
+| `rel` | `--keep` | semibold | リレーション型 |
+| `hl` | `--warn` | semibold | 強調・リテラル |
+| `bad` | `--alarm` | semibold | 誤り |
+| `cm` | `--muted` | regular | コメント |
 
 `rel` が `--keep` なのは、[緑が 1 本しか置けない](#srgb-で取れない色)ため。
 
@@ -241,13 +277,23 @@ font-feature-settings: "palt" 1;
 | カード | `--panel` | `--rule` 1px + `--shadow` | 4px |
 | くぼんだ面（コードブロック） | `--panel-sunken` | `--rule-soft` 1px | 3px |
 | 肢 | `--panel` → hover で `--panel-sunken` | `--rule` 1px | 3px |
-| ボタン | `--accent`（無効時 `--muted`） | なし | 3px |
+| ボタン（主） | `--accent`（無効時 `--muted`） | なし | 3px |
+| ボタン（副） | なし → hover で `--panel-sunken` | `--rule` 1px | 3px |
 | 注意・補足（`Note`） | `--<tone>-bg` | 左に `--<tone>` 2px | なし |
 | 道具の行（`Toolbar`） | `--ground` | 下だけ `--rule-soft` 1px | なし |
 | 入力欄（`TextField`） | `--panel-sunken` | `--rule-soft` 1px | 3px |
 
 **入力欄のプレースホルダは `--muted`、入力できないときは不透明度 0.55。**
 プレースホルダのブラウザ既定の色はテーマに追従せず、沈んだ面の上で読めない。
+
+**ボタンの字は `annotation`、主だけ medium。** 上下の余白は `--space-2xs`、左右は `--space-md`。
+本文の行送り（1.9）を継承させると背が高くなり、操作より本文のように見える。
+
+**主と副を並べるときは、塗るのは主だけ。** 副は罫線だけにして字も太らせない。押す先が
+1 つに見えるようにする。
+
+**無効の道具ボタン（`IconButton`）は不透明度 0.4。** 色を薄くすると淡い面の上で消え、
+`--muted` のままだと押せるものと区別が付かない。
 
 **章ラベルは `§ ラベル` の後を罫線で埋める。**
 

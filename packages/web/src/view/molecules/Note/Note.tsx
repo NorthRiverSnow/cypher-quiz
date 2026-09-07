@@ -44,7 +44,6 @@ export const Note = ({ tone, icon, iconLabel, children }: NoteProps) => {
           <Icon name={icon} label={iconLabel} color={`var(${fg})`} />
         </span>
       )}
-      {/* why: 淡い面に自色を載せると light で AA に届かない（docs/07_design.md） */}
       <Text variant="annotation" tone="soft">
         {children}
       </Text>

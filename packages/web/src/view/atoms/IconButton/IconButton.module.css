@@ -6,7 +6,6 @@
   padding: 0;
   border: var(--border-width) solid transparent;
   border-radius: var(--radius);
-  /* why: 面を塗らない。コードブロックの上に重ねるので、塗ると本文を隠す */
   background: transparent;
   color: var(--muted);
   font: inherit;
@@ -27,8 +26,6 @@
 }
 
 .button:disabled {
-  /* why: 色ではなく不透明度で沈める。--rule まで薄くすると淡い面の上で見えなくなり、
-     --muted のままだと押せるものと見分けが付かない */
   opacity: 0.4;
   cursor: not-allowed;
 }

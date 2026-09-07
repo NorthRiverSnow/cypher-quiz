@@ -21,9 +21,6 @@ export type QueryEditorProps = {
   errorMessage?: string;
 };
 
-/* why: 編集すると色が消える。色分けは出題データが持っていて、編集後の文字列を
-   解析する手段が無い（docs/01_spec.md#4-クエリの実行と編集）。
-   字は段階表から引くので、textarea でも本文と同じ組みになる */
 /* why: 道具と本文を 1 つの枠に収める。離すと道具がどの本文のものか読めない */
 const FRAME: CSSProperties = {
   border: "var(--border-width) solid var(--rule-soft)",
@@ -57,9 +54,6 @@ const AREA: CSSProperties = {
 type Message = { tone: NoteTone; label: string; text: string };
 
 const MESSAGE: Record<"offline" | "rejected" | "error", Message> = {
-  /* why: 編集で書き込みに変えられるので、実行ボタンを出さないだけでは足りない。
-     文言は「セキュリティ」ではなく歯止めとして書く。教材の安全装置なので
-     （docs/01_spec.md#実行は読み取り専用） */
   rejected: {
     tone: "warn",
     label: "注意",

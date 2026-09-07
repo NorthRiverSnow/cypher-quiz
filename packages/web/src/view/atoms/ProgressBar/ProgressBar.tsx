@@ -4,20 +4,16 @@ import { Text } from "../Text/Text";
 
 export type ProgressBarProps = {
   /* box ごとの枚数。左から box 0（まだ）/ box 1（1 回正答）/ box 2（完了）
-     （docs/01_spec.md#6-出題の順序と習熟度） */
+     （docs/01_spec.md#6-復習間隔反復） */
   counts: readonly [number, number, number];
 };
 
-/* box に対応する色。完了は正解と同じ緑、1 回正答は進行中の青、まだは地の色 */
 const FILL = ["var(--rule)", "var(--accent)", "var(--keep)"] as const;
 
-/* why: 完了が左から伸びるように、box の大きい順に並べる。box の順に並べると
-   緑が右端に出て、どこまで進んだのかが読み取れない */
 const ORDER = [2, 1, 0] as const;
 
 const TRACK: CSSProperties = {
   display: "flex",
-  /* why: 帯の太さは部品の寸法。余白の段階には含めない */
   height: "0.35rem",
   borderRadius: "var(--radius-pill)",
   background: "var(--rule-soft)",

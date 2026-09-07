@@ -1,17 +1,12 @@
-/* why: 色だけを CSS 側に置く。状態で変わる値をインライン style に書くと、
-   インラインが CSS Modules に勝つので :disabled で上書きできない */
 .input {
   color: var(--ink);
 }
 
 .input::placeholder {
-  /* why: ブラウザ既定の色はテーマに追従せず、dark の沈んだ面では読めない */
   color: var(--muted);
 }
 
 .input:disabled {
-  /* why: 字も罫線もまとめて薄くする。接続中に一時的に止めているだけなので、
-     alarm のような意味のある色は当てない */
   opacity: 0.55;
   cursor: not-allowed;
 }

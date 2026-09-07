@@ -24,8 +24,6 @@ const CHOICE_KIND: Record<Direction, ChoiceKind> = { forward: "prose", reverse: 
 
 const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
 
-/* why: ラベルと中身を STACK の間隔より狭くまとめる。同じ間隔だと、
-   ラベルがどちらに属するのか読めない */
 const GROUP: CSSProperties = { display: "grid", gap: "var(--space-xs)" };
 
 const ACTIONS: CSSProperties = { display: "flex", justifyContent: "flex-end" };
@@ -62,7 +60,6 @@ export const FlashCard = ({
         />
       </div>
       <div style={ACTIONS}>
-        {/* why: 肢を押した時点では回答にしない。押し間違いをここで取り消せる */}
         <Button onClick={onAnswer} disabled={selected === undefined}>
           決定
         </Button>

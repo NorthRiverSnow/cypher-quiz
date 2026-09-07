@@ -16,7 +16,6 @@ export type TextFieldProps = {
 
 const GROUP: CSSProperties = { display: "grid", gap: "var(--space-2xs)" };
 
-/* why: 字は code の段。入れるのは URI や識別子で、l と 1、O と 0 を読み分けられる必要がある */
 const FIELD: CSSProperties = {
   ...TEXT.code,
   width: "100%",
@@ -26,9 +25,8 @@ const FIELD: CSSProperties = {
   background: "var(--panel-sunken)",
 };
 
-/* why: autoComplete を渡す口を作っていない。ブラウザの保存を促さないのが
-   「パスワードを管理しない」という仕様の趣旨（docs/01_spec.md#5-db-への接続）で、
-   かつ off を渡してもパスワード欄では無視するブラウザがあるため、既定に任せる */
+/* why: autoComplete を渡す口を作っていない。off はパスワード欄では無視するブラウザがあり、
+   渡せる口があると効くように見える */
 export const TextField = ({
   label,
   value,

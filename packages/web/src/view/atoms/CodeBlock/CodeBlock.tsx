@@ -2,9 +2,6 @@ import type { CSSProperties } from "react";
 
 import { TEXT, Text } from "../Text/Text";
 
-/* why: guide の色付けは字句ではなく編集判断で付いている。変数 `e` に .hl を当てて
-   「束縛済み変数の再利用」を見せる、`ASC LIMIT` を 1 つの span にまとめる、といった
-   例があり、解析器では再現できない。だから色分けは入力データとして受け取る。 */
 export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
 
 export type CodeSegment = { text: string; kind?: CodeKind };
@@ -16,10 +13,10 @@ export type CodeBlockProps = {
 };
 
 const SEGMENT: Record<CodeKind, CSSProperties> = {
-  kw: { color: "var(--accent)", fontWeight: 600 },
-  rel: { color: "var(--keep)", fontWeight: 600 },
-  hl: { color: "var(--warn)", fontWeight: 600 },
-  bad: { color: "var(--alarm)", fontWeight: 600 },
+  kw: { color: "var(--accent)", fontWeight: "var(--weight-semibold)" },
+  rel: { color: "var(--keep)", fontWeight: "var(--weight-semibold)" },
+  hl: { color: "var(--warn)", fontWeight: "var(--weight-semibold)" },
+  bad: { color: "var(--alarm)", fontWeight: "var(--weight-semibold)" },
   cm: { color: "var(--muted)" },
 };
 

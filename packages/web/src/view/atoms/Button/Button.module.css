@@ -1,30 +1,52 @@
 .button {
-  padding: var(--space-xs) var(--space-lg);
+  padding: var(--space-2xs) var(--space-md);
   border: var(--border-width) solid transparent;
   border-radius: var(--radius);
-  background: var(--accent);
-  /* why: 文字色を --panel にする。light では白（4.82:1）、dark では暗色（8.59:1）になり
-     両テーマで AA を満たす。--ground だと light が 4.37:1 で届かない */
-  color: var(--panel);
-  font: inherit;
-  font-weight: 600;
+  /* why: font-family だけ継承する。button の UA 既定は本文と別の書体・大きさで、
+     指定しないと段階表から引いた大きさに UA の書体が当たる */
+  font-family: inherit;
   cursor: pointer;
   transition: background 120ms;
 }
 
+.primary {
+  background: var(--accent);
+  /* why: 文字色を --panel にする。light では白（4.82:1）、dark では暗色（8.59:1）になり
+     両テーマで AA を満たす。--ground だと light が 4.37:1 で届かない */
+  color: var(--panel);
+  font-weight: var(--weight-medium);
+}
+
 /* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
 @media (hover: hover) {
-  .button:not(:disabled):hover {
+  .primary:not(:disabled):hover {
     /* why: --ink 側へ混ぜると light では暗く、dark では明るくなる。
        テーマごとに値を書き分けずに済み、文字とのコントラストはどちらも上がる */
     background: color-mix(in oklch, var(--accent) 86%, var(--ink));
   }
 }
 
-.button:disabled {
+.primary:disabled {
   /* why: 塗りは有効時と同じまま色だけを --muted にする。罫線だけの姿にすると
-     押せる二次ボタンに見えて、無効だと分からない。
+     quiet と見分けが付かず、押せる副ボタンに見える。
      文字は --panel のままで AA を満たす（light 4.62:1 / dark 6.38:1） */
   background: var(--muted);
+  cursor: not-allowed;
+}
+
+.quiet {
+  border-color: var(--rule);
+  background: none;
+  color: var(--ink-soft);
+}
+
+@media (hover: hover) {
+  .quiet:not(:disabled):hover {
+    background: var(--panel-sunken);
+  }
+}
+
+.quiet:disabled {
+  color: var(--muted);
   cursor: not-allowed;
 }
