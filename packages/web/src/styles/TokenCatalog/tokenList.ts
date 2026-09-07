@@ -3,7 +3,7 @@ export type Token = { name: string; role: string };
 export const SURFACES: Token[] = [
   { name: "--ground", role: "背景" },
   { name: "--panel", role: "カード面" },
-  { name: "--panel-2", role: "コードブロック背景" },
+  { name: "--panel-sunken", role: "くぼんだ面。意味色の AA はこの面で測る" },
   { name: "--rule", role: "罫線" },
   { name: "--rule-soft", role: "弱い罫線" },
 ];

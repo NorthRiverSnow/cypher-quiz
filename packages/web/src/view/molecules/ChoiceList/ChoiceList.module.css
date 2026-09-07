@@ -22,7 +22,7 @@
 @media (hover: hover) {
   .choice:hover {
     border-color: var(--accent);
-    background: var(--panel-2);
+    background: var(--panel-sunken);
   }
 }
 

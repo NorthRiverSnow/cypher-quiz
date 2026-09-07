@@ -16,10 +16,14 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 | `docs/02_architecture.md` | 関数型で MVC、境界の強制、ディレクトリ                       |
 | `docs/03_api.md`          | OpenAPI 自動追従、読み取り専用の多層防御、資格情報           |
 | `docs/04_roadmap.md`      | フェーズ A〜D、検証項目、置いた判断                          |
-| `docs/05_reference.md`    | データセット、30 枚のカード、意匠の実値                      |
+| `docs/05_reference.md`    | データセット、30 枚のカード、確認済みの実行結果              |
 | `docs/06_deck.md`         | guide 03 の本文。**生成物**（`tools/extract_guide_docs.py`） |
+| `docs/07_design.md`       | 意匠の現行仕様。パレット、色の制約、文字の段階               |
 
 **設計を変えるときは docs も直す。** 実装と docs が食い違ったら docs が正。
+
+**docs は現行仕様だけを書く。** guide から変わったものは変わったあとの内容を書く。
+履歴（「以前は X だった」）は書かない——git log の役目。
 
 ## コメントは "why" だけ
 
@@ -157,9 +161,9 @@ story を撮ったほうが速く正確に判断できる。書いても「描�
 
 `vite.config.ts` の `fmt.ignorePatterns` で除外済み。**理由を消さないこと。**
 
-`docs/` は guide からの**逐語引用**を載せる参照資料で、整形すると
-`rgba(15,26,36,.06)` が `rgba(15, 26, 36, 0.06)` に書き換わって「実測値」でなくなる。
-`:root { /* light */ }` の 1 行スキーマも複数行に展開されて図解の意図が消える。
+`docs/06_deck.md` は生成物で、整形すると生成器の出力と一致しなくなり、
+`python3 tools/extract_guide_docs.py` を走らせるたびに差分が出る。
+実行結果は空白で桁を揃えてあり、表の整形で桁が崩れる。
 
 ## macOS の罠
 

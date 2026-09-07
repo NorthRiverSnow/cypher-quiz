@@ -43,7 +43,7 @@ export const CodeBlock = ({ code }: CodeBlockProps) => (
       fontFamily: "var(--font-mono)",
       fontSize: "0.795rem",
       lineHeight: 1.75,
-      background: "var(--panel-2)",
+      background: "var(--panel-sunken)",
       border: "1px solid var(--rule-soft)",
       borderRadius: 3,
       padding: "0.75rem 0.85rem",
