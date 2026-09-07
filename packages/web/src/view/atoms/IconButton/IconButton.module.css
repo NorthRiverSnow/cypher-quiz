@@ -1,8 +1,8 @@
 .button {
   display: grid;
   place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
+  width: var(--tool-size);
+  height: var(--tool-size);
   padding: 0;
   border: var(--border-width) solid transparent;
   border-radius: var(--radius);

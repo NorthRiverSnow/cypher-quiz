@@ -243,6 +243,7 @@ font-feature-settings: "palt" 1;
 | 肢 | `--panel` → hover で `--panel-sunken` | `--rule` 1px | 3px |
 | ボタン | `--accent`（無効時 `--muted`） | なし | 3px |
 | 注意・補足（`Note`） | `--<tone>-bg` | 左に `--<tone>` 2px | なし |
+| 道具の行（`Toolbar`） | `--ground` | 下だけ `--rule-soft` 1px | なし |
 
 **章ラベルは `§ ラベル` の後を罫線で埋める。**
 
@@ -257,9 +258,17 @@ font-feature-settings: "palt" 1;
 **溝は 12px のまま、余白で帯を細く見せる。** 掴む的は溝の幅で決まるので、
 溝を細くすると帯だけでなく的も小さくなる。
 
+**道具と本文は 1 つの枠に収める**（ツールバーと本編）。枠は組む側が持ち、
+`Toolbar` と `CodeBlock`（`bare`）は面と仕切りだけを描く。
+
+道具を本文に**重ねない**。重ねるとスクロールバーの上にボタンが乗り、
+避けるために本文を削ると折り返しが早まって器が縦に伸びる。
+
+入力欄には `scrollbar-gutter: stable` を当てる。スクロールバーが出た瞬間に字が横へ動かない。
+
 | | 値 |
 |---|---|
-| 溝の幅 | `12px` |
+| 溝の幅 | `--scrollbar-size`（`12px`） |
 | 帯の見え幅 | `4px`（透明な `4px` の罫線 + `background-clip: padding-box`） |
 | 角丸 | `999px`（完全な丸） |
 

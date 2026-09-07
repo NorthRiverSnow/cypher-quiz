@@ -9,7 +9,11 @@ export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
 
 export type CodeSegment = { text: string; kind?: CodeKind };
 
-export type CodeBlockProps = { code: readonly CodeSegment[] };
+export type CodeBlockProps = {
+  code: readonly CodeSegment[];
+  /* 親が枠を持つときに使う。面も罫線も角丸も描かない */
+  bare?: boolean;
+};
 
 const SEGMENT: Record<CodeKind, CSSProperties> = {
   kw: { color: "var(--accent)", fontWeight: 600 },
@@ -53,8 +57,10 @@ const toLines = (code: readonly CodeSegment[]): CodeSegment[][] => {
   return lines;
 };
 
-export const CodeBlock = ({ code }: CodeBlockProps) => (
-  <pre style={SURFACE}>
+const BARE: CSSProperties = { ...SURFACE, background: "none", border: "none", borderRadius: 0 };
+
+export const CodeBlock = ({ code, bare = false }: CodeBlockProps) => (
+  <pre style={bare ? BARE : SURFACE}>
     {/* why: pre > code は HTML の定型。字は Text の段階表から引く */}
     <Text as="code" variant="code">
       {toLines(code).map((line, i) => (

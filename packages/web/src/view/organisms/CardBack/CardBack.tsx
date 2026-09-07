@@ -5,6 +5,7 @@ import { CodeBlock, type CodeSegment } from "../../atoms/CodeBlock/CodeBlock";
 import { Card } from "../../atoms/Card/Card";
 import { Icon, type IconName } from "../../atoms/Icon/Icon";
 import { IconButton } from "../../atoms/IconButton/IconButton";
+import { Toolbar } from "../../atoms/Toolbar/Toolbar";
 import { ResultBlock } from "../../atoms/ResultBlock/ResultBlock";
 import { SectionLabel } from "../../atoms/SectionLabel/SectionLabel";
 import { TEXT, Text } from "../../atoms/Text/Text";
@@ -34,17 +35,11 @@ const GROUP: CSSProperties = { display: "grid", gap: "var(--space-xs)" };
 
 const MARKED: CSSProperties = { display: "flex", alignItems: "flex-start", gap: "var(--space-xs)" };
 
-const QUERY: CSSProperties = { position: "relative" };
-
-const TOOLS: CSSProperties = {
-  position: "absolute",
-  top: "var(--space-xs)",
-  right: "var(--space-xs)",
-  display: "flex",
-  gap: "var(--space-2xs)",
-  /* why: コードに重なるので面を敷く。敷かないと字がアイコンの下を通って読めなくなる */
-  background: "var(--panel-sunken)",
+/* why: 道具と本文を 1 つの枠に収める。離すと道具がどの本文のものか読めない */
+const QUERY: CSSProperties = {
+  border: "var(--border-width) solid var(--rule-soft)",
   borderRadius: "var(--radius)",
+  background: "var(--panel-sunken)",
 };
 
 type AnswerProps = {
@@ -129,9 +124,8 @@ export const CardBack = ({
 
         {code !== undefined && (
           <div style={QUERY}>
-            <CodeBlock code={code} />
             {(onReset !== undefined || onRun !== undefined) && (
-              <div style={TOOLS}>
+              <Toolbar>
                 {onReset !== undefined && (
                   <IconButton
                     icon="restart_alt"
@@ -148,8 +142,9 @@ export const CardBack = ({
                     disabled={runDisabled}
                   />
                 )}
-              </div>
+              </Toolbar>
             )}
+            <CodeBlock code={code} bare />
           </div>
         )}
         {expected !== undefined && <ResultBlock>{expected}</ResultBlock>}
