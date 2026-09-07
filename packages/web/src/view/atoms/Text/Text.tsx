@@ -1,23 +1,16 @@
 import type { CSSProperties, ReactNode } from "react";
 
-/* 文字の型はこの表だけが持つ。**小さい順に並べてある。**
- *
- * why: 同じ役割に別の値が付くのを止めるために 1 箇所へ集めた。等幅の小さい字が
- * 7 種に割れ、そのうち 0.775rem と 0.795rem の差は誰にも見えなかった。
- * 段階を跨ぐ差だけが意図で、段の中の差は事故として扱う。
- */
+/* 文字の型はこの表だけが持つ。小さい順。一覧は docs/07_design.md#4-文字の段階 */
 export const TEXT = {
   micro: {
     fontFamily: "var(--font-mono)",
     fontSize: "0.72rem",
     lineHeight: 1.6,
     letterSpacing: "0.14em",
-    /* why: guide の大文字マイクロラベルの型（docs/05_reference.md#意匠）に含まれている。
-       和文のラベルには何も起きないので、和文専用に外す必要はない */
+    /* why: guide のマイクロラベルの型。和文には効かないので外す必要がない */
     textTransform: "uppercase",
   },
-  /* why: 行送りだけ code より広い。番号の行box が高くなって肢の 1 行目に寄る。
-     字の大きさが違うので box は一致しない——寄せるだけ */
+  /* why: 行送りだけ code より広い。番号が肢の 1 行目に寄る */
   numeral: { fontFamily: "var(--font-mono)", fontSize: "0.8rem", lineHeight: 1.9 },
   code: { fontFamily: "var(--font-mono)", fontSize: "0.8rem", lineHeight: 1.75 },
   annotation: { fontSize: "0.875rem", lineHeight: 1.75 },

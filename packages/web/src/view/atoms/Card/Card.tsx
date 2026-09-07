@@ -12,9 +12,5 @@ const CARD: CSSProperties = {
   boxShadow: "var(--shadow)",
 };
 
-/* why: 器だけを持ち、中の並びは組む側に任せる。載せるものごとに間隔が変わる。
- *
- * why: article にしない。自己完結した単位として読み上げるべきかは中身が決めることで、
- * 器が決めてしまうと、フォームや要約を載せたときに意味づけが合わなくなる。
- */
+/* why: article にしない。自己完結した単位として読み上げるかは中身が決める */
 export const Card = ({ children }: CardProps) => <div style={CARD}>{children}</div>;

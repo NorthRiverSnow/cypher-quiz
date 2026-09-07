@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { CodeBlock, type CodeSegment } from "../../view/atoms/CodeBlock/CodeBlock";
+import { ResultBlock } from "../../view/atoms/ResultBlock/ResultBlock";
 import { Text } from "../../view/atoms/Text/Text";
 import { Note } from "../../view/molecules/Note/Note";
 import { ENTITIES, INKS, SEMANTIC, SURFACES, TINTS, type Token } from "./tokenList";
@@ -32,12 +33,6 @@ const CHIP: CSSProperties = {
 };
 
 const HEAD: CSSProperties = { marginBottom: "0.6rem" };
-
-const RESULT: CSSProperties = {
-  borderLeft: "2px solid var(--keep)",
-  padding: "0.1rem 0 0.1rem 0.7rem",
-  marginBottom: "0.9rem",
-};
 
 const SAMPLE_QUERY: CodeSegment[] = [
   { text: "// 全エンジニアと、対応した件数", kind: "cm" },
@@ -146,11 +141,11 @@ export const TokenCatalog = () => (
           </Text>
         </div>
         <CodeBlock code={SAMPLE_QUERY} />
-        <div style={RESULT}>
-          <Text variant="code" tone="soft">
-            Killua Zoldyck{"  "}
+        <div style={{ marginBottom: "0.9rem" }}>
+          <ResultBlock>
+            {"Killua Zoldyck   "}
             <b style={{ color: "var(--keep)" }}>0</b>
-          </Text>
+          </ResultBlock>
         </div>
         <Note tone="warn" icon="warning" iconLabel="注意">
           DISTINCT を外して{" "}
