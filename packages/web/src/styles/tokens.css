@@ -116,6 +116,47 @@ body {
   font-feature-settings: "palt" 1;
 }
 
+/* スクロールバー。既定は太く、面より明度が浮いて器の中で目立つ。
+ *
+ * why: 標準プロパティと ::-webkit-scrollbar の両方を書く。前者は Firefox が読み、
+ * 後者があると Chrome / Safari はそちらを優先して標準プロパティを無視する。
+ * どちらか一方だけだと片方のブラウザで既定のままになる。
+ *
+ * why: 帯の色をトークンから引くので、テーマ切替に自動で追従する。
+ */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: 999px;
+  /* why: 透明な罫線と padding-box で帯の周りに余白を作る。溝に触れていると太く見え、
+     器の罫線と紛らわしくなる。溝は 12px のまま余白を広げる——掴む的は溝の幅で決まるので、
+     溝を細くすると帯だけでなく的も小さくなる。12px の溝に 4px ずつで見えるのは 4px */
+  border: 4px solid transparent;
+  background-clip: padding-box;
+}
+
+/* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
+@media (hover: hover) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+    background-clip: padding-box;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;

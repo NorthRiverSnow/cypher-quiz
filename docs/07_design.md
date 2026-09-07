@@ -218,4 +218,21 @@ font-feature-settings: "palt" 1;
 
 フォーカスリングは `2px solid var(--accent)` を `outline-offset: 2px` で外側に置く。
 
+### スクロールバー
+
+細い帯にする。溝は透明、帯は `--rule`、hover で `--muted`。
+
+**溝は 12px のまま、余白で帯を細く見せる。** 掴む的は溝の幅で決まるので、
+溝を細くすると帯だけでなく的も小さくなる。
+
+| | 値 |
+|---|---|
+| 溝の幅 | `12px` |
+| 帯の見え幅 | `4px`（透明な `4px` の罫線 + `background-clip: padding-box`） |
+| 角丸 | `999px`（完全な丸） |
+
+**標準プロパティ（`scrollbar-width` / `scrollbar-color`）と `::-webkit-scrollbar` の両方を書く。**
+前者は Firefox が読み、後者があると Chrome / Safari はそちらを優先する。
+片方だけだと、もう片方のブラウザで既定のままになる。
+
 `prefers-reduced-motion: reduce` のとき `animation` と `transition` を無効にする。

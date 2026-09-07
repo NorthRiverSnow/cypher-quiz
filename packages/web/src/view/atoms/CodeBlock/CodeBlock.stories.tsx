@@ -71,6 +71,22 @@ const LONG_LINE: CodeSegment[] = [
   { text: "'Auth Gateway'", kind: "hl" },
 ];
 
+/* why: 空白もハイフンも括弧も無い連なりは、折り返す位置が無い。正規表現の選択肢を
+   縦棒で繋ぐと実際にこうなる。溢れを pre の内側に閉じ込められているかを見るための data */
+const UNBREAKABLE: CodeSegment[] = [
+  { text: "MATCH", kind: "kw" },
+  { text: " (i:Incident)\n" },
+  { text: "WHERE", kind: "kw" },
+  { text: " i.title =~ " },
+  {
+    text: "'(?i).*(disconnect|throttling|saturation|misconfiguration|escalation|degradation|oom_kill).*'",
+    kind: "hl",
+  },
+  { text: "\n" },
+  { text: "RETURN", kind: "kw" },
+  { text: " i.id, i.title" },
+];
+
 const meta = {
   title: "atoms/CodeBlock",
   component: CodeBlock,
@@ -98,3 +114,5 @@ export const 変数の強調: Story = { args: { code: REUSE_VARIABLE } };
 export const 誤りの提示: Story = { args: { code: WRONG_AGGREGATE } };
 
 export const 横に溢れる行: Story = { args: { code: LONG_LINE } };
+
+export const 折り返せない行: Story = { args: { code: UNBREAKABLE } };

@@ -5,7 +5,10 @@ import { CodeBlock, type CodeSegment } from "./CodeBlock";
 
 afterEach(cleanup);
 
-const lines = (container: HTMLElement) => [...(container.querySelector("pre")?.children ?? [])];
+/* 行は pre > code の直下に並ぶ。字は Text が code 要素に当てる */
+const lines = (container: HTMLElement) => [
+  ...(container.querySelector("pre code")?.children ?? []),
+];
 
 describe("CodeBlock", () => {
   it("セグメントの中の改行で行を割る", () => {
@@ -63,5 +66,18 @@ describe("CodeBlock", () => {
     const { container } = render(<CodeBlock code={[{ text: "plain" }]} />);
 
     expect(lines(container)[0]?.querySelectorAll("span")).toHaveLength(0);
+  });
+
+  /* why: 守れるのは指定が消えていないことだけ。**閉じているかは測れない。**
+     happy-dom はレイアウトを計算しないので、400 字の折り返せない行を入れても
+     scrollWidth も clientWidth も 0 になる（実測）。
+     実際に閉じているかは Skill の storybook-shot で撮って確かめる。
+
+     why: それでも書くのは、この 1 行が消えると溢れが親を突き抜けて
+     ページ全体が横スクロールするのに、コードを読んでも画面を見ても気づきにくいため */
+  it("溢れを内側に閉じる指定が残っている", () => {
+    const { container } = render(<CodeBlock code={[{ text: "MATCH (t:Team)" }]} />);
+
+    expect(container.querySelector("pre")?.style.overflowX).toBe("auto");
   });
 });
