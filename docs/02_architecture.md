@@ -192,13 +192,23 @@ organisms→molecules は通り、organisms→pages はエラーになる。
 
 **既定はインライン style。** トークンを `var(--accent)` でそのまま参照でき、部品が 1 ファイルで完結する。
 
-**擬似クラスとアットルールが要るものだけ CSS Modules。** `:hover` `:focus-visible` `:active`
+**文字は [`atoms/Text`](../packages/web/src/view/atoms/Text/Text.tsx) から引く。**
+`font-family` / `font-size` / `line-height` / `letter-spacing` を部品に書かない。
+段階表は `Text.tsx` の `TEXT` で、値の一覧は [`07_design.md`](./07_design.md) にある。
+
+`Text` は `style` も `className` も受け取らない——受け取れる口を作ると、そこから値が再び散る。
+余白が要るときは `marginBottom` だけを持つラッパの div に出す。
+
+**擬似クラスとアットルールが要るものだけ CSS Modules。** `:hover` `:active`
 `@media` はインライン style では書けない。コンポーネントの `.tsx` の隣に `X.module.css` を置く。
+
+**フォーカスリングは部品に書かない。** `tokens.css` の `:where(:focus-visible)` が
+キーボードで辿れる要素すべてに出す（[`07_design.md`](./07_design.md)）。
 
 ```
 view/molecules/ChoiceList/
 ├─ ChoiceList.tsx
-├─ ChoiceList.module.css   # :hover / :focus-visible / @media (hover: hover)
+├─ ChoiceList.module.css   # :hover / [aria-checked] / @media (hover: hover)
 └─ ChoiceList.stories.tsx
 ```
 
