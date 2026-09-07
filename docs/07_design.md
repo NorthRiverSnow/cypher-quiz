@@ -144,7 +144,7 @@ OKLCH（知覚均等空間）で測る。
 | 正答 | `--keep` |
 | 誤答 | `--alarm` |
 | 注意・罠 | `--warn` |
-| 進捗バー | `--accent` |
+| 進捗バー | box 0 は `--rule`、box 1 は `--accent`、box 2（完了）は `--keep` |
 | 結果表のノード種別チップ | `--team` / `--engineer` / `--service` / `--incident` |
 
 **「正解」を名乗る色は `--keep` だけ。** 金（`--warn`）は注意・罠の専任で、正解には使わない。
