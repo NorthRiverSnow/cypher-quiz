@@ -58,3 +58,14 @@ export const 意味色: Story = {
     </>
   ),
 };
+
+/* コードポイントを間違えると豆腐（□）になる。字形が出ているかはここで見る */
+export const 種類: Story = {
+  render: (args) => (
+    <>
+      {Object.keys(ICONS).map((name) => (
+        <Icon key={name} {...args} name={name as keyof typeof ICONS} size="1.75rem" />
+      ))}
+    </>
+  ),
+};

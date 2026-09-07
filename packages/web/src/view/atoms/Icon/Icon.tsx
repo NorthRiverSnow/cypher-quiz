@@ -1,6 +1,10 @@
 /* why: ligature 名（"warning"）で書くとフォント到着前に文字列が見えるため、コードポイントで持つ */
 export const ICONS = {
   warning: "\uf083",
+  radio_button_unchecked: "\ue836",
+  close: "\ue5cd",
+  play_arrow: "\ue037",
+  restart_alt: "\uf053",
 } as const;
 
 export type IconName = keyof typeof ICONS;

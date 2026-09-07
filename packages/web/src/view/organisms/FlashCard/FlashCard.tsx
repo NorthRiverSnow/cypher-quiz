@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { type Direction, SECTION_LABELS, type SectionId } from "../../../types";
 import { Button } from "../../atoms/Button/Button";
 import { Card } from "../../atoms/Card/Card";
+import { SectionLabel } from "../../atoms/SectionLabel/SectionLabel";
 import { Text, type TextVariant } from "../../atoms/Text/Text";
 import { type ChoiceKind, ChoiceList } from "../../molecules/ChoiceList/ChoiceList";
 
@@ -23,18 +24,9 @@ const CHOICE_KIND: Record<Direction, ChoiceKind> = { forward: "prose", reverse: 
 
 const STACK: CSSProperties = { display: "grid", gap: "1.15rem" };
 
-const SECTION: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "auto 1fr",
-  gap: "0.7rem",
-  alignItems: "center",
-};
-
 /* why: ラベルと中身を STACK の間隔より狭くまとめる。同じ間隔だと、
    ラベルがどちらに属するのか読めない */
 const GROUP: CSSProperties = { display: "grid", gap: "0.4rem" };
-
-const RULE: CSSProperties = { height: "1px", background: "var(--rule-soft)" };
 
 const ACTIONS: CSSProperties = { display: "flex", justifyContent: "flex-end" };
 
@@ -49,12 +41,7 @@ export const FlashCard = ({
 }: FlashCardProps) => (
   <Card>
     <div style={STACK}>
-      <div style={SECTION}>
-        <Text variant="micro" tone="muted">
-          § {SECTION_LABELS[section]}
-        </Text>
-        <span style={RULE} aria-hidden />
-      </div>
+      <SectionLabel>{SECTION_LABELS[section]}</SectionLabel>
       <div style={GROUP}>
         <Text variant="micro" tone="muted">
           問題

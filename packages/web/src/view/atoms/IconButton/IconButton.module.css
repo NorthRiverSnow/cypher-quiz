@@ -1,0 +1,34 @@
+.button {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  /* why: 面を塗らない。コードブロックの上に重ねるので、塗ると本文を隠す */
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    color 120ms,
+    background 120ms,
+    border-color 120ms;
+}
+
+/* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
+@media (hover: hover) {
+  .button:not(:disabled):hover {
+    border-color: var(--rule);
+    background: var(--panel);
+    color: var(--accent);
+  }
+}
+
+.button:disabled {
+  /* why: 色ではなく不透明度で沈める。--rule まで薄くすると淡い面の上で見えなくなり、
+     --muted のままだと押せるものと見分けが付かない */
+  opacity: 0.4;
+  cursor: not-allowed;
+}
