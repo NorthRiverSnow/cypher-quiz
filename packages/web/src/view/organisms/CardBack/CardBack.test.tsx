@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { userEvent } from "storybook/test";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { WITH } from "../../../fixtures/cards";
@@ -58,53 +57,31 @@ describe("CardBack", () => {
     expect(hidden.container.querySelector("pre")).toBeNull();
   });
 
-  it("onRun を渡さなければ実行ボタンを出さない", () => {
-    render(<CardBack {...BASE} code={WITH.code} />);
+  /* why: 道具の押せる押せないは QueryEditor が持つ。ここで見るのは
+     「実行できるカードか」の判断だけ */
+  it("editor を渡さなければ道具を出さない", () => {
+    const { container } = render(<CardBack {...BASE} code={WITH.code} />);
 
-    expect(screen.queryByRole("button", { name: "実行" })).toBeNull();
-  });
-
-  it("実行ボタンを押すと onRun を呼ぶ", async () => {
-    const onRun = vi.fn();
-    render(<CardBack {...BASE} code={WITH.code} onRun={onRun} />);
-
-    await userEvent.click(screen.getByRole("button", { name: "実行" }));
-
-    expect(onRun).toHaveBeenCalledOnce();
-  });
-
-  it("runDisabled なら押せない", async () => {
-    const onRun = vi.fn();
-    render(<CardBack {...BASE} code={WITH.code} onRun={onRun} runDisabled />);
-
-    await userEvent.click(screen.getByRole("button", { name: "実行" }));
-
-    expect(onRun).not.toHaveBeenCalled();
-  });
-
-  it("リセットを押すと onReset を呼ぶ", async () => {
-    const onReset = vi.fn();
-    render(<CardBack {...BASE} code={WITH.code} onReset={onReset} />);
-
-    await userEvent.click(screen.getByRole("button", { name: "リセット" }));
-
-    expect(onReset).toHaveBeenCalledOnce();
-  });
-
-  it("resetDisabled なら押せない", async () => {
-    const onReset = vi.fn();
-    render(<CardBack {...BASE} code={WITH.code} onReset={onReset} resetDisabled />);
-
-    await userEvent.click(screen.getByRole("button", { name: "リセット" }));
-
-    expect(onReset).not.toHaveBeenCalled();
-  });
-
-  /* why: クエリが無いカードでは、実行するものが無い */
-  it("クエリが無ければ道具を出さない", () => {
-    render(<CardBack {...BASE} onRun={vi.fn()} onReset={vi.fn()} />);
-
+    expect(container.querySelector("pre")).not.toBeNull();
     expect(screen.queryByRole("button", { name: "実行" })).toBeNull();
     expect(screen.queryByRole("button", { name: "リセット" })).toBeNull();
+  });
+
+  it("editor を渡せば実行できる", () => {
+    render(
+      <CardBack
+        {...BASE}
+        code={WITH.code}
+        editor={{ onChange: vi.fn(), onRun: vi.fn(), onReset: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "実行" })).toHaveProperty("disabled", false);
+  });
+
+  it("クエリが無ければ道具も出さない", () => {
+    render(<CardBack {...BASE} editor={{ onChange: vi.fn(), onRun: vi.fn(), onReset: vi.fn() }} />);
+
+    expect(screen.queryByRole("button", { name: "実行" })).toBeNull();
   });
 });

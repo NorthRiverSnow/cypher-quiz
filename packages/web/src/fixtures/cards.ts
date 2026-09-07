@@ -93,3 +93,47 @@ export const WITH: CardFixture = {
   note: "集約関数でない項目が自動的にグループ化キーになる。書く語は無い。WITH に並べた変数だけが先に進み、その後の WHERE が HAVING に相当する。",
   warn: "キーは書かれていないので、うっかり増える。WITH i, e, count(DISTINCT t) と項目を 1 つ足すとキーが (i, e) になり、52 行が畳まれず teams_involved は全部 1 になる。エラーは出ない。",
 };
+
+const WRITING_ROLES = [
+  "無条件に作る。重複チェックをしないので、再実行すると増える",
+  "「あれば使う、無ければ作る」。冪等なので何度実行しても同じ状態になる",
+  "プロパティとラベルの付け外し",
+  "消す。リレーションが残っているノードは普通には消せない",
+];
+
+/* 書き込み系。実行させないので、期待される実行結果を持たない */
+export const SET_REMOVE: CardFixture = {
+  section: "writing",
+  name: "SET / REMOVE",
+  role: WRITING_ROLES[2] ?? "",
+  choices: WRITING_ROLES,
+  answer: 2,
+  code: [
+    { text: "SET", kind: "kw" },
+    { text: " s.language = " },
+    { text: "'Go'", kind: "hl" },
+    { text: "          " },
+    { text: "1つ設定", kind: "cm" },
+    { text: "\n" },
+    { text: "SET", kind: "kw" },
+    { text: " s += {tier: 1, sla: 99.9}  " },
+    { text: "まとめて追加/更新", kind: "cm" },
+    { text: "\n" },
+    { text: "SET", kind: "kw" },
+    { text: " s =  {name: s.name}        " },
+    { text: "全置換（他は消える）", kind: "cm" },
+    { text: "\n" },
+    { text: "SET", kind: "kw" },
+    { text: " s:Critical                 " },
+    { text: "ラベルを足す", kind: "cm" },
+    { text: "\n\n" },
+    { text: "REMOVE", kind: "kw" },
+    { text: " s.sla                    " },
+    { text: "プロパティを消す", kind: "cm" },
+    { text: "\n" },
+    { text: "REMOVE", kind: "kw" },
+    { text: " s:Critical              " },
+    { text: "ラベルを外す", kind: "cm" },
+  ],
+  warn: "= と += は別物。= は書かなかったプロパティを消す。",
+};

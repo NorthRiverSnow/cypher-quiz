@@ -4,13 +4,12 @@ import { SECTION_LABELS, type SectionId } from "../../../types";
 import { CodeBlock, type CodeSegment } from "../../atoms/CodeBlock/CodeBlock";
 import { Card } from "../../atoms/Card/Card";
 import { Icon, type IconName } from "../../atoms/Icon/Icon";
-import { IconButton } from "../../atoms/IconButton/IconButton";
-import { Toolbar } from "../../atoms/Toolbar/Toolbar";
 import { ResultBlock } from "../../atoms/ResultBlock/ResultBlock";
 import { SectionLabel } from "../../atoms/SectionLabel/SectionLabel";
 import { TEXT, Text } from "../../atoms/Text/Text";
 import type { ChoiceKind } from "../../molecules/ChoiceList/ChoiceList";
 import { Note } from "../../molecules/Note/Note";
+import { QueryEditor, type QueryEditorProps } from "../../molecules/QueryEditor/QueryEditor";
 
 export type CardBackProps = {
   section: SectionId;
@@ -21,12 +20,10 @@ export type CardBackProps = {
   expected?: string;
   note?: string;
   warn?: string;
-  /* why: 渡さなければ道具を出さない。実行させないカードがある
+  /* why: 実行できるカードだけ渡す。渡さなければ枠付きのコードを出すだけにする。
+     構文列挙のみの 5 枚と書き込み系の 5 枚は実行させない
      （docs/01_spec.md#4-クエリの実行と編集） */
-  onRun?: () => void;
-  onReset?: () => void;
-  runDisabled?: boolean;
-  resetDisabled?: boolean;
+  editor?: Omit<QueryEditorProps, "code">;
 };
 
 const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
@@ -34,13 +31,6 @@ const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
 const GROUP: CSSProperties = { display: "grid", gap: "var(--space-xs)" };
 
 const MARKED: CSSProperties = { display: "flex", alignItems: "flex-start", gap: "var(--space-xs)" };
-
-/* why: 道具と本文を 1 つの枠に収める。離すと道具がどの本文のものか読めない */
-const QUERY: CSSProperties = {
-  border: "var(--border-width) solid var(--rule-soft)",
-  borderRadius: "var(--radius)",
-  background: "var(--panel-sunken)",
-};
 
 type AnswerProps = {
   icon: IconName;
@@ -78,10 +68,7 @@ export const CardBack = ({
   expected,
   note,
   warn,
-  onRun,
-  onReset,
-  runDisabled = false,
-  resetDisabled = false,
+  editor,
 }: CardBackProps) => {
   /* why: 正誤を props で受けない。受けると「正答なのに違う肢を正しいと出す」組み合わせが作れる */
   const isCorrect = chosen === correct;
@@ -122,31 +109,12 @@ export const CardBack = ({
           </div>
         )}
 
-        {code !== undefined && (
-          <div style={QUERY}>
-            {(onReset !== undefined || onRun !== undefined) && (
-              <Toolbar>
-                {onReset !== undefined && (
-                  <IconButton
-                    icon="restart_alt"
-                    label="リセット"
-                    onClick={onReset}
-                    disabled={resetDisabled}
-                  />
-                )}
-                {onRun !== undefined && (
-                  <IconButton
-                    icon="play_arrow"
-                    label="実行"
-                    onClick={onRun}
-                    disabled={runDisabled}
-                  />
-                )}
-              </Toolbar>
-            )}
-            <CodeBlock code={code} bare />
-          </div>
-        )}
+        {code !== undefined &&
+          (editor === undefined ? (
+            <CodeBlock code={code} />
+          ) : (
+            <QueryEditor code={code} {...editor} />
+          ))}
         {expected !== undefined && <ResultBlock>{expected}</ResultBlock>}
         {note !== undefined && (
           <Text variant="prose" tone="soft">

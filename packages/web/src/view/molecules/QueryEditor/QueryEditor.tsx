@@ -29,6 +29,9 @@ const FRAME: CSSProperties = {
   border: "var(--border-width) solid var(--rule-soft)",
   borderRadius: "var(--radius)",
   background: "var(--panel-sunken)",
+  /* why: 溢れをここで閉じる。中の pre だけに任せると枠が中身の幅まで広がり、
+     カードを突き抜けてページ全体が横スクロールする */
+  overflow: "hidden",
 };
 
 const AREA: CSSProperties = {
@@ -38,11 +41,15 @@ const AREA: CSSProperties = {
   /* why: 6 行ぶんの高さを最低限として与える。行送りは段階表から引く */
   minHeight: `calc(${TEXT.code.lineHeight}em * 6)`,
   padding: "var(--space-sm)",
-  /* why: 溝を常に確保する。スクロールバーが出た瞬間に字が横へ動くのを防ぐ */
+  /* why: 溝を常に確保する。スクロールバーが出た瞬間に字が横へ動くのを防ぐ。
+     縦だけで足りるのは、textarea が折り返せない連なりも強制的に割るため */
   scrollbarGutter: "stable",
   /* why: 枠は親が持つ */
   border: "none",
   background: "none",
+  /* why: 枠が溢れを閉じている（overflow: hidden）ので、外側に出るリングは切られる。
+     内側へ振って枠の中に描く */
+  outlineOffset: "calc(-1 * var(--border-width-bold))",
   color: "var(--ink)",
   resize: "vertical",
 };
@@ -50,7 +57,8 @@ const AREA: CSSProperties = {
 type Message = { tone: NoteTone; label: string; text: string };
 
 const MESSAGE: Record<"offline" | "rejected" | "error", Message> = {
-  /* why: 拒否の文言を「セキュリティ」ではなく歯止めとして書く。教材の安全装置なので
+  /* why: 編集で書き込みに変えられるので、実行ボタンを出さないだけでは足りない。
+     文言は「セキュリティ」ではなく歯止めとして書く。教材の安全装置なので
      （docs/01_spec.md#実行は読み取り専用） */
   rejected: {
     tone: "warn",

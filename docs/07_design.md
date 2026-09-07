@@ -266,6 +266,10 @@ font-feature-settings: "palt" 1;
 
 入力欄には `scrollbar-gutter: stable` を当てる。スクロールバーが出た瞬間に字が横へ動かない。
 
+**折り返せない連なりの扱いは要素で違う。** `pre`（`CodeBlock`）は溢れて横スクロールし、
+`textarea` は強制的に割る。**編集中に横スクロールは起きない。**
+枠を持つ側が `overflow: hidden` で溢れを閉じる——中の要素だけに任せると枠が中身の幅まで広がる。
+
 | | 値 |
 |---|---|
 | 溝の幅 | `--scrollbar-size`（`12px`） |
