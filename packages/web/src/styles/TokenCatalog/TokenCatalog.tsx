@@ -1,8 +1,21 @@
 import type { CSSProperties } from "react";
 
 import { CodeBlock, type CodeSegment } from "../../view/atoms/CodeBlock/CodeBlock";
+import { Text } from "../../view/atoms/Text/Text";
 import { Note } from "../../view/molecules/Note/Note";
 import { ENTITIES, INKS, SEMANTIC, SURFACES, TINTS, type Token } from "./tokenList";
+
+/* このファイルの style は見本を並べるためのものだけ。字の型は Text が持つ
+   （docs/07_design.md#4-文字の段階） */
+
+const PAGE: CSSProperties = {
+  background: "var(--ground)",
+  color: "var(--ink)",
+  minHeight: "100vh",
+  padding: "2.5rem 1.5rem 4rem",
+};
+
+const COLUMN: CSSProperties = { maxWidth: "var(--wide)", margin: "0 auto" };
 
 const ROW: CSSProperties = {
   display: "grid",
@@ -18,15 +31,12 @@ const CHIP: CSSProperties = {
   border: "1px solid var(--rule)",
 };
 
-const LABEL: CSSProperties = { fontFamily: "var(--font-mono)", fontSize: "0.82rem" };
-const ROLE: CSSProperties = { color: "var(--muted)", fontSize: "0.86rem" };
+const HEAD: CSSProperties = { marginBottom: "0.6rem" };
 
-const HEADING: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: "0.72rem",
-  letterSpacing: "0.2em",
-  textTransform: "uppercase",
-  color: "var(--accent)",
+const RESULT: CSSProperties = {
+  borderLeft: "2px solid var(--keep)",
+  padding: "0.1rem 0 0.1rem 0.7rem",
+  marginBottom: "0.9rem",
 };
 
 const SAMPLE_QUERY: CodeSegment[] = [
@@ -47,8 +57,12 @@ const SAMPLE_QUERY: CodeSegment[] = [
 const Swatch = ({ name, role }: Token) => (
   <div style={ROW}>
     <div style={{ ...CHIP, background: `var(${name})` }} />
-    <code style={LABEL}>{name}</code>
-    <span style={ROLE}>{role}</span>
+    <Text as="code" variant="code">
+      {name}
+    </Text>
+    <Text variant="annotation" tone="muted">
+      {role}
+    </Text>
   </div>
 );
 
@@ -61,16 +75,19 @@ const TintSwatch = ({ name, role }: Token) => (
         background: `var(${name})`,
         display: "grid",
         placeItems: "center",
-        fontFamily: "var(--font-mono)",
-        fontSize: "0.72rem",
-        fontWeight: 600,
         color: `var(${name.replace("-bg", "")})`,
       }}
     >
-      Aa
+      {/* why: micro ではなく code。micro は uppercase を持つので Aa が AA になり、
+          小文字の字面を見られなくなる */}
+      <Text variant="code">Aa</Text>
     </div>
-    <code style={LABEL}>{name}</code>
-    <span style={ROLE}>{role}</span>
+    <Text as="code" variant="code">
+      {name}
+    </Text>
+    <Text variant="annotation" tone="muted">
+      {role}
+    </Text>
   </div>
 );
 
@@ -78,7 +95,11 @@ type GroupProps = { title: string; tokens: Token[]; tint?: boolean };
 
 const Group = ({ title, tokens, tint = false }: GroupProps) => (
   <section style={{ marginBottom: "2.25rem" }}>
-    <p style={{ ...HEADING, margin: "0 0 0.6rem" }}>{title}</p>
+    <div style={HEAD}>
+      <Text variant="micro" tone="accent">
+        {title}
+      </Text>
+    </div>
     {tokens.map((t) =>
       tint ? <TintSwatch key={t.name} {...t} /> : <Swatch key={t.name} {...t} />,
     )}
@@ -86,33 +107,23 @@ const Group = ({ title, tokens, tint = false }: GroupProps) => (
 );
 
 export const TokenCatalog = () => (
-  <div
-    style={{
-      background: "var(--ground)",
-      color: "var(--ink)",
-      fontFamily: "var(--font-sans)",
-      minHeight: "100vh",
-      padding: "2.5rem 1.5rem 4rem",
-    }}
-  >
-    <div style={{ maxWidth: "var(--wide)", margin: "0 auto" }}>
-      <p style={{ ...HEADING, letterSpacing: "0.22em", margin: "0 0 1rem" }}>
-        NordWind · Cypher Quiz · Design Tokens
-      </p>
-      <h1
-        style={{
-          fontFamily: "var(--font-serif)",
-          fontWeight: 900,
-          fontSize: "clamp(1.8rem, 5vw, 2.6rem)",
-          lineHeight: 1.32,
-          margin: "0 0 1.25rem",
-        }}
-      >
-        意匠の実値
-      </h1>
-      <p style={{ maxWidth: "var(--col)", color: "var(--ink-soft)", margin: "0 0 2.5rem" }}>
-        ツールバーの Theme で light / dark を切り替えて、guides を隣に開いて見比べる。
-      </p>
+  <div style={PAGE}>
+    <div style={COLUMN}>
+      <div style={{ marginBottom: "1rem" }}>
+        <Text variant="micro" tone="accent">
+          NordWind · Cypher Quiz · Design Tokens
+        </Text>
+      </div>
+      <div style={{ marginBottom: "1.25rem" }}>
+        <Text as="h1" variant="display">
+          意匠の実値
+        </Text>
+      </div>
+      <div style={{ maxWidth: "var(--col)", marginBottom: "2.5rem" }}>
+        <Text variant="prose" tone="soft">
+          ツールバーの Theme で light / dark を切り替えて、guides を隣に開いて見比べる。
+        </Text>
+      </div>
 
       <Group title="§ Surfaces" tokens={SURFACES} />
       <Group title="§ Ink" tokens={INKS} />
@@ -121,38 +132,31 @@ export const TokenCatalog = () => (
       <Group title="§ Entities — 結果表のチップ" tokens={ENTITIES} />
 
       <section>
-        <p style={{ ...HEADING, margin: "0 0 0.9rem" }}>§ Typography</p>
-        <p
-          style={{
-            fontFamily: "var(--font-serif)",
-            fontWeight: 900,
-            fontSize: "1.9rem",
-            margin: "0 0 0.4rem",
-          }}
-        >
-          見出しは Zen Old Mincho
-        </p>
-        <p style={{ margin: "0 0 0.4rem" }}>
-          本文は Zen Kaku Gothic New。OPTIONAL MATCH を使うのはどういうときか。
-        </p>
+        <div style={{ marginBottom: "0.9rem" }}>
+          <Text variant="micro" tone="accent">
+            § Typography
+          </Text>
+        </div>
+        <div style={{ marginBottom: "0.4rem" }}>
+          <Text variant="display">見出しは Zen Old Mincho</Text>
+        </div>
+        <div style={{ marginBottom: "0.4rem" }}>
+          <Text variant="prose">
+            本文は Zen Kaku Gothic New。OPTIONAL MATCH を使うのはどういうときか。
+          </Text>
+        </div>
         <CodeBlock code={SAMPLE_QUERY} />
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.775rem",
-            lineHeight: 1.8,
-            color: "var(--ink-soft)",
-            borderLeft: "2px solid var(--keep)",
-            padding: "0.1rem 0 0.1rem 0.7rem",
-            marginBottom: "0.9rem",
-          }}
-        >
-          Killua Zoldyck{"  "}
-          <b style={{ color: "var(--keep)" }}>0</b>
+        <div style={RESULT}>
+          <Text variant="code" tone="soft">
+            Killua Zoldyck{"  "}
+            <b style={{ color: "var(--keep)" }}>0</b>
+          </Text>
         </div>
         <Note tone="warn" icon="warning" iconLabel="注意">
           DISTINCT を外して{" "}
-          <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem" }}>count(t)</code>{" "}
+          <Text as="code" variant="code">
+            count(t)
+          </Text>{" "}
           にすると、13 が 20 になる。
         </Note>
       </section>

@@ -21,11 +21,6 @@
   }
 }
 
-.button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .button:disabled {
   /* why: 塗りは有効時と同じまま色だけを --muted にする。罫線だけの姿にすると
      押せる二次ボタンに見えて、無効だと分からない。

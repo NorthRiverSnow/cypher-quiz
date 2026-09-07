@@ -26,11 +26,6 @@
   }
 }
 
-.choice:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 /* why: 選択状態は aria-checked が既に持っている。class を二重に持たない。
    hover より後に書いて、選択中の面が hover に上書きされないようにする */
 .choice[aria-checked="true"] {

@@ -116,6 +116,19 @@ body {
   font-feature-settings: "palt" 1;
 }
 
+/* フォーカスリング。
+ *
+ * why: 部品ごとに書くと同じ 2 行が増える。キーボードで辿れる要素すべてに同じ輪を出す。
+ *
+ * why: 要素を列挙せず :focus-visible だけで引く。列挙すると、後から足した
+ * input や summary が漏れる。:where() で詳細度を 0 にしてあるので、
+ * 部品側で class セレクタを書けば必ず上書きできる。
+ */
+:where(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* スクロールバー。既定は太く、面より明度が浮いて器の中で目立つ。
  *
  * why: 標準プロパティと ::-webkit-scrollbar の両方を書く。前者は Firefox が読み、

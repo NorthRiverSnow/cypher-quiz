@@ -217,6 +217,8 @@ font-feature-settings: "palt" 1;
 **章ラベルは `§ ラベル` の後を罫線で埋める。**
 
 フォーカスリングは `2px solid var(--accent)` を `outline-offset: 2px` で外側に置く。
+**`tokens.css` の `:where(:focus-visible)` 1 箇所だけで、キーボードで辿れる要素すべてに出す。**
+部品ごとには書かない。
 
 ### スクロールバー
 
@@ -234,5 +236,13 @@ font-feature-settings: "palt" 1;
 **標準プロパティ（`scrollbar-width` / `scrollbar-color`）と `::-webkit-scrollbar` の両方を書く。**
 前者は Firefox が読み、後者があると Chrome / Safari はそちらを優先する。
 片方だけだと、もう片方のブラウザで既定のままになる。
+
+**見え方はブラウザで違う。** Firefox に太さを px で指定する手段はない。
+
+| | Firefox | Chrome / Safari |
+|---|---|---|
+| 太さ | `thin`（px 指定は不可） | `4px` |
+| 色 | `--rule` / 溝は透明 | 同じ |
+| 角丸 | 付かない | `999px` |
 
 `prefers-reduced-motion: reduce` のとき `animation` と `transition` を無効にする。
