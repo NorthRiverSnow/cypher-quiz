@@ -3,8 +3,9 @@ import type { CodeSegment } from "../view/atoms/CodeBlock/CodeBlock";
 
 /* Storybook とテストが共有するサンプル。値は docs/06_deck.md から取っている。
  *
- * why: 手で書く。フェーズ B の抽出器（tools/extract_deck.ts）を先に作ると、
- * 雰囲気を見る前にデータ形式が固まる（docs/04_roadmap.md#fixtures-を-a-4-で作る理由）
+ * TODO: フェーズ B で tools/extract_deck.ts の生成物に置き換える。
+ * 今は手で書く——抽出器を先に作ると、雰囲気を見る前にデータ形式が固まる
+ * （docs/04_roadmap.md#fixtures-を-a-4-で作る理由）
  */
 export type CardFixture = {
   section: SectionId;

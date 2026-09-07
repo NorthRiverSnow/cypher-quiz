@@ -67,6 +67,8 @@ const ICON_BOX = `calc(${TEXT.annotation.fontSize} * ${TEXT.annotation.lineHeigh
 
 - `vite-plus/test` から import する（`vitest` からは `vp lint` がエラーにする）
 - `afterEach(cleanup)` を書く。globals を切っているので自動 cleanup が実行されない
+- `vp test run` で root から全パッケージ。DOM が要るものは各パッケージの `vite.config.ts` の
+  `test.environment` で指定する（root は `test.projects` で各設定を使わせているだけ）
 - **例外**: 消えても画面で気づけない指定は 1 件だけ置いてよい（`CodeBlock` の `overflowX`）。
   そのときは**テスト名に「指定が残っている」と書く**——効果を検証していないことを明示する
 
@@ -80,6 +82,8 @@ vp test related packages/web/src/view/atoms/X/X.test.tsx
 
 **パスは root からの相対。** 絶対パスだと `No test files found` で 1 件も実行されずに
 exit 0 になり、通ったように見える。
+
+編集後はフックが `vp test related` で影響範囲だけ実行する（全件だとテストが増えるほど重くなる）。
 
 ## 7. 撮る
 

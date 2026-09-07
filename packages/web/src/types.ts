@@ -1,7 +1,7 @@
 /* Model の型。View は型だけを要る（docs/02_architecture.md「型は共有、ロジックは非共有」）。
  *
- * why: packages/shared ではなくここに置く。shared はフェーズ C で API と共有するために
- * 作るもので、フェーズ A の時点では web しか読まない。
+ * TODO: フェーズ C で packages/shared へ移す。shared は API と型を共有するために作るもので、
+ * 今は web しか読まない。
  */
 
 export type SectionId = "skeleton" | "patterns" | "shaping" | "lists" | "writing" | "subqueries";
