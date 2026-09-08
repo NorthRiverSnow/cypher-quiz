@@ -16,7 +16,7 @@ D. 結線
 2 つの原則で順番を決めている。
 
 1. **見た目を先に固める** — フェーズ A で止めて雰囲気を見てもらう。DB も API もモデルも無し
-2. **危険な部分を早く潰す** — [読み取り専用の強制](./03_api.md#2-読み取り専用の強制多層)が崩れると設計が変わるので、フェーズ C の最初に実測する
+2. **危険な部分を早く解消する** — [読み取り専用の強制](./03_api.md#2-読み取り専用の強制多層)が崩れると設計が変わるので、フェーズ C の最初に実測する
 
 ---
 
@@ -24,26 +24,38 @@ D. 結線
 
 **固定データだけで画面を組み、雰囲気を調整する。** DB も API もモデルも要らない。
 
-| # | やること | 備考 |
-|---:|---|---|
-| 1 | モノレポの足場 | workspaces / `tsconfig.base.json` / ESLint |
-| 2 | `styles/tokens.css` | guides の `:root` 3 ブロックを移植（light / `prefers-color-scheme` / `[data-theme]`） |
-| 3 | Storybook セットアップ | **light / dark を切り替えるツールバー**を decorator で入れる |
-| 4 | `fixtures/` | サンプルの Card / Question / 実行結果。**実データを使う**（`OPTIONAL MATCH` と Killua Zoldyck の例） |
-| 5 | プリミティブ | `CodeBlock` → `ResultTable` → `Chip` → `ProgressBar` |
-| 6 | コンポーネント | `FlashCard` / `ChoiceList` / `CardBack` / `QueryEditor` / `ConnectForm` / `Summary` |
-| 7 | `screens/QuizScreen` | 画面まるごと。全状態を props で受ける |
+**1 ステップ = 1 レビュー。** 各ステップの終わりで止まり、その時点の story を見て判断をもらう（[CLAUDE.md](../CLAUDE.md) の「進め方」）。
+
+| # | やること | story で見る state |
+|---|---|---|
+| A-0 | `docs/` の章 ID を [`SectionId`](./02_architecture.md#4-デッキ生成) に揃える。**コードは書かない** | — |
+| A-1 | モノレポの足場（lint の層境界）/ `styles/tokens.css`（`:root` 3 ブロック）/ Storybook / `styles/TokenCatalog/` | light / dark |
+| A-2 | `CodeBlock` / `Icon` / `Note` | 語句の種別、横に溢れる行、注記の色調 |
+| A-3 | `Card` / `Button` / `ChoiceList` / `FlashCard`。**まだ裏面は作らない** | 正順 / 逆順、未選択 / 選択中、回答ボタンの有効 / 無効 |
+| A-4 | `CardBack` / `fixtures/` | 正解 / 不正解、罠のあるカード |
+| A-5 | `ResultTable` | 1 行、複数列、日付を含む表、ノードを含む表 |
+| A-6 | `QueryEditor` | 通常 / 編集済み / 実行中 / 実行エラー / 書き込みで拒否 / 未接続 |
+| A-7 | `ProgressBar` / `ConnectForm` / `Summary` | 未入力 / 入力中 / 接続中 / 接続失敗 / dev 自動接続中 |
+| A-8 | `templates/QuizLayout` と 4 つの page、`routes.tsx` で結合 | 下の一覧 |
 
 ### なぜ light / dark の切替を最初に入れるのか
 
-guides は**両方のパレットを持っている**（JS がないため切替 UI だけが無い）。両方で見ながら詰めないと、片方で破綻する。
+guides は**両方のパレットを持っている**（JS がないため切替 UI だけが無い）。両方を見ながら調整しないと、片方で破綻する。
 
-### 7 でできるようになること
+### `fixtures/` を A-4 で作る理由
 
-`QuizScreen` が全状態を props で受ける純関数なので、Storybook で以下を**並べて見比べられる**。
+`fixtures/` は Storybook とテストが共有するサンプルデータなので、**共有する相手が 2 つ以上になってから形が決まる。**
+A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカードを使う A-4 で切り出す。
+
+中身は [`06_deck.md`](./06_deck.md) から引くが、**手で書く。** 抽出器（B-2）を先に作ると、
+雰囲気を見る前にデータ形式が固まる。
+
+### A-8 でできるようになること
+
+ページが全状態を props で受ける純関数なので、Storybook で以下を**並べて見比べられる**。
 
 ```
-出題中 / 正答直後 / 誤答直後 / 実行中 / 実行エラー / 未接続 / 完了
+出題中 / 正解直後 / 不正解直後 / 実行中 / 実行エラー / 未接続 / 完了
 ```
 
 ### ▶ ここで確認をもらう
@@ -54,9 +66,9 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 | # | やること |
 |---:|---|
-| 8 | `shared/schema/` の Zod と `result.ts` |
-| 9 | `tools/extract_deck.ts` → `deck.generated.ts`（30 枚） |
-| 10 | `question.ts` / `leitner.ts` / `quiz.ts` / `rng.ts` / `progress.ts` |
+| B-1 | `shared/schema/` の Zod と `result.ts` |
+| B-2 | `tools/extract_deck.ts` → `deck.generated.ts`（30 枚） |
+| B-3 | `question.ts` / `leitner.ts` / `quiz.ts` / `rng.ts` / `progress.ts` |
 
 **全て純関数なので、React 抜きでユニットテストが書ける。**
 
@@ -66,11 +78,11 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 | # | やること | 備考 |
 |---:|---|---|
-| 11 | Docker Compose（`neo4j` + `seed`）+ `.env` / `.env.example` | 投入後に 73 / 153 を確認 |
-| 12 | **`readOnly.ts` と実測** | **下の検証 8 をここで通す。通らなければ先に進まない** |
-| 13 | `driverStore` / `/api/connect`（GET / POST / DELETE）/ `/api/run` / ログ抑制 / `toPlainJson` | クッキーは httpOnly。**フロントに識別子を渡さない** |
-| 14 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
-| 15 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
+| C-1 | Docker Compose（`neo4j` + `seed`）+ `.env` / `.env.example` | 投入後に 73 / 153 を確認 |
+| C-2 | **`readOnly.ts` と実測** | **下の検証 8 をここで通す。通らなければ先に進まない** |
+| C-3 | `driverStore` / `/api/connect`（GET / POST / DELETE）/ `/api/run` / ログ抑制 / `toPlainJson` | クッキーは httpOnly。**フロントに識別子を渡さない** |
+| C-4 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
+| C-5 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
 
 ---
 
@@ -78,8 +90,8 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 | # | やること |
 |---:|---|
-| 15 | `controller/` で model と view を繋ぐ。**View は一切変えない**（変える必要が出たらフェーズ A の設計ミス） |
-| 16 | 通し確認 |
+| D-1 | `controller/` で model と view を繋ぐ。**View は一切変えない**（変える必要が出たらフェーズ A の設計ミス） |
+| D-2 | 通し確認 |
 
 ---
 
@@ -87,7 +99,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 ### 見た目
 
-1. `npm run storybook` で DB も API も無しに全コンポーネントが見え、**light / dark 両方**で崩れない
+1. `vp run storybook` で DB も API も無しに全コンポーネントが見え、**light / dark 両方**で崩れない
 
 ### 環境
 
@@ -100,7 +112,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
    - コンソールで `document.cookie` を叩いて**そのクッキーが見えない**
    - `localStorage` に接続系のキーが無い（`box` の進捗だけがある）
 6. 切断ボタンで手入力の接続画面に戻り、`bolt://localhost:7687` と dev 資格情報で接続できる（本番経路の確認）
-7. **歯止めが効く**
+7. **歯止めが働く**
    - `.env` の `NEO4J_PASSWORD` を変えて `docker compose up` → コンテナ側も変わるので**繋がる**（出どころが 1 箇所である証拠）
    - `NEO4J_URI` をリモートに向けて自動接続 → 拒否される
    - `NODE_ENV=production` かつ `DEV_AUTO_CONNECT=true` → **起動が失敗する**
@@ -126,20 +138,22 @@ guides は**両方のパレットを持っている**（JS がないため切替
 
 ### 学習フロー
 
-13. 誤答したカードが数枚後に再出題され、全て 2 回正答するとサマリに到達する
+13. 不正解のカードが数枚後に再出題され、全て 2 回正解するとサマリに到達する
 14. リロードしても `box` は残る
 
 ### 境界とテスト
 
-15. `npm run lint` が MVC / FP 境界違反を検出する
+15. `vp check`（fmt + lint + typecheck）が MVC 境界違反を検出する
     - `view/` から `../model/` を import してみて赤くなるか
-    - `model/` に `class` を書いてみて赤くなるか
-16. `npm test` — `model/` と `toPlainJson` のユニットテスト
-    - 誤答肢が正解と重複しない
-    - 同じシードで出題順が一致する
+    - `model/` で `react` を import してみて赤くなるか
+    - `QuizState` を書き換えてみて**型エラー**になるか（`Readonly` を付けた所だけが対象。[運用ルール](./02_architecture.md#readonly-は付ける場所を選ぶ)）
+    （`class` は機械では止めない。[理由](./02_architecture.md#何を機械が守り何を守らないか)）
+16. `vp test` — `model/` と `toPlainJson` のユニットテスト
+    - 不正解の肢が正解と重複しない
+    - 同じシードで出題順が一致し、シードが違えば変わる
     - Leitner の遷移
     - Neo4j 型の変換
-17. `npm run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに走らせると **落ちる**
+17. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
 
 ### 再現性
 
@@ -154,7 +168,7 @@ guides は**両方のパレットを持っている**（JS がないため切替
 | # | 判断 | 理由 | 代替案 |
 |---:|---|---|---|
 | 1 | `Result` は自前 30 行 | 必要な合成が浅い | `neverthrow` |
-| 2 | `eslint-plugin-functional` の強制は `model/**` に限定 | 全域に `no-let` を掛けると摩擦のほうが大きい | 全域に掛ける |
+| 2 | **ESLint を入れず Oxlint だけにする** | 層境界は `no-restricted-imports` で守れ、不変性は `Readonly<>` で型が守る（付けた所だけ・浅くだけ）。クラス禁止だけ機械化を諦めた | Oxlint の JS プラグインで `ClassDeclaration` を検出してエラーにする |
 | 3 | フロントは OpenAPI からコード生成しない | 同じ Zod が源なので `z.infer` で足りる | `openapi-typescript` |
 | 4 | 書き込み系 5 枚は実行させない | 接続先で挙動が変わると説明が難しい | Docker のローカル DB のときだけ書き込ませる |
 | 5 | UI 言語は日本語のみ | 英語版 guide が存在しないため、英語化は翻訳ではなく書き下ろしになる | ja / en 切替 |

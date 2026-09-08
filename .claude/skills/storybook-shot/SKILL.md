@@ -1,0 +1,130 @@
+---
+name: storybook-shot
+description: Storybook の story を Chrome headless で撮って自分で見る。見た目を変えたあと、ユーザーに確認を頼む前に必ず使う。light/dark の両方、拡大しての位置合わせ、CSS 案の比較にも使える。Puppeteer や Playwright の追加は不要。
+---
+
+# Storybook を自分で見る
+
+**見た目を変えたら、聞く前に撮る。** ユーザーに確認を頼むのは「どちらが好みか」に絞る。
+アイコンの位置合わせのようにマジックナンバーを調整する作業は、自分で見ないと収束しない。
+
+## 1. Storybook が上がっているか確認する
+
+```
+lsof -nP -iTCP:6006 -sTCP:LISTEN
+```
+
+いなければ上げる。**package.json のスクリプト経由で、バックグラウンドで動かす。**
+`node_modules/.bin/` を直接叩かない。
+
+```
+vp run storybook
+```
+
+`.storybook/main.ts` と `.storybook/preview*` は設定ファイルなので **HMR の対象外。**
+触ったら再起動する（`kill <pid>` → 6006 の解放を待ってから起動）。
+
+## 2. story id を取る
+
+```
+curl -s http://localhost:6006/index.json | python3 -c "
+import json,sys
+for k,v in json.load(sys.stdin).get('entries',{}).items(): print(k,'|',v.get('title'),'|',v.get('name'))
+"
+```
+
+**日本語の title は URL エンコードが必要。**
+
+```
+python3 -c "import urllib.parse;print(urllib.parse.quote('意匠-トークン--すべて'))"
+```
+
+## 3. 撮る
+
+```
+CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+for t in light dark; do
+  "$CH" --headless=new --disable-gpu --hide-scrollbars --no-sandbox \
+    --virtual-time-budget=9000 --window-size=1100,2600 \
+    --screenshot=shot_$t.png \
+    "http://localhost:6006/iframe.html?id=<id>&globals=theme:${t}&viewMode=story"
+done
+```
+
+- `globals=theme:light|dark` で `withThemeByDataAttribute` が切り替わる。**必ず両方撮る**
+- `--virtual-time-budget=9000` は Google Fonts の到着待ち。短いと書体が当たらないまま写る
+- `--window-size` の高さはページ全体が入る値にする。足りないと下が切れる
+- 起動時に `CVDisplayLinkCreateWithCGDisplay failed` などが出るが**無害**
+- 出力は scratchpad に置く。リポジトリを汚さない
+
+## 3.5 狭い幅は `--window-size` では試せない
+
+**Chrome headless のレイアウト幅は 500 CSS px より下がらない。** `--window-size=390` を渡しても
+`document.documentElement.clientWidth` は 500 のままで、**スクリーンショットが 390 で切られるだけ**。
+切れた絵を見て「溢れている」と誤診する。
+
+本当に狭い幅を見るには、scratchpad に**幅を固定した iframe で囲むページ**を作って撮る。
+
+```html
+<iframe src="http://localhost:6006/iframe.html?id=<id>" style="width:360px;height:460px"></iframe>
+```
+
+### iframe だと「準備中」が残ることがある
+
+story を足した直後や HMR のあと、**iframe の中で Storybook の準備中オーバーレイが消えず、
+中身を覆ったまま写る。** `--virtual-time-budget` を伸ばしても消えない。
+
+部品が壊れているのか覆われているだけなのかは `--dump-dom` で分かる。
+
+```
+"$CH" --headless=new --disable-gpu --no-sandbox --virtual-time-budget=12000 \
+  --dump-dom "http://localhost:6006/iframe.html?id=<id>&viewMode=story" \
+  | grep -o 'storybook-root.\{0,200\}'
+```
+
+中身が出ているなら覆われているだけ。**幅を測る必要が無いときは iframe で囲まず、
+story の URL を直接撮る。**
+
+### 数値で測るなら CSS を写したページを作る
+
+**`file://` のページから `localhost` の iframe の中は読めない**（cross-origin）。
+`scrollWidth` を測りたいときは、scratchpad に CSS を写したページを作ってそこで測る。
+
+```js
+document.documentElement.scrollWidth > document.documentElement.clientWidth; // ページが横スクロール
+el.scrollWidth > el.clientWidth; // ブロック内で横スクロール
+```
+
+**写すときは書体まで写す。** `ui-monospace` は headless で別の書体に落ちることがあり、
+字幅が変わって数値がずれる（実測で 1 字 7.9px が 6.4px になり、溢れないと誤診した）。
+`--font-mono` の実値をそのまま書く。
+
+**ブロック要素の `getBoundingClientRect().width` は器の幅を返す。** 中身の幅ではない。
+文字の実幅は `Range` で測る。
+
+## 4. 細部は切り出して拡大する
+
+**この環境に PIL は無い。** `sips` を使う。
+
+```
+sips -c <高さ> <幅> --cropOffset <Y> <X> shot_light.png --out crop.png
+sips --resampleHeightWidth <高さ*4> <幅*4> crop.png --out zoom.png
+```
+
+**`--cropOffset` は Y X の順**（`sips --help` は `offsetY offsetH` と書いているが誤り）。
+切り出し位置は要素を足すとずれるので、外したら範囲を広げて撮り直す。
+
+## 5. CSS の案を比べるとき
+
+story を汚さずに、scratchpad に検証用 HTML を作って**案を縦に並べて 1 枚に撮る。**
+tokens.css の値とフォントの link をコピーして貼る。`--force-device-scale-factor=3` を付けると
+拡大しなくても細部が読める。
+
+1 往復で決まるので、story を書き換えて撮り直すより速い。
+
+## 見るべきこと
+
+- light と dark の**両方**で崩れていないか
+- 幅を狭めてページ全体が横スクロールしないか（§3.5 の iframe で測る。`--window-size` では試せない）
+- 書体が当たっているか（フォールバックだと字面が変わる）
+- アイコンやチップが本文と光学的に揃っているか

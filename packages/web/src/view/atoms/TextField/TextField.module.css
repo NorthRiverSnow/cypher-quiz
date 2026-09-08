@@ -1,0 +1,12 @@
+.input {
+  color: var(--ink);
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

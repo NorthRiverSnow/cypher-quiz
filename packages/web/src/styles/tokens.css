@@ -1,0 +1,188 @@
+/* デザイントークン。値と制約の仕様は docs/07_design.md。
+ *
+ * why: dark を 2 ブロックに分けてある。@media 側は OS 設定への追従で、
+ * :root:not([data-theme="light"]) にすることで手動の light 指定に負ける。
+ * :root[data-theme="dark"] は手動指定なので OS 設定より優先される。
+ */
+:root {
+  /* 面と文字 */
+  --ground: #eef5fa;
+  --panel: #ffffff;
+  --panel-sunken: #f4f8fb;
+  --ink: #15232f;
+  --ink-soft: #394f65;
+  --muted: #647789;
+  --rule: #c8d6e2;
+  --rule-soft: #e0e9f1;
+
+  /* 意味色。淡い面（*-bg）に文字を置くときは --ink / --ink-soft を使う。
+   * 自色は罫線とアイコンに限る（docs/07_design.md#淡い面に自色を載せない） */
+  --accent: #006bf0; /* 構造・キーワード → 選択中の肢、進捗バー */
+  --accent-bg: #dbe9ff;
+  --keep: #008509; /* 正解 → 罫線と正しい肢、コード中のリレーション型 */
+  --keep-bg: #dcf5d5;
+  --alarm: #de1f2d; /* 誤り → 不正解の罫線、誤った肢 */
+  --alarm-bg: #ffe3e1;
+  --warn: #8f6d00; /* 注意 → 罠、引っかけの注記 */
+  --warn-bg: #faeed1;
+
+  /* エンティティ色。結果表でノードとして返った値の字 */
+  --team: #bf5000;
+  --engineer: #a144d8;
+  --service: #008076;
+  --incident: #da1d69;
+
+  --shadow: 0 1px 2px rgba(15, 26, 36, 0.06), 0 8px 24px -16px rgba(15, 26, 36, 0.35);
+
+  /* 版面 */
+  --col: 40rem; /* 本文の measure */
+  --wide: 62rem; /* コンテナ幅 */
+
+  --tool-size: 1.5rem; /* アイコンだけのボタンの一辺 */
+  --scrollbar-size: 12px; /* 溝の幅 */
+
+  /* 罫線と角丸 */
+  --border-width: 1px;
+  --border-width-bold: 2px; /* 左の帯、フォーカスリング */
+  --radius: 3px; /* 部品 */
+  --radius-card: 4px;
+  --radius-pill: 999px;
+
+  /* 余白。gap / padding / margin はこの 6 段から選ぶ */
+  --space-2xs: 0.15rem;
+  --space-xs: 0.4rem;
+  --space-sm: 0.7rem;
+  --space-md: 1.15rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+
+  /* 書体 */
+  --font-serif: "Zen Old Mincho", "Hiragino Mincho ProN", serif;
+  --font-sans: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Zen Kaku Gothic New", ui-monospace, monospace;
+  --font-icon: "Material Symbols Rounded";
+
+  /* 字の太さ */
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 900;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0a1119;
+    --panel: #111c28;
+    --panel-sunken: #16222f;
+    --ink: #dce7f1;
+    --ink-soft: #b3c4d3;
+    --muted: #8ba0b5;
+    --rule: #27384a;
+    --rule-soft: #1d2c3b;
+
+    --accent: #86baff;
+    --accent-bg: #0d2444;
+    --keep: #44d94e;
+    --keep-bg: #082c0c;
+    --alarm: #ff938b;
+    --alarm-bg: #3c1614;
+    --warn: #e3af00;
+    --warn-bg: #302200;
+
+    --team: #ff8d44;
+    --engineer: #d798ff;
+    --service: #00d4c5;
+    --incident: #ff8dab;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0a1119;
+  --panel: #111c28;
+  --panel-sunken: #16222f;
+  --ink: #dce7f1;
+  --ink-soft: #b3c4d3;
+  --muted: #8ba0b5;
+  --rule: #27384a;
+  --rule-soft: #1d2c3b;
+
+  --accent: #86baff;
+  --accent-bg: #0d2444;
+  --keep: #44d94e;
+  --keep-bg: #082c0c;
+  --alarm: #ff938b;
+  --alarm-bg: #3c1614;
+  --warn: #e3af00;
+  --warn-bg: #302200;
+
+  --team: #ff8d44;
+  --engineer: #d798ff;
+  --service: #00d4c5;
+  --incident: #ff8dab;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16.5px;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "palt" 1;
+}
+
+/* why: 要素を列挙しない。列挙すると後から足した input や summary が漏れる。
+ * :where() で詳細度 0 なので、部品側から上書きできる */
+:where(:focus-visible) {
+  outline: var(--border-width-bold) solid var(--accent);
+  outline-offset: var(--border-width-bold);
+}
+
+/* why: 標準プロパティと ::-webkit-scrollbar の両方を書く。前者は Firefox が読み、
+ * 後者があると Chrome / Safari はそちらを優先する。片方だけだと片方が既定のまま */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: var(--radius-pill);
+  /* why: 溝は 12px のまま、透明な罫線で見え幅だけ細くする。掴む的は溝の幅で決まる */
+  border: 4px solid transparent;
+  background-clip: padding-box;
+}
+
+/* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
+@media (hover: hover) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+    background-clip: padding-box;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

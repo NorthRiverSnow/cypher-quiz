@@ -1,0 +1,21 @@
+{
+  "name": "cypher-quiz",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-storybook": "vp -C packages/web run build-storybook",
+    "storybook": "vp -C packages/web run storybook",
+    "test": "vp test run",
+    "test:web": "vp -C packages/web run test",
+    "typecheck": "vp run -F './packages/*' typecheck",
+    "web": "vp -C packages/web dev"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.13.0"
+}

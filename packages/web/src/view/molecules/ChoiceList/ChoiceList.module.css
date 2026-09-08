@@ -1,0 +1,30 @@
+.choice {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  gap: var(--space-sm);
+  align-items: start;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-sm);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 120ms,
+    background 120ms;
+}
+
+@media (hover: hover) {
+  .choice:hover {
+    border-color: var(--accent);
+    background: var(--panel-sunken);
+  }
+}
+
+.choice[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}

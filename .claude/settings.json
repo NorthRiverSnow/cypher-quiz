@@ -1,0 +1,75 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/no-npm.py\"",
+            "timeout": 10,
+            "statusMessage": "npm の直叩きを確認中"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/check-doc-links.py\"",
+            "timeout": 15,
+            "statusMessage": "docs のリンクを検証中"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/vp-check.py\"",
+            "timeout": 130,
+            "statusMessage": "vp check を実行中"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/vp-test-related.py\"",
+            "timeout": 120,
+            "statusMessage": "関係するテストを実行中"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/storybook-index.py\"",
+            "timeout": 15,
+            "statusMessage": "Storybook の索引を確認中"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/guide-sync.py\"",
+            "timeout": 15,
+            "statusMessage": "guide と docs のずれを確認中"
+          }
+        ]
+      }
+    ]
+  }
+}

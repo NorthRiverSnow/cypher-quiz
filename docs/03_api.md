@@ -49,12 +49,12 @@ const route = createRoute({
 
 ### 成果物としての `openapi.json` と乖離検出
 
-`/doc` は常に最新だが、**外部に配る成果物**としての `openapi.json` もコミットする。そして**ズレたら CI で落とす**。
+`/doc` は常に最新だが、**外部に配る成果物**としての `openapi.json` もコミットする。そして**ズレたら CI をエラーで終了させる**。
 
 | コマンド | 動作 |
 |---|---|
-| `npm run openapi:write` | アプリを import してドキュメントを `openapi/openapi.json` に書き出す |
-| `npm run openapi:check` | 再生成して差分を取り、ズレていたら **exit 1** |
+| `vp run openapi:write` | アプリを import してドキュメントを `openapi/openapi.json` に書き出す |
+| `vp run openapi:check` | 再生成して差分を取り、ズレていたら **exit 1** |
 
 これで「スキーマを変えたのに `openapi.json` を更新し忘れる」が起きなくなる。
 
@@ -70,7 +70,7 @@ const route = createRoute({
 
 ## 2. 読み取り専用の強制（多層）
 
-ユーザーが[任意の Cypher を編集して投げられる](./01_spec.md#4-クエリの実行と編集)以上、ここが一番効く防御線。
+ユーザーが[任意の Cypher を編集して投げられる](./01_spec.md#4-クエリの実行と編集)以上、ここが最も有効な防御線。
 
 > **キーワードの正規表現マッチはやらない。**
 > コメントや文字列リテラルの中の `CREATE` を誤検知し、逆に見落としもする。
@@ -162,9 +162,10 @@ if (plan.summary.queryType !== 'r') {
 フロントが持つ接続状態は、識別子ではなく**表示用の情報だけ**：
 
 ```ts
+// React state として丸ごと差し替えるだけなので readonly は付けない
 type ConnectionStatus =
-  | { readonly connected: false }
-  | { readonly connected: true; readonly uri: string; readonly mode: 'manual' | 'dev-auto' };
+  | { connected: false }
+  | { connected: true; uri: string; mode: 'manual' | 'dev-auto' };
 ```
 
 クッキーの属性: `HttpOnly` / `SameSite=Strict` / `Path=/api` / 本番では `Secure` / **`Max-Age` を付けない**（セッションクッキー。タブを閉じれば消える）。
@@ -179,7 +180,7 @@ Vite の dev proxy で同一オリジンになるので、`fetch` は `credentia
 |---|---|
 | **ディスクに書かない** | 手入力の資格情報は永続化しない |
 | **ログに出さない** | Hono のロガーでリクエストボディを出さない。`/api/connect` はログ抑制 |
-| **エラーをサニタイズ** | ドライバのエラーは URI に資格情報を含みうる。クライアントへ返す前に落とす |
+| **エラーをサニタイズ** | ドライバのエラーは URI に資格情報を含みうる。クライアントへ返す前に取り除く |
 | **メモリのみ** | サーバ側 `Map`。**サーバ再起動で全消滅** |
 | **失効させる** | idle TTL 30 分で失効し、`driver.close()`。同時セッション数に上限 |
 | **フロントは識別子を持たない** | httpOnly クッキー。`localStorage` も React state も使わない |
@@ -282,7 +283,7 @@ services:
 | `Node` / `Relationship` / `Path` | `RETURN n`、`p = (…)` |
 | `Date` | `Incident.date` |
 
-**View がドライバを import せずに表を描けるよう、純関数で素の JSON に落とす。**
+**View がドライバを import せずに表を描けるよう、純関数で素の JSON に変換する。**
 
 ```ts
 // packages/api/src/neo4j/toPlainJson.ts — 純粋。DB も I/O も触らない

@@ -1,0 +1,49 @@
+.button {
+  padding: var(--space-2xs) var(--space-md);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.primary {
+  background: var(--accent);
+  /* why: 文字色を --panel にする。light では白（4.82:1）、dark では暗色（8.59:1）になり
+     両テーマで AA を満たす。--ground だと light が 4.37:1 で届かない */
+  color: var(--panel);
+  font-weight: var(--weight-medium);
+}
+
+@media (hover: hover) {
+  .primary:not(:disabled):hover {
+    /* why: --ink 側へ混ぜると light では暗く、dark では明るくなる。
+       テーマごとに値を書き分けずに済み、文字とのコントラストはどちらも上がる */
+    background: color-mix(in oklch, var(--accent) 86%, var(--ink));
+  }
+}
+
+.primary:disabled {
+  /* why: 塗りは有効時と同じまま色だけを --muted にする。罫線だけの姿にすると
+     quiet と見分けが付かず、押せる副ボタンに見える。
+     文字は --panel のままで AA を満たす（light 4.62:1 / dark 6.38:1） */
+  background: var(--muted);
+  cursor: not-allowed;
+}
+
+.quiet {
+  border-color: var(--rule);
+  background: none;
+  color: var(--ink-soft);
+}
+
+@media (hover: hover) {
+  .quiet:not(:disabled):hover {
+    background: var(--panel-sunken);
+  }
+}
+
+.quiet:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
