@@ -42,6 +42,9 @@ importers:
 
   packages/web:
     dependencies:
+      '@cypher-quiz/shared':
+        specifier: workspace:*
+        version: link:../shared
       react:
         specifier: ^19.2.8
         version: 19.2.8
