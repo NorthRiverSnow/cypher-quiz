@@ -3,12 +3,14 @@ export type Box = 0 | 1 | 2;
 
 export const DONE: Box = 2;
 
-/** 不正解なら 0 に戻す。正解は 1 つ進め、DONE で止まる */
-export const nextBox = (box: Box, correct: boolean): Box => {
-  if (!correct) return 0;
+/**
+ * キーは今の連続正解数、値は正解した後の連続正解数。
+ * 2 回で完了なので、キーが 2 のときは加算せず 2 のままにする。
+ */
+const ADVANCED: Record<Box, Box> = { 0: 1, 1: 2, 2: 2 };
 
-  return box === DONE ? DONE : ((box + 1) as Box);
-};
+/** 不正解なら 0 に戻す。正解は 1 つ進め、DONE で止まる */
+export const nextBox = (box: Box, correct: boolean): Box => (correct ? ADVANCED[box] : 0);
 
 export const isDone = (box: Box): boolean => box === DONE;
 
