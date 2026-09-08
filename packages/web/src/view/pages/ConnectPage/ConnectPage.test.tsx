@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { ConnectPage, type ConnectPageProps } from "./ConnectPage";
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 const BASE: ConnectPageProps = {

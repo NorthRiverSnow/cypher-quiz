@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { WITH } from "../../../fixtures/cards";
 import { CardBack, type CardBackProps } from "./CardBack";
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 const BASE: CardBackProps = {

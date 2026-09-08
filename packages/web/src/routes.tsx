@@ -75,7 +75,6 @@ const Quiz = () => {
           expected: card.expected,
           note: card.note,
           warn: card.warn,
-          /* 実行はバックエンド待ち。編集はできるが実行はできない状態を出す */
           editor:
             card.code === undefined
               ? undefined

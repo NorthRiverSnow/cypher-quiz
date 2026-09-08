@@ -12,7 +12,7 @@ export const ERROR_KINDS = [
 export const ApiErrorSchema = z.object({
   kind: z.enum(ERROR_KINDS),
   message: z.string(),
-  /* read-only-violation のときだけ入る。サーバが返したクエリの分類（'rw' / 'w' / 's'） */
+  /** read-only-violation のときだけ入る。サーバが返したクエリの分類（'rw' / 'w' / 's'） */
   queryType: z.string().optional(),
 });
 

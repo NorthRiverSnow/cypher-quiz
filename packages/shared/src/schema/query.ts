@@ -20,7 +20,7 @@ export type RunRequest = z.infer<typeof RunRequestSchema>;
 export const QueryResultSchema = z.object({
   columns: z.array(z.string()),
   rows: z.array(z.array(CellSchema)),
-  /* サーバ側で測った値。クライアントの往復時間は含まない */
+  /** サーバ側で測った値。クライアントの往復時間は含まない */
   elapsedMs: z.number(),
 });
 

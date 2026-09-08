@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { WITH } from "../../../fixtures/cards";
 import { QueryEditor, type QueryEditorProps } from "./QueryEditor";
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 const BASE: QueryEditorProps = {

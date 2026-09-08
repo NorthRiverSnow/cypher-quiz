@@ -21,12 +21,12 @@ export type ConnectFormProps = {
   values: ConnectInput;
   onChange: (field: ConnectField, value: string) => void;
   onConnect: () => void;
-  /* 接続せずに、または自動接続のまま出題へ進む */
+  /** 接続せずに、または自動接続のまま出題へ進む */
   onStart: () => void;
-  /* 自動接続を切って手入力に戻す */
+  /** 自動接続を切って手入力に戻す */
   onDisconnect: () => void;
   status?: ConnectStatus;
-  /* status が "failed" のときのサーバからの文言 */
+  /** status が "failed" のときのサーバからの文言 */
   errorMessage?: string;
 };
 

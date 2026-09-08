@@ -7,7 +7,7 @@ import { QuizLayout } from "../../templates/QuizLayout/QuizLayout";
 
 export type StartPageProps = {
   onStart: () => void;
-  /* 前回の続きがあるときの残り問題数。無い（未着手）なら渡さない */
+  /** 前回の続きがあるときの残り問題数。渡さなければ未着手 */
   remaining?: number;
 };
 

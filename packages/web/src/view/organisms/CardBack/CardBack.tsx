@@ -23,10 +23,10 @@ export type CardBackProps = {
   note?: string;
   warn?: string;
   editor?: Omit<QueryEditorProps, "code">;
-  /* 実行して返ってきた行。期待される実行結果とは別に、下へ積む */
+  /** 実行して返ってきた行。期待される実行結果とは別に、下へ積む */
   result?: ResultTableProps;
   onNext: () => void;
-  /* 最後の 1 枚なら進む先は結果。残っていれば次のカード */
+  /** 最後の 1 枚なら進む先は結果。残っていれば次のカード */
   isLast?: boolean;
 };
 

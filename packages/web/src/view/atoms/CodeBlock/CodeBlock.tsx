@@ -8,7 +8,7 @@ export type CodeSegment = { text: string; kind?: CodeKind };
 
 export type CodeBlockProps = {
   code: readonly CodeSegment[];
-  /* 親が枠を持つときに使う。面も罫線も角丸も描かない */
+  /** 親が枠を持つときに使う。面も罫線も角丸も描かない */
   bare?: boolean;
 };
 

@@ -16,7 +16,7 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   subqueries: "サブクエリ・スキーマ・診断",
 };
 
-/* 出題の向き。正順は構文 → 目的、逆順は目的 → 構文（docs/01_spec.md §2） */
+/* 正順・逆順の意味は docs/01_spec.md#2-出題形式 */
 export type Direction = "forward" | "reverse";
 
 export const DIRECTION_LABELS: Record<Direction, string> = {

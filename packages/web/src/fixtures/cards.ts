@@ -11,7 +11,7 @@ export type CardFixture = {
   section: SectionId;
   name: string;
   role: string;
-  /* 不正解の肢は同じ章から引く。answer が正しい肢の位置 */
+  /** choices の中で正しい肢の位置 */
   choices: readonly string[];
   answer: number;
   code?: readonly CodeSegment[];
@@ -101,7 +101,6 @@ const WRITING_ROLES = [
   "消す。リレーションが残っているノードは普通には消せない",
 ];
 
-/* 書き込み系。実行させないので、期待される実行結果を持たない */
 export const SET_REMOVE: CardFixture = {
   section: "writing",
   name: "SET / REMOVE",

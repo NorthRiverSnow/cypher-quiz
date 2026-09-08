@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { SECTION_LABELS } from "../../../types";
 import { FlashCard, type FlashCardProps } from "./FlashCard";
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 const BASE: FlashCardProps = {

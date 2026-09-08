@@ -6,8 +6,7 @@ import { Text } from "../../view/atoms/Text/Text";
 import { Note } from "../../view/molecules/Note/Note";
 import { ENTITIES, INKS, SEMANTIC, SURFACES, TINTS, type Token } from "./tokenList";
 
-/* このファイルの style は見本を並べるためのものだけ。字の型は Text が持つ
-   （docs/07_design.md#5-文字の段階） */
+/* このファイルの style は見本を並べるためのものだけ */
 
 const PAGE: CSSProperties = {
   background: "var(--ground)",

@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { ProgressBar } from "./ProgressBar";
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 describe("ProgressBar", () => {
@@ -28,7 +27,6 @@ describe("ProgressBar", () => {
     expect(bar.getAttribute("aria-valuemax")).toBe("60");
   });
 
-  /* why: 左から完了・1 回正解・まだの順。box の順に並べると緑が右端に出る */
   it("完了を左に置き、枚数の比を区画の幅にする", () => {
     render(<ProgressBar counts={[38, 14, 8]} />);
     const bar = screen.getByRole("progressbar", { name: "進捗" });

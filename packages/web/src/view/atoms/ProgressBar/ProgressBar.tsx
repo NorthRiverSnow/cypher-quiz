@@ -3,8 +3,7 @@ import type { CSSProperties } from "react";
 import { Text } from "../Text/Text";
 
 export type ProgressBarProps = {
-  /* box ごとの枚数。左から box 0（まだ）/ box 1（1 回正解）/ box 2（完了）
-     （docs/01_spec.md#6-復習間隔反復） */
+  /** box ごとの枚数。左から box 0（まだ）/ box 1（1 回正解）/ box 2（完了） */
   counts: readonly [number, number, number];
 };
 
