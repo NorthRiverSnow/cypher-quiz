@@ -1,6 +1,7 @@
 import type { ChangeEvent, CSSProperties } from "react";
 
-import { CodeBlock, type CodeSegment } from "../../atoms/CodeBlock/CodeBlock";
+import type { CodeSegment } from "../../../types";
+import { CodeBlock } from "../../atoms/CodeBlock/CodeBlock";
 import { IconButton } from "../../atoms/IconButton/IconButton";
 import { Toolbar } from "../../atoms/Toolbar/Toolbar";
 import { TEXT } from "../../atoms/Text/Text";

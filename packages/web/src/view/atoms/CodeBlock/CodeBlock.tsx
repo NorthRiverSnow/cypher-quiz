@@ -1,10 +1,7 @@
 import type { CSSProperties } from "react";
 
+import type { CodeKind, CodeSegment } from "../../../types";
 import { TEXT, Text } from "../Text/Text";
-
-export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
-
-export type CodeSegment = { text: string; kind?: CodeKind };
 
 export type CodeBlockProps = {
   code: readonly CodeSegment[];

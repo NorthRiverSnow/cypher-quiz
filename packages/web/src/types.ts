@@ -1,4 +1,5 @@
-/* Model の型。View は型だけを要る（docs/02_architecture.md「型は共有、ロジックは非共有」）。
+/* Model と View が共有する型（docs/02_architecture.md「型は共有、ロジックは非共有」）。
+ * lint が View から model/** を禁止しているので、両方が要る型はここに置く。
  *
  * TODO: フェーズ C で packages/shared へ移す。shared は API と型を共有するために作るもので、
  * 今は web しか読まない。
@@ -15,6 +16,12 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   writing: "書き込み",
   subqueries: "サブクエリ・スキーマ・診断",
 };
+
+/* コードの色分け。意味は docs/07_design.md#7-コードのハイライト */
+export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
+
+/** kind が無ければ素の字 */
+export type CodeSegment = { text: string; kind?: CodeKind };
 
 /* 正順・逆順の意味は docs/01_spec.md#2-出題形式 */
 export type Direction = "forward" | "reverse";

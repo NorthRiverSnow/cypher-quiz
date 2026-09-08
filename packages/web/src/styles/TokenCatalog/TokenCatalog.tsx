@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
-import { CodeBlock, type CodeSegment } from "../../view/atoms/CodeBlock/CodeBlock";
+import type { CodeSegment } from "../../types";
+import { CodeBlock } from "../../view/atoms/CodeBlock/CodeBlock";
 import { ResultBlock } from "../../view/atoms/ResultBlock/ResultBlock";
 import { Text } from "../../view/atoms/Text/Text";
 import { Note } from "../../view/molecules/Note/Note";

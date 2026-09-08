@@ -1,5 +1,4 @@
-import type { SectionId } from "../types";
-import type { CodeSegment } from "../view/atoms/CodeBlock/CodeBlock";
+import type { CodeSegment, SectionId } from "../types";
 
 /* Storybook とテストが共有するサンプル。値は docs/06_deck.md から取っている。
  *

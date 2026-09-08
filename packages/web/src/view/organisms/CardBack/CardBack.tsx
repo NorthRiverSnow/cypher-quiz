@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 
-import { SECTION_LABELS, type SectionId } from "../../../types";
+import { type CodeSegment, SECTION_LABELS, type SectionId } from "../../../types";
 import { Button } from "../../atoms/Button/Button";
-import { CodeBlock, type CodeSegment } from "../../atoms/CodeBlock/CodeBlock";
+import { CodeBlock } from "../../atoms/CodeBlock/CodeBlock";
 import { Card } from "../../atoms/Card/Card";
 import { Icon, type IconName } from "../../atoms/Icon/Icon";
 import { ResultBlock } from "../../atoms/ResultBlock/ResultBlock";

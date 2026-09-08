@@ -115,53 +115,52 @@ export type Result<T, E> =
 
 ```ts
 // vite.config.ts（抜粋）
+const NO_LOGIC = ["**/model/**", "**/controller/**"];
+
 lint: {
   options: { typeAware: true, typeCheck: true },
   overrides: [
     {
+      // Model は React も DOM も、上の層も知らない
       files: ["packages/web/src/model/**"],
       rules: {
-        // Model は React も DOM も知らない
         "no-restricted-imports": ["error", {
-          patterns: ["react", "react-dom", "../view/*", "../controller/*"],
+          patterns: ["react", "react-dom", "**/view/**", "**/controller/**"],
         }],
-        "prefer-const": "error",
       },
     },
     {
+      // View はロジックも副作用も知らない。型は types.ts と @cypher-quiz/shared から取る
       files: ["packages/web/src/view/**"],
-      rules: {
-        // View はロジックを知らない。型は @cypher-quiz/shared から取る
-        "no-restricted-imports": ["error", {
-          patterns: ["../model/*", "../controller/*"],
-        }],
-      },
+      rules: { "no-restricted-imports": ["error", { patterns: NO_LOGIC }] },
+    },
+    {
+      // 結線の層。controller は呼ぶが、model には触らない
+      files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
+      rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**"] }] },
     },
     // アトミックデザインの層。下の層しか import できない
     {
       files: ["packages/web/src/view/atoms/**"],
       rules: {
         "no-restricted-imports": ["error", {
-          patterns: ["**/molecules/**", "**/organisms/**", "**/templates/**", "**/pages/**"],
+          patterns: [...NO_LOGIC, "**/molecules/**", "**/organisms/**", "**/templates/**", "**/pages/**"],
         }],
       },
     },
-    {
-      files: ["packages/web/src/view/molecules/**"],
-      rules: {
-        "no-restricted-imports": ["error", {
-          patterns: ["**/organisms/**", "**/templates/**", "**/pages/**"],
-        }],
-      },
-    },
-    // organisms は templates / pages を、templates は pages を禁止（以下同様）
+    // molecules / organisms / templates も同じ形（上の層と NO_LOGIC を並べる）
   ],
 }
 ```
 
+**View の各層には `NO_LOGIC` を書き足す。** 同じファイルに override が 2 つ当たると
+**後の設定が前を置き換える**（マージされない）ので、アトミックデザインの規則だけを書くと
+MVC の禁止が消える。
+
 `**/molecules/**` のような glob が `../../molecules/Note` のような相対 import にも一致することは実測済み。
-**4 方向すべて確認した**——atoms→molecules はエラーになり、molecules→atoms は通り、
-organisms→molecules は通り、organisms→pages はエラーになる。
+**7 方向を確認した**——`view` → `model`、`view` → `controller`、`pages` → `model`、
+`routes.tsx` → `model`、`model` → `react`、`atoms` → `molecules` はすべてエラーになり、
+`controller` → `model` は通る。
 
 ### 各層の禁止事項
 
@@ -349,14 +348,16 @@ export type Card = Readonly<{
   warn?:    string;      // 罠
 }>;
 
-export type CodeSegment = Readonly<{
-  text: string;                        // 素の文字列
-  kind?: CodeKind;                     // kw / rel / hl / bad / cm。無ければ素の字
-}>;
+// src/types.ts — Model と View が共有する
+export type CodeKind = 'kw' | 'rel' | 'hl' | 'bad' | 'cm';
+export type CodeSegment = { text: string; kind?: CodeKind };
 ```
 
 `code` は `CodeBlock` がそのまま描けるセグメントの列で持つ。範囲（開始位置と長さ）で
 持つと、View に変換の処理が要る。
+
+**`CodeSegment` は `src/types.ts` に置く。** View は lint で `model/**` を import できないので、
+`model/deck.ts` に置くと View 側が同じ型を二重に定義することになる。
 
 ### `runnable` / `mutates` はデータに書く
 

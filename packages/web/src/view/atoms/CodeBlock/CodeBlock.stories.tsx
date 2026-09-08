@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { CodeBlock, type CodeSegment } from "./CodeBlock";
+import type { CodeSegment } from "../../../types";
+import { CodeBlock } from "./CodeBlock";
 
 const OWNS_QUERY: CodeSegment[] = [
   { text: "// Grid Operations が持っているサービス", kind: "cm" },

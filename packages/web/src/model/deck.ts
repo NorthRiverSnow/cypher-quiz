@@ -1,8 +1,4 @@
-import type { SectionId } from "../types";
-
-export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
-
-export type CodeSegment = { text: string; kind?: CodeKind };
+import type { CodeSegment, SectionId } from "../types";
 
 export type Card = Readonly<{
   id: string;
