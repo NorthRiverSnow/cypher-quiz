@@ -22,7 +22,7 @@ guide が変わったら作り直す。変わったことは SessionStart のフ
 
 - **`§ Prerequisite`** — [`05_reference.md`](./05_reference.md#データセット) が同じ表を持つ
 - **ハイライトの範囲** — `span.kw` などの位置は文字数で持つ値で、
-  フェーズ B の `tools/extract_deck.ts` が HTML から直接拾う
+  出題データ（`model/deck.data.ts`）は色分けをセグメントの列で持つ
 - **実行結果の強調** — `<b>` は fence の中では記法にならないので、値だけが残る
 
 ---

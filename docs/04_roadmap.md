@@ -67,7 +67,7 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 | # | やること |
 |---:|---|
 | B-1 | `shared/schema/` の Zod と `result.ts` |
-| B-2 | `tools/extract_deck.ts` → `deck.generated.ts`（30 枚） |
+| B-2 | `model/deck.data.ts`（30 枚の固定データ）と `deck.ts` の型 |
 | B-3 | `question.ts` / `leitner.ts` / `quiz.ts` / `rng.ts` / `progress.ts` |
 
 **全て純関数なので、React 抜きでユニットテストが書ける。**

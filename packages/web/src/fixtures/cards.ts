@@ -3,7 +3,7 @@ import type { CodeSegment } from "../view/atoms/CodeBlock/CodeBlock";
 
 /* Storybook とテストが共有するサンプル。値は docs/06_deck.md から取っている。
  *
- * TODO: フェーズ B で tools/extract_deck.ts の生成物に置き換える。
+ * TODO: フェーズ D で model/deck.data.ts に置き換える。
  * 今は手で書く——抽出器を先に作ると、雰囲気を見る前にデータ形式が固まる
  * （docs/04_roadmap.md#fixtures-を-a-4-で作る理由）
  */

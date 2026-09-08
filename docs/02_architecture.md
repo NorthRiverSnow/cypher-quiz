@@ -266,7 +266,7 @@ story ファイルに書いてよいのは、被写体の並べ方（`render`）
 | 型 | なぜ |
 |---|---|
 | `QuizState` とその中身 | reducer の状態。`(state, event) => state` で回すので、書き換えると React の変更検知と Model の純粋性が同時に壊れる |
-| `Card` / `Sample` | `deck.generated.ts` はモジュール共有データ。1 箇所で書き換えると全出題に波及する |
+| `Card` | `deck.data.ts` はモジュール共有データ。1 箇所で書き換えると全出題に波及する |
 
 付けない（短命、または誰も書き換えない）:
 
@@ -299,11 +299,13 @@ View は Model の**型**は要るがロジックは要らない。型を `share
 
 ---
 
-## 4. デッキ生成
+## 4. デッキ
 
-`guides/03_cypher_reference_ja.html` を単一の真実として扱い（`nordwind-workshop` 側の運用思想と揃える）、そこから `deck.generated.ts` を吐く。
+30 枚は `model/deck.data.ts` の**固定データ**として持つ。値の出どころは
+[`06_deck.md`](./06_deck.md)（guide 03 の本文）。
 
-**生成物はコミットする**ので、このリポジトリは単体で完結する。
+**抽出器は置かない。** 教材はこのリポジトリの外にあり、生成器を持つと外部への依存が残る。
+30 枚は動かないデータなので、更新するときは手で直す。
 
 **デッキはフロントだけが持つ。** API を通らないので `shared/schema/` にも入れない。
 バックエンドの仕事はグラフクエリの実行だけで、[接続しなくても解ける](./01_spec.md#5-db-への接続)
@@ -347,24 +349,18 @@ export type Card = Readonly<{
   warn?:    string;      // 罠
 }>;
 
-export type Sample = Readonly<{
-  cypher:     string;                  // タグを剥がした素のクエリ
-  highlights: readonly Token[];        // span.kw/.rel/.hl/.bad/.cm の範囲
-  expected?:  string;                  // 期待される実行結果
-  runnable:   boolean;                 // 22 枚が true
-  mutates:    boolean;                 // 5 枚が true
+export type CodeSegment = Readonly<{
+  text: string;                        // 素の文字列
+  kind?: CodeKind;                     // kw / rel / hl / bad / cm。無ければ素の字
 }>;
 ```
 
-### `runnable` / `mutates` は自動判定しない
+`code` は `CodeBlock` がそのまま描けるセグメントの列で持つ。範囲（開始位置と長さ）で
+持つと、View に変換の処理が要る。
 
-`tools/extract_deck.ts` の**明示テーブル**で持つ。30 枚しかなく、誤判定のほうが高くつく。
+### `runnable` / `mutates` はデータに書く
 
-### 抽出元はこのリポジトリの外
-
-`../nordwind-workshop/guides/03_cypher_reference_ja.html`。パスは引数で渡し、既定値をそこに向ける。
-
-**guide が無い環境ではコミット済みの `deck.generated.ts` が使われるので、ビルドは壊れない。**
+判定の処理を持たない。30 枚しかなく、誤判定のほうが高くつく。
 
 ---
 
@@ -380,7 +376,6 @@ cypher-quiz/
 ├─ tsconfig.base.json
 ├─ openapi/openapi.json             # 生成物。乖離を CI で検出
 ├─ seed/dataset/                    # nordwind-workshop/dataset/ のスナップショット
-├─ tools/extract_deck.ts
 └─ packages/
    │
    ├─ shared/src/
@@ -406,7 +401,7 @@ cypher-quiz/
       ├─ .storybook/
       └─ src/
          ├─ model/                  # ★ React も DOM も知らない純粋 TS
-         │  ├─ deck.generated.ts
+         │  ├─ deck.data.ts          # 30 枚の固定データ
          │  ├─ deck.ts               # Card / SectionId / Direction。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
          │  ├─ quiz.ts              # QuizState / reduceQuiz / セレクタ
