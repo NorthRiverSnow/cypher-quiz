@@ -102,6 +102,7 @@ export PATH="$HOME/.local/share/vite-plus/bin:$PATH"   # vp はシェル関数�
 vp check                     fmt + lint + typecheck
 vp run test                  Vitest（root から全パッケージ）
 vp run test:web              Vitest（フロントエンドだけ）
+vp run web                   アプリの dev server（5173）
 vp run storybook             Storybook（6006）
 vp -C packages/web build     root では対象パッケージが必要
 vp run -F './packages/*' <t> packages 配下だけ（`-r` は root も選ぶので使わない）

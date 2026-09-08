@@ -1,12 +1,17 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router";
+
+import "./styles";
+import { AppRoutes } from "./routes";
 
 const el = document.getElementById("root");
 if (!el) throw new Error("#root が無い");
 
 createRoot(el).render(
   <StrictMode>
-    {/* TODO: フェーズ D で controller と繋いで pages/QuizScreen を描く */}
-    <p>足場のみ</p>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   </StrictMode>,
 );

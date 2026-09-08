@@ -36,7 +36,7 @@ D. 結線
 | A-5 | `ResultTable` / `Chip` | 1 行、複数列、日付を含む表 |
 | A-6 | `QueryEditor` | 通常 / 編集済み / 実行中 / 実行エラー / 書き込みで拒否 / 未接続 |
 | A-7 | `ProgressBar` / `ConnectForm` / `Summary` | 未入力 / 入力中 / 接続中 / 接続失敗 / dev 自動接続中 |
-| A-8 | `pages/QuizScreen` で結合 | 下の一覧 |
+| A-8 | `templates/QuizLayout` と 4 つの page、`routes.tsx` で結合 | 下の一覧 |
 
 ### なぜ light / dark の切替を最初に入れるのか
 
@@ -52,7 +52,7 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 
 ### A-8 でできるようになること
 
-`QuizScreen` が全状態を props で受ける純関数なので、Storybook で以下を**並べて見比べられる**。
+ページが全状態を props で受ける純関数なので、Storybook で以下を**並べて見比べられる**。
 
 ```
 出題中 / 正解直後 / 不正解直後 / 実行中 / 実行エラー / 未接続 / 完了

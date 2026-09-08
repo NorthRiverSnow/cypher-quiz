@@ -181,7 +181,7 @@ organisms→molecules は通り、organisms→pages はエラーになる。
 | **molecules** | atoms を組んだ 1 つの役割 | 名前を付けると 1 語で言える。`Note` / `ChoiceList` / `ResultTable` |
 | **organisms** | 画面の中の意味のあるかたまり | 単体で「何の部品か」が分かる。`FlashCard` / `CardBack` |
 | **templates** | 配置だけ | データを一切知らない。`QuizLayout` |
-| **pages** | 全状態を props で受ける | `QuizScreen` のみ |
+| **pages** | 全状態を props で受ける | `StartPage` / `ConnectPage` / `QuizPage` / `ResultPage` |
 
 トークンの一覧（`styles/TokenCatalog/`）はこの層に入れない。**どの部品にも属さないので
 部品の story に置けず、アプリの画面でもないので `pages/` にも置けない。**
@@ -429,9 +429,12 @@ cypher-quiz/
          │  │  ├─ ConnectForm/
          │  │  └─ Summary/
          │  ├─ templates/           # 配置だけ。データを知らない
-         │  │  └─ QuizLayout/
+         │  │  └─ QuizLayout/       # 1 カラム。進捗の穴を持つ
          │  └─ pages/               # 全状態を props で受ける
-         │     └─ QuizScreen/       # 画面まるごと純関数
+         │     ├─ StartPage/
+         │     ├─ ConnectPage/
+         │     ├─ QuizPage/         # 表か裏のどちらか
+         │     └─ ResultPage/
          │
          ├─ controller/
          │  ├─ useQuiz.ts
@@ -445,15 +448,32 @@ cypher-quiz/
          └─ api/client.ts           # fetch のみ
 ```
 
-### `screens/QuizScreen.tsx` が純関数であることの意味
+### ページが純関数であることの意味
 
-画面全体が「全状態を props で受ける純関数」なので、**Storybook で状態を並べて見比べられる**。
+ページが「全状態を props で受ける純関数」なので、**Storybook で状態を並べて見比べられる**。
 
 ```
 出題中 / 正解直後 / 不正解直後 / 実行中 / 実行エラー / 未接続 / 完了
 ```
 
 これがフェーズ A（見た目を先に決める）を成立させる要。
+
+### URL とページの対応
+
+`src/routes.tsx` が持つ。**ページは URL も遷移も知らない。**
+
+| URL | ページ | 進む先 |
+|---|---|---|
+| `/` | `StartPage` | `/connect` |
+| `/connect` | `ConnectPage` | 接続 / 接続せずに始める → `/quiz` |
+| `/quiz` | `QuizPage` | 最後の 1 枚の次 → `/result` |
+| `/result` | `ResultPage` | もう一度 / 不正解だけ → `/quiz` |
+| 上記以外 | — | `/` へ送る |
+
+**ページに `useNavigate` を持たせない。** 持たせると story とテストに Router が必要になり、
+View が遷移を知ることになる。`routes.tsx` が薄い包みを作り、そこで `navigate` に繋ぐ。
+
+router は `react-router`（`BrowserRouter` + `Routes`）。`main.tsx` が `BrowserRouter` を張る。
 
 ---
 

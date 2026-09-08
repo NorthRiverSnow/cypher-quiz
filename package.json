@@ -8,7 +8,7 @@
     "test": "vp test run",
     "test:web": "vp -C packages/web run test",
     "typecheck": "vp run -F './packages/*' typecheck",
-    "web": "vp run -F @cypher-quiz/web"
+    "web": "vp -C packages/web dev"
   },
   "devDependencies": {
     "vite": "catalog:",
