@@ -43,6 +43,7 @@ const LINE: CSSProperties = {
   textIndent: "-2ch",
 };
 
+/** 改行を含むセグメントの列を、行ごとのセグメントの列に割る */
 const toLines = (code: readonly CodeSegment[]): CodeSegment[][] => {
   const lines: CodeSegment[][] = [[]];
   for (const segment of code) {

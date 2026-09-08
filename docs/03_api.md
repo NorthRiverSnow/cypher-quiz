@@ -22,7 +22,9 @@ packages/shared/src/schema/*.ts        ← Zod スキーマ（唯一の真実）
 
 `@hono/zod-openapi` は**ルート定義そのものからドキュメントを組み立てる**ので、ドキュメントが実装から乖離しようがない。別ファイルに OpenAPI を手書きしないため。
 
-> **注意:** `z` は `zod` からではなく **`@hono/zod-openapi` から** import する（公式 README 明示）。
+> **`shared` のスキーマは素の `zod` で書く。** `@hono/zod-openapi@1` は `zod@^4` を
+> peer dependency に取るので実体は 1 つで、OpenAPI の付加情報は `api` 側で載せられる。
+> フロントに Hono の依存を持ち込まないために、この形にしている。
 
 ```ts
 // packages/api/src/routes/run.ts
@@ -306,7 +308,7 @@ services:
 | `GET` | `/api/connect` | — | `ConnectionStatus`。未接続でも dev 自動接続が有効ならその場で繋ぐ |
 | `POST` | `/api/connect` | `{ uri, user, password, database? }` | `ConnectionStatus` + `Set-Cookie`(httpOnly) |
 | `DELETE` | `/api/connect` | — | クッキーを消し、`driver.close()` |
-| `POST` | `/api/run` | `{ cypher }` | `QueryResult`（読み取り専用で実行） |
+| `POST` | `/api/run` | `{ cypher }` | `QueryResult`（`columns` / `rows` / `elapsedMs`。読み取り専用で実行） |
 | `GET` | `/doc` | — | OpenAPI ドキュメント（JSON） |
 | `GET` | `/docs` | — | Scalar による API リファレンス UI |
 

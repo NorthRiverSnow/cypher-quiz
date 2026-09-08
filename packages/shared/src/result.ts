@@ -14,7 +14,10 @@ export const map = <T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<
 export const mapErr = <T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> =>
   result.ok ? result : err(fn(result.error));
 
-/* why: then ではなく flatMap。Promise と紛らわしく、await できると誤解される */
+/**
+ * 失敗なら fn を呼ばず、最初の理由をそのまま返す。
+ *
+ */
 export const flatMap = <T, U, E>(
   result: Result<T, E>,
   fn: (value: T) => Result<U, E>,
