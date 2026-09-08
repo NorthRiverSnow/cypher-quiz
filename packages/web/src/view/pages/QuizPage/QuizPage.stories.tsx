@@ -18,6 +18,7 @@ const QUESTION = {
 const BACK = {
   section: OPTIONAL_MATCH.section,
   kind: "prose" as const,
+  onNext: fn(),
   correct: OPTIONAL_MATCH.role,
   code: OPTIONAL_MATCH.code,
   expected: OPTIONAL_MATCH.expected,
@@ -107,6 +108,7 @@ export const 実行しないカード: Story = {
         correct: SET_REMOVE.role,
         code: SET_REMOVE.code,
         note: SET_REMOVE.note,
+        onNext: fn(),
       },
     },
   },

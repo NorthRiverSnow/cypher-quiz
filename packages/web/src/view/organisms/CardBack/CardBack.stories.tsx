@@ -21,6 +21,7 @@ const meta = {
     note: OPTIONAL_MATCH.note,
     /* 実行できるのが標準。出ないほうが例外 */
     editor: EDITOR,
+    onNext: fn(),
   },
   argTypes: { kind: { control: "inline-radio", options: ["prose", "syntax"] } },
   decorators: [
@@ -41,6 +42,8 @@ export const 正解: Story = {};
 export const 不正解: Story = {
   args: { chosen: OPTIONAL_MATCH.choices[2] },
 };
+
+export const 最後の1枚: Story = { args: { isLast: true } };
 
 /* 罠を持つカード。裏面で最も情報が多くなる形 */
 export const 罠のあるカード: Story = {

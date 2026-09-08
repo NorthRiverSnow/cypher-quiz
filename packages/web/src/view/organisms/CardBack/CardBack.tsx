@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { SECTION_LABELS, type SectionId } from "../../../types";
+import { Button } from "../../atoms/Button/Button";
 import { CodeBlock, type CodeSegment } from "../../atoms/CodeBlock/CodeBlock";
 import { Card } from "../../atoms/Card/Card";
 import { Icon, type IconName } from "../../atoms/Icon/Icon";
@@ -21,6 +22,9 @@ export type CardBackProps = {
   note?: string;
   warn?: string;
   editor?: Omit<QueryEditorProps, "code">;
+  onNext: () => void;
+  /* 最後の 1 枚なら進む先は結果。残っていれば次のカード */
+  isLast?: boolean;
 };
 
 const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
@@ -28,6 +32,8 @@ const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
 const GROUP: CSSProperties = { display: "grid", gap: "var(--space-xs)" };
 
 const MARKED: CSSProperties = { display: "flex", alignItems: "flex-start", gap: "var(--space-xs)" };
+
+const ACTIONS: CSSProperties = { display: "flex", justifyContent: "flex-end" };
 
 type AnswerProps = {
   icon: IconName;
@@ -66,6 +72,8 @@ export const CardBack = ({
   note,
   warn,
   editor,
+  onNext,
+  isLast = false,
 }: CardBackProps) => {
   /* why: 正誤を props で受けない。受けると「正解なのに違う肢を正しいと出す」組み合わせが作れる */
   const isCorrect = chosen === correct;
@@ -122,6 +130,10 @@ export const CardBack = ({
             {warn}
           </Note>
         )}
+
+        <div style={ACTIONS}>
+          <Button onClick={onNext}>{isLast ? "結果を見る" : "次の問題"}</Button>
+        </div>
       </div>
     </Card>
   );

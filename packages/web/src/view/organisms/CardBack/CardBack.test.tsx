@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { userEvent } from "storybook/test";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { WITH } from "../../../fixtures/cards";
@@ -12,9 +13,26 @@ const BASE: CardBackProps = {
   kind: "prose",
   chosen: WITH.role,
   correct: WITH.role,
+  onNext: () => undefined,
 };
 
 describe("CardBack", () => {
+  it("次の問題へ進める", async () => {
+    const onNext = vi.fn();
+    render(<CardBack {...BASE} onNext={onNext} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "次の問題" }));
+
+    expect(onNext).toHaveBeenCalledOnce();
+  });
+
+  it("最後の 1 枚では進む先を結果と書く", () => {
+    render(<CardBack {...BASE} isLast />);
+
+    expect(screen.getByRole("button", { name: "結果を見る" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "次の問題" })).toBeNull();
+  });
+
   it("選んだ肢が正しければ正解にする", () => {
     render(<CardBack {...BASE} />);
 

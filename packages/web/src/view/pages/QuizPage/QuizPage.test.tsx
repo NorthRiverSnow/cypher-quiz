@@ -26,6 +26,7 @@ const BACK: QuizFace = {
     kind: "prose",
     chosen: OPTIONAL_MATCH.role,
     correct: OPTIONAL_MATCH.role,
+    onNext: () => undefined,
   },
 };
 
