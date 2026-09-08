@@ -25,3 +25,17 @@ export const flatMap = <T, U, E>(
 
 export const unwrapOr = <T, E>(result: Result<T, E>, fallback: T): T =>
   result.ok ? result.value : fallback;
+
+/**
+ * throw する処理を Result に変える。捕まえた値は unknown のまま渡す。
+ *
+ * why: try を書く場所をここだけにする。呼ぶ側は mapErr で自分のエラー型に変えるか、
+ * unwrapOr で代わりの値を返すかを選ぶ——どちらも「握り潰していない」ことが形に出る
+ */
+export const attempt = <T>(fn: () => T): Result<T, unknown> => {
+  try {
+    return ok(fn());
+  } catch (error) {
+    return err(error);
+  }
+};

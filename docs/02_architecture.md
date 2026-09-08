@@ -254,6 +254,15 @@ story ファイルに書いてよいのは、被写体の並べ方（`render`）
 | 不変性 | **TypeScript の `Readonly<>` / `readonly`** | 型エラーになる。ただし付けた所だけ・浅くだけ（下記） |
 | クラス禁止 | — | **機械では守らない**（下記） |
 
+### クラスを使う唯一の場所
+
+`view/templates/ErrorBoundary`。**React に hook 版の境界が無い**ため、ここだけクラスで書く。
+境界が無いと、描画中の例外で React が木ごと外して**白い画面**になる。
+
+持たせるのは `componentDidCatch` と `getDerivedStateFromError` だけで、出す画面は
+`fallback` として外から渡す（中身を知らないまま包む）。**スタックはコンソールに残し、
+画面には文言だけを出す。**
+
 **クラス禁止だけは機械化していない。** Oxlint に該当ルールが無く、クラスは「うっかり書く」ものではないので、レビューで足りると判断した。どうしても止めたければ Oxlint の JS プラグイン（`vite.config.ts` の `lint.jsPlugins`。Vite+ 自身も 1 つ登録している）で `ClassDeclaration` を検出してエラーにする 15 行程度のプラグインを書けば済む。
 
 ### `Readonly` は付ける場所を選ぶ

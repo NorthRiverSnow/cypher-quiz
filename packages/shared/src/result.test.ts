@@ -1,12 +1,46 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { err, flatMap, isOk, map, mapErr, ok, unwrapOr, type Result } from "./result";
+import { attempt, err, flatMap, isOk, map, mapErr, ok, unwrapOr, type Result } from "./result";
 
 const parseCount = (text: string): Result<number, string> => {
   const n = Number(text);
 
   return Number.isInteger(n) ? ok(n) : err(`整数ではない: ${text}`);
 };
+
+describe("attempt", () => {
+  it("throw しなければ戻り値を包む", () => {
+    expect(attempt(() => 13)).toEqual(ok(13));
+  });
+
+  it("throw した値をそのまま渡す", () => {
+    const boom = new Error("QuotaExceededError");
+
+    expect(
+      attempt(() => {
+        throw boom;
+      }),
+    ).toEqual(err(boom));
+  });
+
+  /* why: 例外を外へ出さない。呼ぶ側は mapErr か unwrapOr で必ず扱うことになる */
+  it("呼ぶ側に例外を投げない", () => {
+    expect(() =>
+      attempt(() => {
+        throw new Error("boom");
+      }),
+    ).not.toThrow();
+  });
+
+  it("unwrapOr と組むと代わりの値になる", () => {
+    expect(
+      unwrapOr(
+        attempt((): number => JSON.parse("{壊れている")),
+        0,
+      ),
+    ).toBe(0);
+  });
+});
 
 describe("Result", () => {
   it("成功は値を持ち、失敗は理由を持つ", () => {
