@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router";
 
+import { useTheme } from "./controller/useTheme";
 import { OPTIONAL_MATCH, SET_REMOVE, WITH } from "./fixtures/cards";
+import { ThemeToggle } from "./view/atoms/ThemeToggle/ThemeToggle";
 import type { ConnectInput } from "./view/organisms/ConnectForm/ConnectForm";
 import { ConnectPage } from "./view/pages/ConnectPage/ConnectPage";
 import { QuizPage, type QuizFace } from "./view/pages/QuizPage/QuizPage";
 import { ResultPage } from "./view/pages/ResultPage/ResultPage";
 import { StartPage } from "./view/pages/StartPage/StartPage";
+import { Corner } from "./view/templates/Corner/Corner";
 
 /* URL とページの対応。ページは全状態を props で受ける純関数なので、遷移はここで
  * navigate に繋ぐ（docs/02_architecture.md#url-とページの対応）
@@ -124,13 +127,22 @@ const Result = () => {
   );
 };
 
-export const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Start />} />
-    <Route path="/connect" element={<Connect />} />
-    <Route path="/quiz" element={<Quiz />} />
-    <Route path="/result" element={<Result />} />
-    {/* why: 知らない URL はスタートへ送る。空白の画面を出さない */}
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
-);
+export const AppRoutes = () => {
+  const [theme, toggleTheme] = useTheme();
+
+  return (
+    <>
+      <Corner>
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      </Corner>
+      <Routes>
+        <Route path="/" element={<Start />} />
+        <Route path="/connect" element={<Connect />} />
+        <Route path="/quiz" element={<Quiz />} />
+        <Route path="/result" element={<Result />} />
+        {/* why: 知らない URL はスタートへ送る。空白の画面を出さない */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  );
+};

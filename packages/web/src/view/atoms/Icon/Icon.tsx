@@ -6,6 +6,8 @@ export const ICONS = {
   close: "\ue5cd",
   play_arrow: "\ue037",
   restart_alt: "\uf053",
+  light_mode: "\ue518",
+  dark_mode: "\ue51c",
 } as const;
 
 export type IconName = keyof typeof ICONS;

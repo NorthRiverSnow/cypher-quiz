@@ -437,6 +437,7 @@ cypher-quiz/
          │     └─ ResultPage/
          │
          ├─ controller/
+         │  ├─ useTheme.ts          # data-theme と localStorage。View の外
          │  ├─ useQuiz.ts
          │  └─ useConnection.ts
          │
@@ -474,6 +475,10 @@ cypher-quiz/
 View が遷移を知ることになる。`routes.tsx` が薄い包みを作り、そこで `navigate` に繋ぐ。
 
 router は `react-router`（`BrowserRouter` + `Routes`）。`main.tsx` が `BrowserRouter` を張る。
+
+テーマの切替も `routes.tsx` に置く。**どのページにも属さない道具**なので、
+`templates/Corner` で画面の隅に固定し、状態は `controller/useTheme` が持つ
+（`data-theme` と `localStorage` は View の外）。
 
 ---
 
