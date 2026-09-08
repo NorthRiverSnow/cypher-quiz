@@ -27,5 +27,5 @@ export const 始めたばかり: Story = { args: { counts: [60, 0, 0] } };
 
 export const 完了: Story = { args: { counts: [0, 0, 60] } };
 
-/* 誤答して box 0 に戻ったものがある状態 */
+/* 不正解で box 0 に戻ったものがある状態 */
 export const 差し戻しあり: Story = { args: { counts: [12, 20, 28] } };

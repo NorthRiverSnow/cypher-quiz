@@ -47,6 +47,9 @@ description: view/ にコンポーネントを新しく作る手順。層の決�
 
 - `@media (hover: hover)` で囲む。指で触る端末は hover が張り付く
 - **フォーカスリングは書かない。** `tokens.css` の `:where(:focus-visible)` が全要素に出す
+- **`button` を自分で組んだら `color: inherit` と `font-family: inherit` を書く。**
+  UA が当てる色と書体は継承されない。書き忘れると **dark で字が黒くなる**（light では
+  `ButtonText` が本文の色に近く、気づけない）
 - **選択状態は `aria-checked` を CSS のセレクタにも使う。** class を二重に持たない
 
 ### インライン style は CSS Modules に勝つ

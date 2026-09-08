@@ -18,3 +18,8 @@ export const SECTION_LABELS: Record<SectionId, string> = {
 
 /* 出題の向き。正順は構文 → 目的、逆順は目的 → 構文（docs/01_spec.md §2） */
 export type Direction = "forward" | "reverse";
+
+export const DIRECTION_LABELS: Record<Direction, string> = {
+  forward: "構文 → 目的",
+  reverse: "目的 → 構文",
+};

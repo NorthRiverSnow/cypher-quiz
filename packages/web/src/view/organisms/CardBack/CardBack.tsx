@@ -67,7 +67,7 @@ export const CardBack = ({
   warn,
   editor,
 }: CardBackProps) => {
-  /* why: 正誤を props で受けない。受けると「正答なのに違う肢を正しいと出す」組み合わせが作れる */
+  /* why: 正誤を props で受けない。受けると「正解なのに違う肢を正しいと出す」組み合わせが作れる */
   const isCorrect = chosen === correct;
   const verdictTone = isCorrect ? "keep" : "alarm";
 
@@ -80,7 +80,7 @@ export const CardBack = ({
           {/* why: 記号だけなので、読み上げの名前を label で与える */}
           <Icon
             name={isCorrect ? "radio_button_unchecked" : "close"}
-            label={isCorrect ? "正答" : "誤答"}
+            label={isCorrect ? "正解" : "不正解"}
             size="2rem"
             color={`var(--${verdictTone})`}
           />

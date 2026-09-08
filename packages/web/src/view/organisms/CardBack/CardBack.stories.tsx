@@ -36,9 +36,9 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const 正答: Story = {};
+export const 正解: Story = {};
 
-export const 誤答: Story = {
+export const 不正解: Story = {
   args: { chosen: OPTIONAL_MATCH.choices[2] },
 };
 

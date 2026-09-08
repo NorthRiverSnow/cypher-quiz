@@ -43,8 +43,8 @@
 | トークン | light | dark | 役割 |
 |---|---|---|---|
 | `--accent` | `#006bf0` | `#86baff` | 構造・キーワード → 選択中の肢、進捗バー |
-| `--keep` | `#008509` | `#44d94e` | 正解 → 正答の罫線、正しい肢、コード中のリレーション型 |
-| `--alarm` | `#de1f2d` | `#ff938b` | 誤り → 誤答の罫線、誤った肢 |
+| `--keep` | `#008509` | `#44d94e` | 正解 → 罫線と正しい肢、コード中のリレーション型 |
+| `--alarm` | `#de1f2d` | `#ff938b` | 誤り → 不正解の罫線、誤った肢 |
 | `--warn` | `#8f6d00` | `#e3af00` | 注意 → 罠、引っかけの注記 |
 
 ### 淡い面
@@ -53,7 +53,7 @@
 |---|---|---|---|
 | `--accent-bg` | `#dbe9ff` | `#0d2444` | 選択中の肢の面 |
 | `--keep-bg` | `#dcf5d5` | `#082c0c` | 正解の面 |
-| `--alarm-bg` | `#ffe3e1` | `#3c1614` | 誤答の面 |
+| `--alarm-bg` | `#ffe3e1` | `#3c1614` | 不正解の面 |
 | `--warn-bg` | `#faeed1` | `#302200` | 注意の面 |
 
 ### エンティティ色
@@ -141,12 +141,12 @@ OKLCH（知覚均等空間）で測る。
 | 状態 | 使う色 |
 |---|---|
 | 選択中の肢 | `--accent`（罫線と `--accent-bg` の面） |
-| 正答 | `--keep` |
-| 誤答 | `--alarm` |
+| 正解 | `--keep` |
+| 不正解 | `--alarm` |
 | 注意・罠 | `--warn` |
 | 進捗バー | box 0 は `--rule`、box 1 は `--accent`、box 2（完了）は `--keep` |
 
-**進捗バーは完了 → 1 回正答 → まだの順に区画を置く。** 完了が左から伸びる。
+**進捗バーは完了 → 1 回正解 → まだの順に区画を置く。** 完了が左から伸びる。
 | 結果表のノード種別チップ | `--team` / `--engineer` / `--service` / `--incident` |
 
 **「正解」を名乗る色は `--keep` だけ。** 金（`--warn`）は注意・罠の専任で、正解には使わない。
@@ -171,7 +171,7 @@ OKLCH（知覚均等空間）で測る。
 | `syntax` | mono | `1rem` | semibold | 1.9 | — | 肢の構文 |
 | `titleProse` | serif | `1.125rem` | regular | 1.75 | — | 逆順の設問 |
 | `title` | mono | `1.3rem` | semibold | 1.5 | — | 正順の設問 |
-| `display` | serif | `1.9rem` | black | 1.32 | — | カタログの見出し |
+| `display` | serif | `1.9rem` | black | 1.32 | — | サマリの正解率、カタログの見出し |
 
 `micro` は `text-transform: uppercase` を持つ（guide の大文字マイクロラベルの型）。
 和文のラベルには何も起きない。
@@ -188,7 +188,7 @@ OKLCH（知覚均等空間）で測る。
 | `--weight-medium` | 500 | sans、アイコン | アイコンの `wght` 軸 |
 | `--weight-semibold` | 600 | mono | 肢の構文、正順の設問、コードの語句 |
 | `--weight-bold` | 700 | sans | 主ボタンの文字 |
-| `--weight-black` | 900 | serif | カタログの見出し |
+| `--weight-black` | 900 | serif | サマリの正解率、カタログの見出し |
 
 **太いほうの面は書体ごとに 1 つずつしか読み込んでいない。** そしてその番号が書体で違う。
 
@@ -277,6 +277,7 @@ font-feature-settings: "palt" 1;
 | カード | `--panel` | `--rule` 1px + `--shadow` | 4px |
 | くぼんだ面（コードブロック） | `--panel-sunken` | `--rule-soft` 1px | 3px |
 | 肢 | `--panel` → hover で `--panel-sunken` | `--rule` 1px | 3px |
+| 押せる一覧の行 | なし → hover で `--panel-sunken` | なし | 3px |
 | ボタン（主） | `--accent`（無効時 `--muted`） | なし | 3px |
 | ボタン（副） | なし → hover で `--panel-sunken` | `--rule` 1px | 3px |
 | 注意・補足（`Note`） | `--<tone>-bg` | 左に `--<tone>` 2px | なし |

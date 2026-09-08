@@ -1,9 +1,5 @@
-/* CSS Modules は class 名の対応表を返す。:hover / :focus-visible のように
- * インライン style で書けない見た目はこちらで書く。
- *
- * why: `*.css` より先に宣言する。どちらもワイルドカードの接頭辞が空で、
- * 後に書くと `*.css`（中身が空）に食われて class 名が引けなくなる。
- */
+/* CSS Modules は class 名の対応表を返す。宣言の順序は
+ * docs/02_architecture.md#見た目の書き方インライン-style-と-css-modules */
 declare module "*.module.css" {
   const classes: Readonly<Record<string, string>>;
   export default classes;

@@ -15,23 +15,23 @@ const BASE: CardBackProps = {
 };
 
 describe("CardBack", () => {
-  it("選んだ肢が正しければ正答にする", () => {
+  it("選んだ肢が正しければ正解にする", () => {
     render(<CardBack {...BASE} />);
 
-    expect(screen.getByRole("img", { name: "正答" })).toBeDefined();
-    expect(screen.queryByRole("img", { name: "誤答" })).toBeNull();
+    expect(screen.getByRole("img", { name: "正解" })).toBeDefined();
+    expect(screen.queryByRole("img", { name: "不正解" })).toBeNull();
   });
 
-  it("選んだ肢が違えば誤答にして、選んだ肢も並べる", () => {
+  it("選んだ肢が違えば不正解にして、選んだ肢も並べる", () => {
     const chosen = WITH.choices[0] ?? "";
     render(<CardBack {...BASE} chosen={chosen} />);
 
-    expect(screen.getByRole("img", { name: "誤答" })).toBeDefined();
+    expect(screen.getByRole("img", { name: "不正解" })).toBeDefined();
     expect(screen.getByText("選んだ肢")).toBeDefined();
     expect(screen.getByText(chosen)).toBeDefined();
   });
 
-  it("正答のときは選んだ肢を出さない", () => {
+  it("正解のときは選んだ肢を出さない", () => {
     render(<CardBack {...BASE} />);
 
     expect(screen.queryByText("選んだ肢")).toBeNull();

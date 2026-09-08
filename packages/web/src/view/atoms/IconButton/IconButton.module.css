@@ -16,7 +16,6 @@
     border-color 120ms;
 }
 
-/* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
 @media (hover: hover) {
   .button:not(:disabled):hover {
     border-color: var(--rule);

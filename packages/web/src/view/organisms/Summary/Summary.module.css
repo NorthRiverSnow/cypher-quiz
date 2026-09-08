@@ -1,0 +1,17 @@
+.card {
+  width: 100%;
+  text-align: left;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    background: var(--panel-sunken);
+  }
+}

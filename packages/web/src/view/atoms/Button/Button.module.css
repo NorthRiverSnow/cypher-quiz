@@ -2,8 +2,6 @@
   padding: var(--space-2xs) var(--space-md);
   border: var(--border-width) solid transparent;
   border-radius: var(--radius);
-  /* why: font-family だけ継承する。button の UA 既定は本文と別の書体・大きさで、
-     指定しないと段階表から引いた大きさに UA の書体が当たる */
   font-family: inherit;
   cursor: pointer;
   transition: background 120ms;
@@ -17,7 +15,6 @@
   font-weight: var(--weight-medium);
 }
 
-/* why: 指で触る端末は hover が張り付く。ポインタがある環境だけに限る */
 @media (hover: hover) {
   .primary:not(:disabled):hover {
     /* why: --ink 側へ混ぜると light では暗く、dark では明るくなる。

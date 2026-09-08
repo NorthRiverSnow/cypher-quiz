@@ -16,15 +16,15 @@ export const INKS: Token[] = [
 
 export const SEMANTIC: Token[] = [
   { name: "--accent", role: "構造・キーワード → 選択中の肢、進捗バー" },
-  { name: "--keep", role: "正解 → 正答の罫線、正しい肢、コード中のリレーション型" },
-  { name: "--alarm", role: "誤り → 誤答の罫線、誤った肢" },
+  { name: "--keep", role: "正解 → 罫線と正しい肢、コード中のリレーション型" },
+  { name: "--alarm", role: "誤り → 不正解の罫線、誤った肢" },
   { name: "--warn", role: "注意 → 罠、引っかけの注記" },
 ];
 
 export const TINTS: Token[] = [
   { name: "--accent-bg", role: "選択中の肢の面" },
   { name: "--keep-bg", role: "正解の面" },
-  { name: "--alarm-bg", role: "誤答の面" },
+  { name: "--alarm-bg", role: "不正解の面" },
   { name: "--warn-bg", role: "注意の面" },
 ];
 

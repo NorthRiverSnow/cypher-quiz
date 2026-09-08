@@ -11,7 +11,7 @@ export type CardFixture = {
   section: SectionId;
   name: string;
   role: string;
-  /* 誤答肢は同じ章から引く。answer が正しい肢の位置 */
+  /* 不正解の肢は同じ章から引く。answer が正しい肢の位置 */
   choices: readonly string[];
   answer: number;
   code?: readonly CodeSegment[];
