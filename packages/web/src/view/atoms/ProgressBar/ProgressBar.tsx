@@ -22,7 +22,7 @@ const TRACK: CSSProperties = {
 };
 
 export const ProgressBar = ({ counts }: ProgressBarProps) => {
-  const total = counts.reduce((a, b) => a + b, 0);
+  const total = counts.reduce((sum, count) => sum + count, 0);
   const done = counts[2];
 
   return (

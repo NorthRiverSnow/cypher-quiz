@@ -32,20 +32,20 @@ export const ResultTable = ({ columns, rows }: ResultTableProps) => (
     <table style={TABLE}>
       <thead>
         <tr>
-          {columns.map((c) => (
-            <th key={c} style={CELL} scope="col">
+          {columns.map((col) => (
+            <th key={col} style={CELL} scope="col">
               <Text variant="code" tone="muted">
-                {c}
+                {col}
               </Text>
             </th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {rows.map((row, i) => (
-          <tr key={i}>
-            {row.map((cell, j) => (
-              <td key={j} style={CELL}>
+        {rows.map((row, rowIdx) => (
+          <tr key={rowIdx}>
+            {row.map((cell, colIdx) => (
+              <td key={colIdx} style={CELL}>
                 <Text variant="code" tone={typeof cell === "string" ? "soft" : cell.kind}>
                   {typeof cell === "string" ? cell : cell.text}
                 </Text>

@@ -19,18 +19,18 @@ export const ChoiceList = ({ choices, kind, selected, onSelect }: ChoiceListProp
 
   return (
     <div role="radiogroup" aria-label="選択肢" style={{ display: "grid", gap: "var(--space-xs)" }}>
-      {choices.map((choice, i) => (
+      {choices.map((choice, idx) => (
         <button
           key={choice}
           type="button"
           role="radio"
-          aria-checked={selected === i}
-          data-index={i}
+          aria-checked={selected === idx}
+          data-index={idx}
           className={styles.choice}
           onClick={handleClick}
         >
-          <Text variant="numeral" tone={selected === i ? "accent" : "muted"}>
-            {i + 1}
+          <Text variant="numeral" tone={selected === idx ? "accent" : "muted"}>
+            {idx + 1}
           </Text>
           <Text variant={kind}>{choice}</Text>
         </button>

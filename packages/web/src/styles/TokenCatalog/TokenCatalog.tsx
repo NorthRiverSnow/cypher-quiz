@@ -95,8 +95,8 @@ const Group = ({ title, tokens, tint = false }: GroupProps) => (
         {title}
       </Text>
     </div>
-    {tokens.map((t) =>
-      tint ? <TintSwatch key={t.name} {...t} /> : <Swatch key={t.name} {...t} />,
+    {tokens.map((token) =>
+      tint ? <TintSwatch key={token.name} {...token} /> : <Swatch key={token.name} {...token} />,
     )}
   </section>
 );

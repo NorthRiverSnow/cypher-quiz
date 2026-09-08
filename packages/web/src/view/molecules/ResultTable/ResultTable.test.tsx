@@ -19,7 +19,9 @@ describe("ResultTable", () => {
   it("見出しを列見出しとして出す", () => {
     render(<ResultTable columns={COLUMNS} rows={ROWS} />);
 
-    expect(screen.getAllByRole("columnheader").map((h) => h.textContent)).toEqual(COLUMNS);
+    expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual(
+      COLUMNS,
+    );
   });
 
   it("見出しの行と中身の行を並べる", () => {

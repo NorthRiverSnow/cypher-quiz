@@ -86,9 +86,9 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => { ... };
 | 分類 | 例 | 扱い |
 |---|---|---|
 | 想定内の失敗 | 接続失敗、書き込み拒否、構文エラー、タイムアウト | `Result` の `err` |
-| 想定外 | バグ | 例外として上げる |
+| 想定外 | バグ | `throw` する。`Result` に包まない |
 
-`shared` に 30 行程度の自前 `Result` / `Option` を置く。
+`shared` に 30 行程度の自前 `Result` を置く（`ok` / `err` / `map` / `mapErr` / `flatMap` / `unwrapOr` / `isOk`）。
 
 ```ts
 // packages/shared/src/result.ts
@@ -305,6 +305,10 @@ View は Model の**型**は要るがロジックは要らない。型を `share
 
 **生成物はコミットする**ので、このリポジトリは単体で完結する。
 
+**デッキはフロントだけが持つ。** API を通らないので `shared/schema/` にも入れない。
+バックエンドの仕事はグラフクエリの実行だけで、[接続しなくても解ける](./01_spec.md#5-db-への接続)
+という仕様がこれで成立する。
+
 章は 6 つ。**id は安定した slug、日本語は表示ラベルとして別に持つ。** `section` は「不正解の肢を同じ章から引く」（[`01_spec.md` §2](./01_spec.md#2-出題形式)）ために使う機能上のキーなので、文言を直しても壊れない値にする必要がある。
 
 ```ts
@@ -380,12 +384,11 @@ cypher-quiz/
 └─ packages/
    │
    ├─ shared/src/
-   │  ├─ schema/                    # ★ Zod。型・検証・OpenAPI の唯一の真実
-   │  │  ├─ card.ts
+   │  ├─ schema/                    # ★ Zod。API を通るものだけ。型・検証・OpenAPI の源
    │  │  ├─ query.ts
    │  │  ├─ connect.ts
    │  │  └─ error.ts
-   │  ├─ result.ts                  # Result / Option
+   │  ├─ result.ts                  # Result
    │  └─ index.ts
    │
    ├─ api/src/
@@ -404,7 +407,7 @@ cypher-quiz/
       └─ src/
          ├─ model/                  # ★ React も DOM も知らない純粋 TS
          │  ├─ deck.generated.ts
-         │  ├─ deck.ts
+         │  ├─ deck.ts               # Card / SectionId / Direction。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
          │  ├─ quiz.ts              # QuizState / reduceQuiz / セレクタ
          │  ├─ leitner.ts           # box 遷移

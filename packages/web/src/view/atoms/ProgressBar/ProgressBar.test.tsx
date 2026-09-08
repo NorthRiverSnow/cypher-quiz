@@ -33,7 +33,7 @@ describe("ProgressBar", () => {
     render(<ProgressBar counts={[38, 14, 8]} />);
     const bar = screen.getByRole("progressbar", { name: "進捗" });
 
-    expect([...bar.children].map((s) => (s as HTMLElement).style.flexGrow)).toEqual([
+    expect([...bar.children].map((span) => (span as HTMLElement).style.flexGrow)).toEqual([
       "8",
       "14",
       "38",
