@@ -11,6 +11,7 @@ import { TEXT, Text } from "../../atoms/Text/Text";
 import type { ChoiceKind } from "../../molecules/ChoiceList/ChoiceList";
 import { Note } from "../../molecules/Note/Note";
 import { QueryEditor, type QueryEditorProps } from "../../molecules/QueryEditor/QueryEditor";
+import { ResultTable, type ResultTableProps } from "../../molecules/ResultTable/ResultTable";
 
 export type CardBackProps = {
   section: SectionId;
@@ -22,6 +23,8 @@ export type CardBackProps = {
   note?: string;
   warn?: string;
   editor?: Omit<QueryEditorProps, "code">;
+  /* 実行して返ってきた行。期待される実行結果とは別に、下へ積む */
+  result?: ResultTableProps;
   onNext: () => void;
   /* 最後の 1 枚なら進む先は結果。残っていれば次のカード */
   isLast?: boolean;
@@ -72,6 +75,7 @@ export const CardBack = ({
   note,
   warn,
   editor,
+  result,
   onNext,
   isLast = false,
 }: CardBackProps) => {
@@ -119,7 +123,22 @@ export const CardBack = ({
           ) : (
             <QueryEditor code={code} {...editor} />
           ))}
-        {expected !== undefined && <ResultBlock>{expected}</ResultBlock>}
+        {expected !== undefined && (
+          <div style={GROUP}>
+            <Text variant="micro" tone="muted">
+              期待される実行結果
+            </Text>
+            <ResultBlock>{expected}</ResultBlock>
+          </div>
+        )}
+        {result !== undefined && (
+          <div style={GROUP}>
+            <Text variant="micro" tone="muted">
+              実行結果
+            </Text>
+            <ResultTable {...result} />
+          </div>
+        )}
         {note !== undefined && (
           <Text variant="prose" tone="soft">
             {note}

@@ -1,9 +1,10 @@
 import type { CSSProperties } from "react";
 
-import { Chip, type ChipKind } from "../../atoms/Chip/Chip";
 import { Text } from "../../atoms/Text/Text";
 
-export type ResultCell = string | { chip: ChipKind; text: string };
+export type EntityKind = "team" | "engineer" | "service" | "incident";
+
+export type ResultCell = string | { kind: EntityKind; text: string };
 
 export type ResultTableProps = {
   columns: readonly string[];
@@ -33,7 +34,7 @@ export const ResultTable = ({ columns, rows }: ResultTableProps) => (
         <tr>
           {columns.map((c) => (
             <th key={c} style={CELL} scope="col">
-              <Text variant="micro" tone="muted">
+              <Text variant="code" tone="muted">
                 {c}
               </Text>
             </th>
@@ -45,13 +46,9 @@ export const ResultTable = ({ columns, rows }: ResultTableProps) => (
           <tr key={i}>
             {row.map((cell, j) => (
               <td key={j} style={CELL}>
-                {typeof cell === "string" ? (
-                  <Text variant="code" tone="soft">
-                    {cell}
-                  </Text>
-                ) : (
-                  <Chip kind={cell.chip}>{cell.text}</Chip>
-                )}
+                <Text variant="code" tone={typeof cell === "string" ? "soft" : cell.kind}>
+                  {typeof cell === "string" ? cell : cell.text}
+                </Text>
               </td>
             ))}
           </tr>

@@ -45,6 +45,40 @@ export const 不正解: Story = {
 
 export const 最後の1枚: Story = { args: { isLast: true } };
 
+/* ノードを返すクエリ（`RETURN up`）。ラベルが分かるので色を付ける */
+export const 実行結果がノード: Story = {
+  args: {
+    editor: {
+      ...EDITOR,
+      value:
+        "MATCH (:Service {name:'customer-portal'})\n  -[:DEPENDS_ON*1..3]->(up:Service)\nRETURN DISTINCT up",
+    },
+    result: {
+      columns: ["up"],
+      rows: [
+        [{ kind: "service", text: "auth-service" }],
+        [{ kind: "service", text: "billing-engine" }],
+        [{ kind: "service", text: "payment-gateway" }],
+      ],
+    },
+  },
+};
+
+/* 実行した直後。教材の期待値の下に、返ってきた行が積まれる */
+export const 実行結果あり: Story = {
+  args: {
+    editor: { ...EDITOR, value: "MATCH (e:Engineer)\nRETURN e.name, count(i) AS n" },
+    result: {
+      columns: ["e.name", "n"],
+      rows: [
+        ["Killua Zoldyck", "0"],
+        ["Mika Virtanen", "3"],
+        ["Sanna Koskinen", "2"],
+      ],
+    },
+  },
+};
+
 /* 罠を持つカード。裏面で最も情報が多くなる形 */
 export const 罠のあるカード: Story = {
   args: {

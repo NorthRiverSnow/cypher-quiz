@@ -177,7 +177,7 @@ organisms→molecules は通り、organisms→pages はエラーになる。
 
 | 層 | 何を置くか | 判断の目安 |
 |---|---|---|
-| **atoms** | それ以上割れない見た目 | 状態を持たない。`Icon` / `Chip` / `ProgressBar` / `CodeBlock` |
+| **atoms** | それ以上割れない見た目 | 状態を持たない。`Icon` / `Text` / `ProgressBar` / `CodeBlock` |
 | **molecules** | atoms を組んだ 1 つの役割 | 名前を付けると 1 語で言える。`Note` / `ChoiceList` / `ResultTable` |
 | **organisms** | 画面の中の意味のあるかたまり | 単体で「何の部品か」が分かる。`FlashCard` / `CardBack` |
 | **templates** | 配置だけ | データを一切知らない。`QuizLayout` |
@@ -415,7 +415,6 @@ cypher-quiz/
          │  │                       #   アトミックデザイン。下の層しか import できない
          │  ├─ atoms/               # 最小単位。状態を持たない
          │  │  ├─ Icon/             # Material Symbols のラッパ
-         │  │  ├─ Chip/
          │  │  ├─ ProgressBar/
          │  │  └─ CodeBlock/        # guides の .kw/.rel/.hl/.cm 体系
          │  ├─ molecules/           # atoms の組み合わせ。1 つの役割

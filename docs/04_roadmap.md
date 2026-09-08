@@ -33,7 +33,7 @@ D. 結線
 | A-2 | `CodeBlock` / `Icon` / `Note` | 語句の種別、横に溢れる行、注記の色調 |
 | A-3 | `Card` / `Button` / `ChoiceList` / `FlashCard`。**まだ裏面は作らない** | 正順 / 逆順、未選択 / 選択中、回答ボタンの有効 / 無効 |
 | A-4 | `CardBack` / `fixtures/` | 正解 / 不正解、罠のあるカード |
-| A-5 | `ResultTable` / `Chip` | 1 行、複数列、日付を含む表 |
+| A-5 | `ResultTable` | 1 行、複数列、日付を含む表、ノードを含む表 |
 | A-6 | `QueryEditor` | 通常 / 編集済み / 実行中 / 実行エラー / 書き込みで拒否 / 未接続 |
 | A-7 | `ProgressBar` / `ConnectForm` / `Summary` | 未入力 / 入力中 / 接続中 / 接続失敗 / dev 自動接続中 |
 | A-8 | `templates/QuizLayout` と 4 つの page、`routes.tsx` で結合 | 下の一覧 |

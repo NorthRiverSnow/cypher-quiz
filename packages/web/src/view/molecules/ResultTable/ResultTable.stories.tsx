@@ -36,14 +36,21 @@ export const 複数列: Story = {
   },
 };
 
-/* ノード種別をチップで出す */
-export const チップを含む: Story = {
+/* ノードで返った値はラベルの色で出す */
+export const ノードを含む: Story = {
   args: {
-    columns: ["種別", "name", "language"],
+    columns: ["s", "t", "e"],
     rows: [
-      [{ chip: "service", text: "Service" }, "telemetry-ingest", "Go"],
-      [{ chip: "team", text: "Team" }, "Grid Operations", "—"],
-      [{ chip: "engineer", text: "Engineer" }, "Killua Zoldyck", "—"],
+      [
+        { kind: "service", text: "telemetry-ingest" },
+        { kind: "team", text: "Grid Operations" },
+        { kind: "engineer", text: "Killua Zoldyck" },
+      ],
+      [
+        { kind: "service", text: "billing-engine" },
+        { kind: "team", text: "Billing" },
+        { kind: "engineer", text: "Mika Virtanen" },
+      ],
     ],
   },
 };

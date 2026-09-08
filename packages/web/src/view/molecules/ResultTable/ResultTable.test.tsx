@@ -6,10 +6,10 @@ import { ResultTable, type ResultCell } from "./ResultTable";
 /* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
-const COLUMNS = ["種別", "name", "n"];
+const COLUMNS = ["e", "name", "n"];
 const ROWS: readonly (readonly ResultCell[])[] = [
-  [{ chip: "engineer", text: "Engineer" }, "Killua Zoldyck", "0"],
-  [{ chip: "service", text: "Service" }, "telemetry-ingest", "3"],
+  [{ kind: "engineer", text: "Killua Zoldyck" }, "Killua Zoldyck", "0"],
+  [{ kind: "service", text: "telemetry-ingest" }, "telemetry-ingest", "3"],
 ];
 
 const cellTexts = () =>
@@ -27,16 +27,16 @@ describe("ResultTable", () => {
 
     expect(cellTexts()).toEqual([
       COLUMNS,
-      ["Engineer", "Killua Zoldyck", "0"],
-      ["Service", "telemetry-ingest", "3"],
+      ["Killua Zoldyck", "Killua Zoldyck", "0"],
+      ["telemetry-ingest", "telemetry-ingest", "3"],
     ]);
   });
 
-  /* why: チップの指定は object で来る。文字として扱うと [object Object] が出る */
-  it("チップのセルは中の文字を出す", () => {
-    render(<ResultTable columns={["種別"]} rows={[[{ chip: "team", text: "Team" }]]} />);
+  /* why: ノードのセルは object で来る。文字として扱うと [object Object] が出る */
+  it("ノードのセルは中の文字を出す", () => {
+    render(<ResultTable columns={["t"]} rows={[[{ kind: "team", text: "Grid Operations" }]]} />);
 
-    expect(screen.getByText("Team")).toBeDefined();
+    expect(screen.getByText("Grid Operations")).toBeDefined();
     expect(screen.queryByText(/object/)).toBeNull();
   });
 

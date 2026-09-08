@@ -124,7 +124,7 @@ export const TokenCatalog = () => (
       <Group title="§ Ink" tokens={INKS} />
       <Group title="§ Semantic — クイズの状態に対応" tokens={SEMANTIC} />
       <Group title="§ Semantic 淡い面 — 対になる意味色を載せてある" tokens={TINTS} tint />
-      <Group title="§ Entities — 結果表のチップ" tokens={ENTITIES} />
+      <Group title="§ Entities — 結果表のノード" tokens={ENTITIES} />
 
       <section>
         <div style={{ marginBottom: "var(--space-sm)" }}>

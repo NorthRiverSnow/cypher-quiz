@@ -17,6 +17,20 @@ const BASE: CardBackProps = {
 };
 
 describe("CardBack", () => {
+  it("実行して返ってきた行は表で出す", () => {
+    render(<CardBack {...BASE} result={{ columns: ["n"], rows: [["29"]] }} />);
+
+    expect(screen.getByRole("table")).toBeDefined();
+    expect(screen.getByText("実行結果")).toBeDefined();
+  });
+
+  it("実行していなければ表を出さない", () => {
+    render(<CardBack {...BASE} expected="Killua Zoldyck    0" />);
+
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByText("期待される実行結果")).toBeDefined();
+  });
+
   it("次の問題へ進める", async () => {
     const onNext = vi.fn();
     render(<CardBack {...BASE} onNext={onNext} />);

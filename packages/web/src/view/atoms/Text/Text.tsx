@@ -45,6 +45,10 @@ export const TONES = {
   keep: "var(--keep)",
   alarm: "var(--alarm)",
   warn: "var(--warn)",
+  team: "var(--team)",
+  engineer: "var(--engineer)",
+  service: "var(--service)",
+  incident: "var(--incident)",
 } as const;
 
 export type TextTone = keyof typeof TONES;
