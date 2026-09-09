@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   attempt,
+  attemptAsync,
   err,
   flatMap,
   isOk,
@@ -95,5 +96,47 @@ describe("Result", () => {
     const results = [parseCount("1"), parseCount("x"), parseCount("3")];
 
     expect(results.filter(isOk).map((result) => result.value)).toEqual([1, 3]);
+  });
+});
+
+describe("attemptAsync", () => {
+  it("解決した値を ok で返す", async () => {
+    expect(
+      await attemptAsync(
+        async () => 1,
+        () => "失敗" as const,
+      ),
+    ).toEqual({ ok: true, value: 1 });
+  });
+
+  it("reject した理由を扱えるエラーに変える", async () => {
+    const result = await attemptAsync(
+      () => Promise.reject(new Error("壊れた")),
+      (cause) => (cause instanceof Error ? cause.message : "不明"),
+    );
+
+    expect(result).toEqual({ ok: false, error: "壊れた" });
+  });
+
+  /* why: await の前に投げられた例外も同じ扱いにする。同期の throw だけ素通りすると、
+     呼ぶ側が 2 通りの失敗に備えることになる */
+  it("await の前に throw しても捕まえる", async () => {
+    const result = await attemptAsync(
+      () => {
+        throw new Error("すぐ壊れた");
+      },
+      () => "捕まえた" as const,
+    );
+
+    expect(result).toEqual({ ok: false, error: "捕まえた" });
+  });
+
+  it("Error でない値も捕まえる", async () => {
+    const result = await attemptAsync(
+      () => Promise.reject("文字列"),
+      (cause) => cause,
+    );
+
+    expect(result).toEqual({ ok: false, error: "文字列" });
   });
 });

@@ -46,7 +46,7 @@ const shorten = (event: LogEvent): LogEvent =>
       ? {
           ...event,
           message: redact(event.message),
-          ...(event.stack === undefined ? {} : { stack: redact(event.stack) }),
+          stack: event.stack === undefined ? undefined : redact(event.stack),
         }
       : event;
 
@@ -65,5 +65,7 @@ export const createLogger =
       return;
     }
 
+    /* why: JSON.stringify は値が undefined の項目を出力しない。無い項目を消す処理を
+       呼ぶ側に書かせずに済む */
     write(JSON.stringify({ at: now().toISOString(), level, ...shorten(event) }));
   };

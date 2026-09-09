@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@cypher-quiz/shared": "workspace:*",
+    "hono": "^4.13.7",
     "neo4j-driver": "^5.28.0"
   },
   "devDependencies": {

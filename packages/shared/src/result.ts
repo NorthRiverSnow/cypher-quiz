@@ -40,6 +40,25 @@ export const attempt = <T, E>(fn: () => T, onError: (cause: unknown) => E): Resu
 };
 
 /**
+ * throw する非同期処理を Result に変える。
+ *
+ * why: await を挟むと attempt では捕まえられない。try を書く場所を 1 ファイルに保つため、
+ * 同期の attempt と対で置く
+ *
+ * @param onError 捕まえた値を、扱えるエラーに変える
+ */
+export const attemptAsync = async <T, E>(
+  fn: () => Promise<T>,
+  onError: (cause: unknown) => E,
+): Promise<Result<T, E>> => {
+  try {
+    return ok(await fn());
+  } catch (cause) {
+    return err(onError(cause));
+  }
+};
+
+/**
  * 必ず実行し、throw したら代わりの値で続ける。
  *
  * why: 知らせる必要のない失敗に使う。握り潰しと違い、名前で「回復」だと分かる

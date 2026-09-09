@@ -8,6 +8,7 @@ export {
   flatMap,
   unwrapOr,
   attempt,
+  attemptAsync,
   recover,
 } from "./result";
 export {
