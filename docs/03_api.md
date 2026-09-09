@@ -316,25 +316,49 @@ services:
 
 ## 5. 結果の正規化
 
-`neo4j-driver` は素の JSON ではない型を返す。
+`neo4j-driver` は素の JSON ではない型を返す。**View がドライバを import せずに表を描けるよう、純関数で素の JSON に変換する**（`packages/api/src/neo4j/toPlainJson.ts`。DB も I/O も触らない）。
 
-| ドライバの型 | 出現例 |
-|---|---|
-| `Integer` | `count(*)` |
-| `Node` / `Relationship` / `Path` | `RETURN n`、`p = (…)` |
-| `Date` | `Incident.date` |
+### セル 1 つの対応
 
-**View がドライバを import せずに表を描けるよう、純関数で素の JSON に変換する。**
-
-```ts
-// packages/api/src/neo4j/toPlainJson.ts — 純粋。DB も I/O も触らない
-
-// Neo4j Date  → '2025-07-16'
-// Integer     → number（安全域を超えたら string）
-// Node        → { kind: 'node', labels: ['Incident'], props: { … } }
-```
+| ドライバの値 | 変換後 | 出現例 |
+|---|---|---|
+| `Integer` | `number`。安全域を超えたら `string` | `count(*)` |
+| `Node` | `{ kind: 'node', labels, props }` | `RETURN n` |
+| `Relationship` | `{ kind: 'relationship', type, props }` | `RETURN r` |
+| `Path` | `{ kind: 'path', nodes, relationships }` | `MATCH p = (…)` |
+| マップ | `{ kind: 'map', props }` | `RETURN t { .name }` |
+| リスト | 配列。中身も同じ規則で変換する | `collect(…)` |
+| `Date` / `DateTime` / `Duration` / `Point` | `toString()` の表記 | `Incident.date` → `'2025-08-05'` |
+| `null` / 値の無いセル | `null` | `OPTIONAL MATCH` |
 
 形は `shared` の Zod スキーマで定義するので、**OpenAPI にも自動で載る**。
+
+### マップにタグを付ける
+
+素の JS オブジェクトのまま返すと、**`RETURN { kind: 'node' }` が本物のノードと同じ形になる。** `kind: 'map'` を付けて、スキーマがノードとマップを区別できるようにする。
+
+タグが無ければ `Cell` は任意のオブジェクトを許すことになり、`props` の無い壊れたノードも通る。
+
+### 一時型・空間型を型ごとに分岐しない
+
+素のオブジェクト（マップ）を先に分けると、残るのは `toString()` が読める表記を返すクラスだけになる。**プロトタイプが `Object.prototype` かどうか**で分けられるので、ドライバが型を増やしても分岐を足さずに済む。
+
+既定の `toString()` しか持たないものは `null` にする。`'[object Object]'` を返すと、値が無いのか変換に失敗したのかを受け取った側が区別できない。
+
+### 列名は結果から取れない
+
+`await` した `QueryResult` は `records` と `summary` しか持たない。**0 行のとき列名が消える**ので、`Result.keys()` から取って渡す。
+
+```ts
+const running = tx.run(cypher);
+const keys = await running.keys();
+
+toPlainJson(keys, await running);
+```
+
+### 所要時間
+
+`summary.resultAvailableAfter`（届くまで）と `resultConsumedAfter`（読み終わるまで）の合計。**どちらもサーバ側の計測**で、クライアントの往復時間を含まない。
 
 ---
 
@@ -452,8 +476,10 @@ app.onError      すり抜けた例外。500 と error ログ。スタックは�
 export const runReadOnly = (
   deps: { log: Logger; timeoutMs: number },
   req: { driver: Driver; database?: string; reqId: string; cypher: string },
-) => Promise<Result<QueryResult, ApiError>>;
+) => Promise<Result<{ keys: readonly string[]; result: QueryResult }, ApiError>>;
 ```
+
+列名を結果と一緒に返すのは、[0 行のとき `records` から取れない](#列名は結果から取れない)ため。
 
 **呼ぶ側は Cypher を渡すだけ。** 実行するトランザクションを渡させない——渡せると、
 判定したクエリと実行するクエリを別にできてしまう。

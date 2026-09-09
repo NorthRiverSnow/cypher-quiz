@@ -1,5 +1,5 @@
 import { type ApiError, type Result, attemptAsync, err, isOk, ok } from "@cypher-quiz/shared";
-import neo4j, { type Driver, type QueryResult } from "neo4j-driver";
+import neo4j, { type Driver, type ManagedTransaction, type QueryResult } from "neo4j-driver";
 
 import type { Logger } from "../log";
 import { acceptReadOnly } from "./readOnly";
@@ -17,6 +17,20 @@ export type TxRequest = Readonly<{
   reqId: string;
   cypher: string;
 }>;
+
+export type QueryOutput = Readonly<{
+  /** 列名。RETURN に書かれた順。0 行でも消えない */
+  keys: readonly string[];
+  result: QueryResult;
+}>;
+
+/* why: 列名は await した結果に含まれない。0 行のとき列見出しが消えるので、
+   Result を await する前に keys() から取る（docs/03_api.md#列名は結果から取れない） */
+const runQuery = async (tx: ManagedTransaction, cypher: string): Promise<QueryOutput> => {
+  const running = tx.run(cypher);
+
+  return { keys: await running.keys(), result: await running };
+};
 
 /* why: 閉じられなくても結果は返す。知らせる先が無いので warn に留める */
 const close = async (log: Logger, reqId: string, session: { close: () => Promise<void> }) => {
@@ -40,7 +54,7 @@ const close = async (log: Logger, reqId: string, session: { close: () => Promise
 export const runReadOnly = async (
   { log, timeoutMs }: TxDeps,
   { driver, database, reqId, cypher }: TxRequest,
-): Promise<Result<QueryResult, ApiError>> => {
+): Promise<Result<QueryOutput, ApiError>> => {
   const session = driver.session({
     defaultAccessMode: neo4j.session.READ,
     ...(database === undefined ? {} : { database }),
@@ -48,14 +62,14 @@ export const runReadOnly = async (
 
   const ran = await attemptAsync(
     () =>
-      session.executeRead<Result<QueryResult, ApiError>>(
+      session.executeRead<Result<QueryOutput, ApiError>>(
         async (tx) => {
           const explained = await tx.run(`EXPLAIN ${cypher}`);
           const allowed = acceptReadOnly(explained.summary.queryType, explained.summary.plan);
 
           log({ event: "query.run", reqId, cypher, readOnly: isOk(allowed) });
 
-          return isOk(allowed) ? ok(await tx.run(cypher)) : err(allowed.error);
+          return isOk(allowed) ? ok(await runQuery(tx, cypher)) : err(allowed.error);
         },
         { timeout: timeoutMs },
       ),

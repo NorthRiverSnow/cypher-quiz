@@ -1,5 +1,5 @@
 /* 想定内の失敗を値で返す。バグは Result に包まず throw する
-   （docs/02_architecture.md#2-失敗の扱い） */
+   （docs/02_architecture.md#副作用の扱い） */
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });

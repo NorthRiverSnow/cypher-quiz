@@ -81,6 +81,49 @@ describe("QueryResultSchema", () => {
     expect(QueryResultSchema.parse(input)).toEqual(input);
   });
 
+  it("リレーション・パス・マップ・入れ子のリストも正常終了する", () => {
+    const input = {
+      columns: ["r", "p", "m", "grouped"],
+      rows: [
+        [
+          { kind: "relationship", type: "DEPENDS_ON", props: {} },
+          {
+            kind: "path",
+            nodes: [
+              { kind: "node", labels: ["Service"], props: { name: "mobile-api" } },
+              { kind: "node", labels: ["Service"], props: { name: "auth-service" } },
+            ],
+            relationships: [{ kind: "relationship", type: "DEPENDS_ON", props: {} }],
+          },
+          { kind: "map", props: { svc: "auth-service", up: 2 } },
+          [["a", "b"], ["c"]],
+        ],
+      ],
+      elapsedMs: 8,
+    };
+
+    expect(QueryResultSchema.parse(input)).toEqual(input);
+  });
+
+  /* why: 長さ 0 のパス（MATCH p = (n)）はリレーションを 1 本も持たない */
+  it("リレーションの無いパスも正常終了する", () => {
+    const input = {
+      columns: ["p"],
+      rows: [
+        [
+          {
+            kind: "path",
+            nodes: [{ kind: "node", labels: ["Service"], props: {} }],
+            relationships: [],
+          },
+        ],
+      ],
+      elapsedMs: 1,
+    };
+
+    expect(QueryResultSchema.parse(input)).toEqual(input);
+  });
+
   it("行が無い結果も正常終了する", () => {
     const input = { columns: ["n"], rows: [], elapsedMs: 3 };
 
@@ -98,9 +141,16 @@ describe("QueryResultSchema", () => {
       rows: [[{ kind: "node", labels: ["Service"] }]],
       elapsedMs: 1,
     });
+    /* why: マップにタグが要る理由。タグが無ければ、どんなオブジェクトも通ってしまう */
+    const untaggedMap = QueryResultSchema.safeParse({
+      columns: ["m"],
+      rows: [[{ svc: "auth-service" }]],
+      elapsedMs: 1,
+    });
 
     expect(unknownCell.success).toBe(false);
     expect(nodeWithoutProps.success).toBe(false);
+    expect(untaggedMap.success).toBe(false);
   });
 
   it("行が配列でなければエラーにする", () => {

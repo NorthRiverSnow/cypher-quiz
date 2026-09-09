@@ -204,12 +204,19 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
     - 不正解の肢が正解と重複しない
     - 同じシードで出題順が一致し、シードが違えば変わる
     - Leitner の遷移
-    - Neo4j 型の変換
 26. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
+
+### 結果の正規化
+
+27. **ドライバの型が残らない**（`vp run test:api`。[対応表](./03_api.md#セル-1-つの対応)）
+    - `count(n)` が `73`、2^53 を超える整数は文字列
+    - `Incident.date` が `'2025-08-05'`
+    - ノード・リレーション・パス・マップに `kind` のタグが付き、リストは中まで変換される
+    - **0 行でも列名が残る**
 
 ### 再現性
 
-27. `docker compose down -v && docker compose up` で全て再現する
+28. `docker compose down -v && docker compose up` で全て再現する
 
 ---
 

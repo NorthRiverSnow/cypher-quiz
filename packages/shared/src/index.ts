@@ -19,6 +19,13 @@ export {
 } from "./schema/connect";
 export {
   NodeValueSchema,
+  type NodeValue,
+  RelationshipValueSchema,
+  type RelationshipValue,
+  PathValueSchema,
+  type PathValue,
+  MapValueSchema,
+  type MapValue,
   CellSchema,
   type Cell,
   RunRequestSchema,

@@ -39,7 +39,14 @@ describe("runReadOnly — 通す", () => {
   it("読み取りの結果を返す", async () => {
     const { result } = await run("MATCH (n) RETURN count(n) AS n");
 
-    expect(isOk(result) && result.value.records[0]?.get("n").toNumber()).toBe(73);
+    expect(isOk(result) && result.value.result.records[0]?.get("n").toNumber()).toBe(73);
+  });
+
+  /* why: 0 行のとき列名はレコードから取れない。ここで拾わないと列見出しが消える */
+  it("0 行でも列名を返す", async () => {
+    const { result } = await run("MATCH (t:Team) WHERE t.name = 'いない' RETURN t.name AS name");
+
+    expect(isOk(result) && result.value.keys).toEqual(["name"]);
   });
 
   it("実行したクエリをログに出す", async () => {
@@ -77,7 +84,7 @@ describe("runReadOnly — 拒否する", () => {
 
     const { result } = await run("MATCH (x:Tmp) RETURN count(x) AS n");
 
-    expect(isOk(result) && result.value.records[0]?.get("n").toNumber()).toBe(0);
+    expect(isOk(result) && result.value.result.records[0]?.get("n").toNumber()).toBe(0);
   });
 
   it("r の抜け道も拒否する", async () => {
@@ -138,6 +145,7 @@ describe("runReadOnly — ドライバへの渡し方", () => {
     const result = {
       summary: { queryType: "r", plan: { operatorType: "ProduceResults@neo4j", children: [] } },
       records: [],
+      keys: async () => [],
     };
 
     const driver = {
