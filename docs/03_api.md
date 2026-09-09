@@ -449,12 +449,17 @@ app.onError      すり抜けた例外。500 と error ログ。スタックは�
 
 ```ts
 // packages/api/src/neo4j/tx.ts
-export const runInTx = <T>(
-  driver: Driver,
-  cypher: string,
-  read: (tx: Tx) => Promise<T>,
-) => Promise<Result<T, ApiError>>;
+export const runReadOnly = (
+  deps: { log: Logger; timeoutMs: number },
+  req: { driver: Driver; database?: string; reqId: string; cypher: string },
+) => Promise<Result<QueryResult, ApiError>>;
 ```
+
+**呼ぶ側は Cypher を渡すだけ。** 実行するトランザクションを渡させない——渡せると、
+判定したクエリと実行するクエリを別にできてしまう。
+
+**`EXPLAIN` と本体は同じトランザクションで走る。** 分けると、判定したあとに別の
+スナップショットで実行することになる。
 
 1 箇所に寄せると、**全てのクエリに同じものが自動で掛かる。**
 
@@ -466,7 +471,28 @@ export const runInTx = <T>(
 | [`query.run` のログ](#8-ログ) | 出ないクエリができる |
 | 失敗を [`ApiError`](#7-失敗の返し方) に変える | ルートごとに違う形で返る |
 
-**セッションは `finally` で必ず閉じる。** 例外で抜けた経路だけ閉じ忘れる、が一番起きやすい。
+**セッションは失敗しても必ず閉じる。** 例外で抜けた経路だけ閉じ忘れる、が一番起きやすい。
+`try` を書かずに済ませるため、`attemptAsync` で受けてから閉じる（[`shared/result.ts`](#7-失敗の返し方)）。
+**閉じられなかったときは `warn` に出すだけ**で、結果は返す。
+
+### ドライバのエラーの対応
+
+コードで分ける。**文言では分けない**——バージョンで変わる。
+
+| ドライバのコード | `kind` |
+|---|---|
+| `Neo.ClientError.Transaction.TransactionTimedOut*` | `timeout` |
+| `Neo.ClientError.Statement.AccessMode` | `read-only-violation` |
+| `Neo.ClientError.Statement.*`（上記以外） | `syntax-error` |
+| `Neo.ClientError.Database.DatabaseNotFound` | `invalid-request` |
+| `Neo.ClientError.Security.*` / `ServiceUnavailable` / `SessionExpired` | `connect-failed` |
+| それ以外 | `unexpected` |
+
+**`AccessMode` を `Statement.` より先に見る。** 順番を入れ替えると、第 2 層が止めた
+書き込みが構文エラーとして返る。
+
+**`unexpected` だけはサーバの文をクライアントに返さない。** 実装の中身が漏れる。
+元の文は `error` のログに残す。
 
 **トランザクションを跨いで値を持ち回らない。** 1 リクエストで 2 回クエリを実行したくなったら、
 それは 1 つの Cypher にまとめられないかを先に考える。

@@ -452,7 +452,8 @@ cypher-quiz/
    │  └─ neo4j/
    │     ├─ driverStore.ts          # クロージャ。状態はここだけ
    │     ├─ tx.ts                   # ★ session() を呼ぶ唯一の場所。1 API 1 トランザクション
-   │     ├─ readOnly.ts             # EXPLAIN 判定。純粋関数と実行関数を分離
+   │     ├─ readOnly.ts             # EXPLAIN の分類を通すかに変える純粋関数
+   │     ├─ toApiError.ts           # ドライバの例外を ApiError に変える純粋関数
    │     └─ toPlainJson.ts          # 純粋
    │
    └─ web/
