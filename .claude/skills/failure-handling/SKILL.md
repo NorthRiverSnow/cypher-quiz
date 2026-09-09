@@ -15,22 +15,29 @@ description: 失敗の扱い方。副作用のある処理を足すとき、API 
 | 想定内         | 保存できない、接続できない、書き込み拒否、構文エラー | `model` が `Result` で返す   |
 | 想定外（バグ） | `undefined` を読んだ                                 | `throw`。`Result` に包まない |
 
-**`try` を書くのは `shared/result.ts` の `attempt` だけ。** throw する API（`localStorage`、
-ドライバ、`JSON.parse`）はこれで包む。
+**`try` を書くのは `shared/result.ts` の `attempt` と `recover` だけ。** throw する API
+（`localStorage`、ドライバ、`JSON.parse`）はこの 2 つのどちらかで包む。
+
+**どちらを使うかは「利用者に知らせるか」で決める。**
+
+|            | 使うもの  | 判断                                   |
+| ---------- | --------- | -------------------------------------- |
+| 知らせる   | `attempt` | 失敗したままだと、利用者が困る         |
+| 知らせない | `recover` | 代わりの値で続けても、利用者は困らない |
 
 ```ts
-// 失敗を自分のエラー型に変える
-mapErr(
-  attempt(() => store.setItem(KEY, json)),
-  (): "store-unavailable" => "store-unavailable",
+// 知らせる: 保存できないと、これから解く分も残らない
+attempt(
+  () => void store.setItem(KEY, JSON.stringify(boxes)),
+  () => "store-unavailable" as const,
 );
 
-// 失敗したら代わりの値で続ける（回復。握り潰しではない）
-unwrapOr(
-  attempt(() => toBoxes(JSON.parse(raw))),
-  {},
-);
+// 知らせない: 保存が壊れていても、空から始めればクイズは解ける
+recover(() => toBoxes(JSON.parse(raw)), {});
 ```
+
+**`recover` は握り潰しではない。** 握り潰しは「知らせるべき失敗が見えない」こと。
+`recover` は知らせないと決めた失敗にだけ使う——決めた理由を `why:` で書く。
 
 ## 2. controller で `report` に渡す
 
