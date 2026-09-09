@@ -357,23 +357,26 @@ services:
 
 ## 7. 失敗の返し方
 
-**クライアントに返す形は 1 つだけ。** `shared/schema/error.ts` の Zod スキーマが源で、OpenAPI にもそのまま載る。
+**クライアントに返す形は 1 つだけ。** `shared/src/schema/error.ts` の Zod スキーマが源で、OpenAPI にもそのまま載る。
 
 ```ts
-type ApiError = { code: ErrorCode; message: string; detail?: string };
+type ApiError = { kind: ErrorKind; message: string; queryType?: string };
 ```
 
-| `code` | ステータス | 意味 |
+| `kind` | ステータス | 意味 |
 |---|---:|---|
-| `unauthorized` | 401 | クッキーが無い / セッションが失効している |
-| `write-rejected` | 403 | [書き込みクエリのため拒否](#2-読み取り専用の強制多層) |
-| `invalid-cypher` | 422 | `EXPLAIN` が拾った構文エラー |
+| `not-connected` | 401 | クッキーが無い / セッションが失効している |
+| `read-only-violation` | 403 | [読み取り専用の強制で拒否](#2-読み取り専用の強制多層)。`queryType` を添える |
+| `syntax-error` | 422 | `EXPLAIN` が拾った構文エラー |
 | `invalid-request` | 422 | リクエストの検証エラー |
 | `timeout` | 504 | トランザクションタイムアウト（既定 5 秒） |
 | `connect-failed` | 502 | ドライバが繋がらない |
 | `unexpected` | 500 | 想定外。**中身はクライアントに返さない**（ログにだけ残す） |
 
-`code` は文言ではなく機械が読む値なので、**フロントは `message` で分岐しない。**
+`kind` は文言ではなく機械が読む値なので、**フロントは `message` で分岐しない。**
+
+**この表と `ERROR_KINDS` は 1 対 1。** 片方だけ増えると、対応するステータスの無い `kind` が
+500 に落ちる。`schema.test.ts` が 7 つであることを固定している。
 
 ### 経路は 1 本
 
@@ -384,13 +387,17 @@ app.onError      すり抜けた例外。500 と error ログ。スタックは�
 ```
 
 **`message` に生のドライバ出力を入れない。** 接続 URI は `neo4j+s://user:pass@host` の形を取りうるので、
-[サニタイズ](#8-ログ)を通してから `detail` に載せる。ログとクライアント応答が**同じ 1 つの関数**を通る。
+`api/src/redact.ts` を通してから載せる。**ログとクライアント応答が同じ 1 つの関数を通る。**
 
 ---
 
 ## 8. ログ
 
 **JSON 1 行 = 1 イベント。** `at` / `level` / `event` / `reqId` を全イベントが持つ。
+
+`level` は `debug` / `info` / `warn` / `error` の 4 段。**イベントごとに既定が決まり、
+呼ぶ側が上げ下げできる。** `minLevel` より軽いものは書き出さず、既定の `minLevel` は `info`
+——つまり **`debug` は既定では出ない**。
 
 ```
 {"at":"2026-09-09T10:31:02.441Z","level":"info","event":"req.start","reqId":"a1f3","method":"POST","path":"/api/run"}
@@ -416,7 +423,8 @@ app.onError      すり抜けた例外。500 と error ログ。スタックは�
 | 生の接続 URI | `neo4j+s://user:pass@host` の形を取りうる。`scheme://host:port` に切り詰める |
 | クッキーと `Authorization` ヘッダ | セッション識別子そのもの |
 
-**切り詰めるのは 1 つの関数。** ログもクライアント応答もそこを通す。2 箇所に書くと片方だけ直る。
+**切り詰めるのは `api/src/redact.ts` の 1 つの関数。** ログもクライアント応答もそこを通す。
+2 箇所に書くと片方だけ直る。
 
 `req.start` が出すのは `method` と `path`、URL のクエリ文字列まで。**body を渡す引数を作らない**
 ——引数があると、いつか誰かが渡す。

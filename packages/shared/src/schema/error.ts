@@ -1,12 +1,14 @@
 import { z } from "zod";
 
-/* ステータスとの対応は docs/03_api.md#主なエラー */
+/* ステータスとの対応は docs/03_api.md#7-失敗の返し方 */
 export const ERROR_KINDS = [
   "not-connected",
   "read-only-violation",
   "syntax-error",
+  "invalid-request",
   "timeout",
   "connect-failed",
+  "unexpected",
 ] as const;
 
 export const ApiErrorSchema = z.object({

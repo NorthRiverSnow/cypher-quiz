@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { ConnectionStatusSchema, ConnectRequestSchema } from "./connect";
-import { ApiErrorSchema } from "./error";
+import { ApiErrorSchema, ERROR_KINDS } from "./error";
 import { QueryResultSchema, RunRequestSchema } from "./query";
 
 describe("ConnectRequestSchema", () => {
@@ -141,5 +141,19 @@ describe("ApiErrorSchema", () => {
 
   it("知らない種類はエラーにする", () => {
     expect(ApiErrorSchema.safeParse({ kind: "teapot", message: "x" }).success).toBe(false);
+  });
+
+  /* why: この 7 つが docs/03_api.md#7-失敗の返し方 のステータス対応表と 1 対 1 になる。
+     片方だけ増えると、対応の無い kind が 500 に落ちる */
+  it("種類は 7 つ", () => {
+    expect([...ERROR_KINDS]).toEqual([
+      "not-connected",
+      "read-only-violation",
+      "syntax-error",
+      "invalid-request",
+      "timeout",
+      "connect-failed",
+      "unexpected",
+    ]);
   });
 });

@@ -444,6 +444,8 @@ cypher-quiz/
    ├─ api/src/
    │  ├─ app.ts                     # OpenAPIHono の組み立て（純粋）
    │  ├─ server.ts                  # 起動だけ（副作用の端）
+   │  ├─ log.ts                     # ★ JSON 1 行 = 1 イベント。時刻と出力先は注入
+   │  ├─ redact.ts                  # ★ 外へ出る文字列から資格情報を取り除く唯一の関数
    │  ├─ routes/
    │  │  ├─ connect.ts
    │  │  └─ run.ts
