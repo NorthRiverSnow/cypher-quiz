@@ -15,7 +15,6 @@ export type TxDeps = Readonly<{
 export type TxRequest = Readonly<{
   driver: Driver;
   database?: string;
-  reqId: string;
   cypher: string;
 }>;
 
@@ -45,7 +44,7 @@ const runQuery = async (tx: ManagedTransaction, cypher: string): Promise<QueryOu
  */
 export const runReadOnly = async (
   { log, timeoutMs }: TxDeps,
-  { driver, database, reqId, cypher }: TxRequest,
+  { driver, database, cypher }: TxRequest,
 ): Promise<Result<QueryOutput, ApiError>> => {
   const session = driver.session({
     defaultAccessMode: neo4j.session.READ,
@@ -59,7 +58,7 @@ export const runReadOnly = async (
           const explained = await tx.run(`EXPLAIN ${cypher}`);
           const allowed = acceptReadOnly(explained.summary.queryType, explained.summary.plan);
 
-          log({ event: "query.run", reqId, cypher, readOnly: isOk(allowed) });
+          log({ event: "query.run", cypher, readOnly: isOk(allowed) });
 
           return isOk(allowed) ? ok(await runQuery(tx, cypher)) : err(allowed.error);
         },
@@ -70,7 +69,7 @@ export const runReadOnly = async (
     (cause) => cause,
   );
 
-  await closeQuietly(log, reqId, "SessionCloseFailed", session);
+  await closeQuietly(log, "SessionCloseFailed", session);
 
-  return ran.ok ? ran.value : err(reportDriverError(log, reqId, ran.error));
+  return ran.ok ? ran.value : err(reportDriverError(log, ran.error));
 };

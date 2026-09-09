@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { type LogEvent, type LogLevel, createLogger } from "./log";
+import { withReqId } from "./reqContext";
 
 const AT = new Date("2026-09-09T10:31:02.441Z");
+const REQ_ID = "a1f3";
 
 const linesOf = (...events: readonly LogEvent[]): readonly string[] => {
   const written: string[] = [];
   const log = createLogger({ now: () => AT, write: (line) => written.push(line) });
 
   /* why: forEach をそのまま渡すと、要素の添字が第 2 引数（level）に入る */
-  events.forEach((event) => log(event));
+  withReqId(REQ_ID, () => events.forEach((event) => log(event)));
 
   return written;
 };
@@ -34,34 +36,30 @@ describe("createLogger", () => {
   it("1 イベントを JSON 1 行にする", () => {
     const [line] = linesOf({
       event: "req.start",
-      reqId: "a1f3",
       method: "POST",
       path: "/api/run",
     });
 
     expect(line).toBe(
-      '{"at":"2026-09-09T10:31:02.441Z","level":"info","event":"req.start","reqId":"a1f3","method":"POST","path":"/api/run"}',
+      '{"at":"2026-09-09T10:31:02.441Z","level":"info","reqId":"a1f3","event":"req.start","method":"POST","path":"/api/run"}',
     );
   });
 
   it("渡した時刻を使う", () => {
-    expect(objectOf({ event: "req.start", reqId: "a", method: "GET", path: "/" }).at).toBe(
-      AT.toISOString(),
-    );
+    expect(objectOf({ event: "req.start", method: "GET", path: "/" }).at).toBe(AT.toISOString());
   });
 
   it("error だけ level が error になる", () => {
-    expect(
-      objectOf({ event: "error", reqId: "a", name: "TypeError", message: "壊れた" }).level,
-    ).toBe("error");
-    expect(objectOf({ event: "req.end", reqId: "a", status: 500, ms: 4 }).level).toBe("info");
+    expect(objectOf({ event: "error", name: "TypeError", message: "壊れた" }).level).toBe("error");
+    expect(objectOf({ event: "req.end", status: 500, ms: 4 }).level).toBe("info");
   });
 
+  /* why: reqId は呼ぶ側が渡さない。同じリクエストの中で走った行に自動で載る */
   it("1 リクエストの行が同じ reqId で並ぶ", () => {
     const lines = linesOf(
-      { event: "req.start", reqId: "a1f3", method: "POST", path: "/api/run" },
-      { event: "query.run", reqId: "a1f3", cypher: "MATCH (n) RETURN n", readOnly: true },
-      { event: "req.end", reqId: "a1f3", status: 200, ms: 47, rows: 1 },
+      { event: "req.start", method: "POST", path: "/api/run" },
+      { event: "query.run", cypher: "MATCH (n) RETURN n", readOnly: true },
+      { event: "req.end", status: 200, ms: 47, rows: 1 },
     );
 
     expect(lines.map((line) => (JSON.parse(line) as { reqId: string }).reqId)).toEqual([
@@ -74,18 +72,18 @@ describe("createLogger", () => {
   it("実行したクエリをそのまま出す", () => {
     const cypher = "MATCH (n:Team) RETURN n.name";
 
-    expect(objectOf({ event: "query.run", reqId: "a", cypher, readOnly: true })).toMatchObject({
+    expect(objectOf({ event: "query.run", cypher, readOnly: true })).toMatchObject({
       cypher,
       readOnly: true,
     });
-    expect(objectOf({ event: "query.run", reqId: "a", cypher, readOnly: true })).not.toHaveProperty(
+    expect(objectOf({ event: "query.run", cypher, readOnly: true })).not.toHaveProperty(
       "truncated",
     );
   });
 
   it("長すぎるクエリは切って、切ったことを残す", () => {
     const cypher = "A".repeat(1001);
-    const logged = objectOf({ event: "query.run", reqId: "a", cypher, readOnly: true });
+    const logged = objectOf({ event: "query.run", cypher, readOnly: true });
 
     expect(logged.cypher).toBe("A".repeat(1000));
     expect(logged.truncated).toBe(true);
@@ -94,7 +92,7 @@ describe("createLogger", () => {
   it("ちょうど上限までは切らない", () => {
     const cypher = "A".repeat(1000);
 
-    expect(objectOf({ event: "query.run", reqId: "a", cypher, readOnly: true })).not.toHaveProperty(
+    expect(objectOf({ event: "query.run", cypher, readOnly: true })).not.toHaveProperty(
       "truncated",
     );
   });
@@ -102,7 +100,6 @@ describe("createLogger", () => {
   it("エラーの文から資格情報を取り除く", () => {
     const logged = objectOf({
       event: "error",
-      reqId: "a",
       name: "Neo4jError",
       message: "failed to connect to bolt://neo4j:hunter2@db:7687",
       stack: "at connect (bolt://neo4j:hunter2@db:7687)",
@@ -113,19 +110,26 @@ describe("createLogger", () => {
   });
 
   it("スタックが無ければ項目ごと出さない", () => {
-    expect(objectOf({ event: "error", reqId: "a", name: "E", message: "x" })).not.toHaveProperty(
-      "stack",
-    );
+    expect(objectOf({ event: "error", name: "E", message: "x" })).not.toHaveProperty("stack");
+  });
+
+  /* why: 起動時と後始末はリクエストの外で走る。そこも書き出せないと困る */
+  it("リクエストの外では - になる", () => {
+    const { written, log } = capture();
+
+    log({ event: "error", name: "E", message: "x" });
+
+    expect(JSON.parse(written[0] ?? "")).toMatchObject({ reqId: "-" });
   });
 
   /* why: 行データは件数だけ。実行結果は数十行返ることがあり、ここが一番膨らむ */
   it("行は件数だけを出す", () => {
-    expect(objectOf({ event: "req.end", reqId: "a", status: 200, ms: 4, rows: 20 }).rows).toBe(20);
+    expect(objectOf({ event: "req.end", status: 200, ms: 4, rows: 20 }).rows).toBe(20);
   });
 });
 
 describe("createLogger — 重さ", () => {
-  const REQ_START: LogEvent = { event: "req.start", reqId: "a", method: "GET", path: "/" };
+  const REQ_START: LogEvent = { event: "req.start", method: "GET", path: "/" };
 
   it("既定では debug を書き出さない", () => {
     const { written, log } = capture();
@@ -167,7 +171,7 @@ describe("createLogger — 重さ", () => {
     const { written, log } = capture();
 
     log(REQ_START);
-    log({ event: "error", reqId: "a", name: "E", message: "x" });
+    log({ event: "error", name: "E", message: "x" });
 
     expect(levelsOf(written)).toEqual(["info", "error"]);
   });

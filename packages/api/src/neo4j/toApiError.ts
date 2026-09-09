@@ -57,11 +57,11 @@ export const toApiError = (cause: unknown): ApiError => {
  * why: 想定外の文はクライアントに返さない。ここで捨てると何が起きたのか追えなくなるので、
  * 返す前にログへ移す
  */
-export const reportDriverError = (log: Logger, reqId: string, cause: unknown): ApiError => {
+export const reportDriverError = (log: Logger, cause: unknown): ApiError => {
   const api = toApiError(cause);
 
   if (api.kind === "unexpected") {
-    log({ event: "error", reqId, name: "DriverError", message: detailOf(cause) });
+    log({ event: "error", name: "DriverError", message: detailOf(cause) });
   }
 
   return api;

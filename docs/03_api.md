@@ -223,7 +223,7 @@ Vite の dev proxy で同一オリジンになるので、`fetch` は `credentia
 | **ログに出さない** | リクエストボディを出す口を作らない。URI は資格情報を取り除いてから出す（[§8](#8-ログ)） |
 | **エラーをサニタイズ** | ドライバのエラーは URI に資格情報を含みうる。クライアントへ返す前に取り除く |
 | **メモリのみ** | サーバ側 `Map`。**サーバ再起動で全消滅** |
-| **失効させる** | idle TTL 30 分で失効し、`driver.close()`。同時セッション数に上限 |
+| **失効させる** | **最後に使ってから** 30 分で失効し、`driver.close()`。上限に達したら、最後に使ったのが最も古いものを閉じる |
 | **フロントは識別子を持たない** | httpOnly クッキー。`localStorage` も React state も使わない |
 
 クッキーは不透明なランダム値。`Max-Age` を付けないのでリロードでは残るが**タブを閉じれば消え**、サーバ側 `Map` も再起動で消えるため、[再入力になる](./01_spec.md#5-db-への接続)。
@@ -424,9 +424,9 @@ app.onError      すり抜けた例外。500 と error ログ。スタックは�
 ——つまり **`debug` は既定では出ない**。
 
 ```
-{"at":"2026-09-09T10:31:02.441Z","level":"info","event":"req.start","reqId":"a1f3","method":"POST","path":"/api/run"}
-{"at":"2026-09-09T10:31:02.443Z","level":"info","event":"query.run","reqId":"a1f3","cypher":"MATCH (n) RETURN count(n)"}
-{"at":"2026-09-09T10:31:02.488Z","level":"info","event":"req.end","reqId":"a1f3","status":200,"ms":47,"rows":1}
+{"at":"2026-09-09T10:31:02.441Z","level":"info","reqId":"a1f3","event":"req.start","method":"POST","path":"/api/run"}
+{"at":"2026-09-09T10:31:02.443Z","level":"info","reqId":"a1f3","event":"query.run","cypher":"MATCH (n) RETURN count(n)"}
+{"at":"2026-09-09T10:31:02.488Z","level":"info","reqId":"a1f3","event":"req.end","status":200,"ms":47,"rows":1}
 ```
 
 | `event` | いつ | 足すもの |
@@ -437,6 +437,23 @@ app.onError      すり抜けた例外。500 と error ログ。スタックは�
 | `error` | 例外と 5xx | `name` `message` `stack` |
 
 **`reqId` で 1 リクエストの行が繋がる。** 並行して走っても追える。
+
+### `reqId` を持ち回さない
+
+**ルートも `driverStore` も `tx.ts` も `reqId` を受け取らない。** ミドルウェアが
+`AsyncLocalStorage` に載せ、`createLogger` が書き出す直前に引く。
+
+```ts
+// packages/api/src/reqContext.ts
+export const withReqId = <T>(reqId: string, fn: () => T): T => storage.run(reqId, fn);
+export const currentReqId = (): string => storage.getStore() ?? "-";
+```
+
+`AsyncLocalStorage` は `await` を越えて追随するので、**引数に足さなくても奥まで届く**。
+リクエストの外（起動時・後始末）で出した行は `reqId` が `"-"` になる。
+
+時刻と出力先は[注入する](./02_architecture.md#時刻乱数を注入する)のに `reqId` は注入しない。
+**渡させると、呼ぶ側が「今どのリクエストか」を知っている必要が出る**——それを無くすのが目的。
 
 ### 出さないもの
 
@@ -475,7 +492,7 @@ app.onError      すり抜けた例外。500 と error ログ。スタックは�
 // packages/api/src/neo4j/tx.ts
 export const runReadOnly = (
   deps: { log: Logger; timeoutMs: number },
-  req: { driver: Driver; database?: string; reqId: string; cypher: string },
+  req: { driver: Driver; database?: string; cypher: string },
 ) => Promise<Result<{ keys: readonly string[]; result: QueryResult }, ApiError>>;
 ```
 

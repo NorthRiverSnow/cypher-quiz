@@ -10,14 +10,19 @@ const setup = (steps = 0) => {
   let tick = 0;
   let issued = 0;
 
+  const log = createLogger({ now: () => AT, write: (line) => written.push(line) });
   const app = createApp({
-    log: createLogger({ now: () => AT, write: (line) => written.push(line) }),
+    log,
     newReqId: () => `req-${++issued}`,
     /* why: 経過ミリ秒を検証できるように、呼ばれるたびに進む時計を渡す */
     now: () => new Date(AT.getTime() + (tick++ === 0 ? 0 : steps)),
   });
 
-  return { app, events: () => written.map((line) => JSON.parse(line) as Record<string, unknown>) };
+  return {
+    app,
+    log,
+    events: () => written.map((line) => JSON.parse(line) as Record<string, unknown>),
+  };
 };
 
 describe("createApp — リクエストのログ", () => {
@@ -51,6 +56,21 @@ describe("createApp — リクエストのログ", () => {
     await app.request("/ok");
 
     expect(events().map((e) => e.reqId)).toEqual(["req-1", "req-1", "req-2", "req-2"]);
+  });
+
+  /* why: ルートも DB も reqId を受け取らない。奥で出した行にも同じ値が載ること */
+  it("ルートの奥で出した行にも同じ reqId が載る", async () => {
+    const { app, log, events } = setup();
+    app.get("/deep", async (c) => {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      log({ event: "query.run", cypher: "RETURN 1", readOnly: true });
+
+      return c.text("ok");
+    });
+
+    await app.request("/deep");
+
+    expect(events().map((e) => e.reqId)).toEqual(["req-1", "req-1", "req-1"]);
   });
 
   it("かかった時間を出す", async () => {

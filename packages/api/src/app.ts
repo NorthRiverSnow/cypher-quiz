@@ -26,12 +26,11 @@ const normalizeThrown = createMiddleware(async (_c, next) => {
 });
 
 /* why: スタックを外に出さない。中身はログにだけ残す（docs/03_api.md#7-失敗の返し方） */
-const onUnexpected = (log: Logger, reqId: string, cause: unknown) => {
+const onUnexpected = (log: Logger, cause: unknown) => {
   const error = asError(cause);
 
   log({
     event: "error",
-    reqId,
     name: error.name,
     message: error.message,
     stack: error.stack,
@@ -50,7 +49,7 @@ export const createApp = (deps: AppDeps) => {
   app.use(normalizeThrown);
 
   app.onError((cause, c) => {
-    onUnexpected(deps.log, c.get("reqId"), cause);
+    onUnexpected(deps.log, cause);
 
     return c.json(UNEXPECTED, 500);
   });

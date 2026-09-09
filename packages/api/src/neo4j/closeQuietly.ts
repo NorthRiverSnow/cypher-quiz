@@ -13,13 +13,12 @@ import { detailOf } from "./toApiError";
  */
 export const closeQuietly = async (
   log: Logger,
-  reqId: string,
   name: string,
   target: { close: () => Promise<void> },
 ): Promise<void> => {
   const closed = await attemptAsync(() => target.close(), detailOf);
 
   if (!closed.ok) {
-    log({ event: "error", reqId, name, message: closed.error }, "warn");
+    log({ event: "error", name, message: closed.error }, "warn");
   }
 };

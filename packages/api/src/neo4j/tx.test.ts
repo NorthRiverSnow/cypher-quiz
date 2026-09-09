@@ -21,7 +21,7 @@ const captured = () => {
 
 const run = async (cypher: string, timeoutMs = 5000) => {
   const { log, events } = captured();
-  const result = await runReadOnly({ log, timeoutMs }, { driver, reqId: "r1", cypher });
+  const result = await runReadOnly({ log, timeoutMs }, { driver, cypher });
 
   return { result, events: events() };
 };
@@ -55,7 +55,6 @@ describe("runReadOnly — 通す", () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         event: "query.run",
-        reqId: "r1",
         cypher: "MATCH (n:Team) RETURN n.name AS name LIMIT 1",
         readOnly: true,
       }),
@@ -116,7 +115,7 @@ describe("runReadOnly — 拒否する", () => {
     const { log } = captured();
     const result = await runReadOnly(
       { log, timeoutMs: 5000 },
-      { driver, database: "そんなDBは無い", reqId: "r1", cypher: "RETURN 1" },
+      { driver, database: "そんなDBは無い", cypher: "RETURN 1" },
     );
 
     expect(result).toMatchObject({ ok: false, error: { kind: "invalid-request" } });
@@ -174,7 +173,7 @@ describe("runReadOnly — ドライバへの渡し方", () => {
     const { log, events } = captured();
     const result = await runReadOnly(
       { log, timeoutMs: 1234 },
-      { driver, reqId: "r1", cypher: "MATCH (n) RETURN n", ...(database ? { database } : {}) },
+      { driver, cypher: "MATCH (n) RETURN n", ...(database ? { database } : {}) },
     );
 
     return Object.assign(result, { events: events() });

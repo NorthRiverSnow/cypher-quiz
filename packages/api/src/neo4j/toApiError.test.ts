@@ -77,17 +77,17 @@ describe("reportDriverError", () => {
   /* why: 想定外の文はクライアントに返さない。ログに残さないと何が起きたか追えなくなる */
   it("想定外なら元の文をログに残す", () => {
     const { log, events } = captured();
-    const api = reportDriverError(log, "r1", neo4jError("Neo.DatabaseError.General.Unknown"));
+    const api = reportDriverError(log, neo4jError("Neo.DatabaseError.General.Unknown"));
 
     expect(api).toEqual({ kind: "unexpected", message: "想定外のエラーが起きました" });
     expect(events()).toContainEqual(
-      expect.objectContaining({ event: "error", reqId: "r1", message: "サーバからの文" }),
+      expect.objectContaining({ event: "error", message: "サーバからの文" }),
     );
   });
 
   it("分類できたらログに出さない", () => {
     const { log, events } = captured();
-    const api = reportDriverError(log, "r1", neo4jError("Neo.ClientError.Statement.SyntaxError"));
+    const api = reportDriverError(log, neo4jError("Neo.ClientError.Statement.SyntaxError"));
 
     expect(api.kind).toBe("syntax-error");
     expect(events()).toEqual([]);
@@ -96,7 +96,7 @@ describe("reportDriverError", () => {
   it("ログに残す文からも資格情報を取り除く", () => {
     const { log, events } = captured();
 
-    reportDriverError(log, "r1", neo4jError("Unknown", "bolt://u:p@h で失敗"));
+    reportDriverError(log, neo4jError("Unknown", "bolt://u:p@h で失敗"));
 
     expect(events()).toContainEqual(expect.objectContaining({ message: "bolt://h で失敗" }));
   });

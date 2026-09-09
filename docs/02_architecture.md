@@ -69,15 +69,22 @@ export const progressOf      = (s: QuizState): Progress => ...;
 // packages/api/src/neo4j/driverStore.ts
 
 export type DriverStore = {
-  open:  (creds: Credentials) => Promise<Result<SessionId, ConnectError>>;
-  get:   (id: SessionId) => Option<Driver>;
-  close: (id: SessionId) => Promise<void>;
+  open:  (request: OpenRequest) => Promise<Result<string, ApiError>>;
+  get:   (id: string | undefined) => Promise<Session | undefined>;
+  close: (id: string | undefined) => Promise<void>;
   sweep: () => Promise<number>;
 };
 
 // クラスではない。Map への変更はこの関数の中だけに閉じる
 export const createDriverStore = (deps: StoreDeps): DriverStore => { ... };
 ```
+
+`get` が非同期なのは、**失効した接続をその場で閉じる**ため。同期にすると、閉じる相手を
+別の誰かに預けることになる。`id` が `undefined` を取るのは、クッキーが無い要求をそのまま
+渡せるようにするため。
+
+時刻（`now`）・識別子（`newId`）・ドライバの生成（`createDriver`）は[注入する](#時刻乱数を注入する)。
+**保管庫が持つのは `driver` / `uri` / `database` / `mode` だけで、`password` は持たない。**
 
 ### 副作用の扱い
 
@@ -148,6 +155,10 @@ export type Result<T, E> =
 
 - **TTL 判定** — `Clock = () => number` を受け取る
 - **出題順** — シード付き擬似乱数を使う。シードはセッションの初めに引く
+
+**`reqId` だけは注入しない。** 渡させると、呼ぶ側が「今どのリクエストか」を知っている
+必要が出る。`AsyncLocalStorage` に載せて、ログが書き出す直前に引く
+（[`03_api.md`](./03_api.md#reqid-を持ち回さない)）。
 
 出題順は[毎回ランダム](./01_spec.md#6-復習間隔反復)だが、シードを渡せば同じ並びを再現できる。
 テストは固定シードで並びを確かめる。
@@ -445,6 +456,7 @@ cypher-quiz/
    │  ├─ app.ts                     # OpenAPIHono の組み立て（純粋）
    │  ├─ server.ts                  # 起動だけ（副作用の端）
    │  ├─ log.ts                     # ★ JSON 1 行 = 1 イベント。時刻と出力先は注入
+   │  ├─ reqContext.ts              # ★ reqId を AsyncLocalStorage に載せる。引数に足さない
    │  ├─ redact.ts                  # ★ 外へ出る文字列から資格情報を取り除く唯一の関数
    │  ├─ routes/
    │  │  ├─ connect.ts

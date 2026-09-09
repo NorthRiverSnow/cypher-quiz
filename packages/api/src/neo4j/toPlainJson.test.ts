@@ -16,7 +16,7 @@ let driver: Driver;
 /* why: 列名は runReadOnly が Result.keys() から拾って返す。ここで session を開くと
    本番と違う経路を確かめることになる */
 const query = async (cypher: string) => {
-  const ran = await runReadOnly({ log, timeoutMs: 5000 }, { driver, reqId: "t1", cypher });
+  const ran = await runReadOnly({ log, timeoutMs: 5000 }, { driver, cypher });
 
   if (!isOk(ran)) {
     throw new Error(ran.error.message);

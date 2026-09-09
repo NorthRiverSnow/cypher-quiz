@@ -1,18 +1,18 @@
 import { redact } from "./redact";
+import { currentReqId } from "./reqContext";
 
 /* 出す項目は docs/03_api.md#8-ログ */
 export type LogEvent =
-  | Readonly<{ event: "req.start"; reqId: string; method: string; path: string }>
+  | Readonly<{ event: "req.start"; method: string; path: string }>
   | Readonly<{
       event: "query.run";
-      reqId: string;
       cypher: string;
       readOnly: boolean;
       /** 長すぎて切ったときだけ付く。呼ぶ側は渡さない */
       truncated?: true;
     }>
-  | Readonly<{ event: "req.end"; reqId: string; status: number; ms: number; rows?: number }>
-  | Readonly<{ event: "error"; reqId: string; name: string; message: string; stack?: string }>;
+  | Readonly<{ event: "req.end"; status: number; ms: number; rows?: number }>
+  | Readonly<{ event: "error"; name: string; message: string; stack?: string }>;
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -56,6 +56,9 @@ const shorten = (event: LogEvent): LogEvent =>
  * why: 時刻と出力先を渡させる。テストで固定でき、書き出し先を差し替えられる
  * （docs/02_architecture.md#時刻乱数を注入する）
  *
+ * why: reqId だけは渡させない。渡させると、呼ぶ側が「今どのリクエストか」を知っている
+ * 必要が出る。それを無くすために AsyncLocalStorage から引く
+ *
  * @param minLevel 既定は info
  */
 export const createLogger =
@@ -67,5 +70,12 @@ export const createLogger =
 
     /* why: JSON.stringify は値が undefined の項目を出力しない。無い項目を消す処理を
        呼ぶ側に書かせずに済む */
-    write(JSON.stringify({ at: now().toISOString(), level, ...shorten(event) }));
+    write(
+      JSON.stringify({
+        at: now().toISOString(),
+        level,
+        reqId: currentReqId(),
+        ...shorten(event),
+      }),
+    );
   };
