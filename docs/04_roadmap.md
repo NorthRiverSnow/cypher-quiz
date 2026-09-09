@@ -91,6 +91,10 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 | C-6 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
 | C-7 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
 
+**OpenAPI は最初のルートが 1 本できた時点で入れる。** 後から入れると、既に書いた
+ルートを `createRoute` に書き直すことになる。C-4 の途中（`/api/connect` の直後）で
+C-7 を先に済ませた。
+
 **ログを API より先に作る。** 後から足すと、既に書いたルートに 1 本ずつ差し込むことになり、
 差し込み漏れが**そのまま「出ないログ」**になる。土台を先に置けば、以降は書いた時点で出る。
 
@@ -212,6 +216,7 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
     api は 2 段（[置き場所](./02_architecture.md#テストは-2-段に置く)）。`src/` は偽の依存を渡す
     ユニットテスト、`test/` は `app.request()` から叩く API 経路のテストで**偽物を渡さない**。
 26. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
+    （`vp run test:api` も同じ比較をする。`/doc` の中身とコミット済みの内容が一致すること）
 
 ### 結果の正規化
 

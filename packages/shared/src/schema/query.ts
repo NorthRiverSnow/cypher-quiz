@@ -51,17 +51,22 @@ export type Cell =
   | Cell[];
 
 /* why: リストは自分自身を含む（`collect()` の入れ子）。z.lazy で参照を遅らせないと、
-   定義の途中で自分を読むことになる */
-export const CellSchema: z.ZodType<Cell> = z.lazy(() =>
-  z.union([
-    ScalarSchema,
-    NodeValueSchema,
-    RelationshipValueSchema,
-    PathValueSchema,
-    MapValueSchema,
-    z.array(CellSchema),
-  ]),
-);
+   定義の途中で自分を読むことになる
+
+   why: id を付けると OpenAPI が $ref にする。付けないと、自分を含む形を展開し続けて
+   スタックが尽きる（docs/03_api.md#再帰するスキーマには-id-を付ける） */
+export const CellSchema: z.ZodType<Cell> = z
+  .lazy(() =>
+    z.union([
+      ScalarSchema,
+      NodeValueSchema,
+      RelationshipValueSchema,
+      PathValueSchema,
+      MapValueSchema,
+      z.array(CellSchema),
+    ]),
+  )
+  .meta({ id: "Cell" });
 
 export const RunRequestSchema = z.object({
   cypher: z.string().min(1),

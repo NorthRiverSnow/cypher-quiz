@@ -8,6 +8,8 @@
     "db:clean": "docker compose --profile test down --volumes --remove-orphans",
     "db:stop": "docker compose stop neo4j",
     "dev": "vp run db && vp run web",
+    "openapi:check": "vp dlx tsx packages/api/scripts/openapi.ts --check",
+    "openapi:write": "vp dlx tsx packages/api/scripts/openapi.ts",
     "storybook": "vp -C packages/web run storybook",
     "test": "vp test run",
     "test:api": "bash scripts/with-test-db.sh vp -C packages/api run test",

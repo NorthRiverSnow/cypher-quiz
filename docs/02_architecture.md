@@ -498,11 +498,14 @@ cypher-quiz/
    │  └─ index.ts
    │
    ├─ api/
+   │  ├─ scripts/openapi.ts            # openapi.json の書き出しと乖離検出
    │  ├─ test/                         # ★ API 経路のテスト。src の外。偽物を渡さない
    │  │  ├─ api.ts                     # createTestApi / send / jar。テストの土台
-   │  │  └─ connect.test.ts
+   │  │  ├─ connect.test.ts
+   │  │  └─ openapi.test.ts
    │  └─ src/
-   │     ├─ app.ts                     # OpenAPIHono の組み立て（純粋）
+   │     ├─ api.ts                     # ★ 全ルート + /doc + /docs。組み立てはここだけ
+   │     ├─ app.ts                     # 器（ログ・例外・検証 hook）
    │     ├─ server.ts                  # 起動だけ（副作用の端）
    │     ├─ log.ts                     # ★ JSON 1 行 = 1 イベント。時刻と出力先は注入
    │     ├─ reqContext.ts              # ★ reqId を AsyncLocalStorage に載せる。引数に足さない

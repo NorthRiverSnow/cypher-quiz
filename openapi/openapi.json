@@ -1,0 +1,326 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "cypher-quiz API",
+    "version": "0.1.0"
+  },
+  "components": {
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/api/connect": {
+      "get": {
+        "tags": [
+          "connect"
+        ],
+        "summary": "接続状態を返す",
+        "responses": {
+          "200": {
+            "description": "接続状態。未接続でも 200 を返す",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "connected": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        }
+                      },
+                      "required": [
+                        "connected"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "connected": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "uri": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "manual",
+                            "dev-auto"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "connected",
+                        "uri",
+                        "mode"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "connect"
+        ],
+        "summary": "接続する。識別子は httpOnly クッキーで返す",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uri": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "user": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "database": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uri",
+                  "user",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "接続状態。未接続でも 200 を返す",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "connected": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        }
+                      },
+                      "required": [
+                        "connected"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "connected": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "uri": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "manual",
+                            "dev-auto"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "connected",
+                        "uri",
+                        "mode"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "リクエストの形が正しくない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "想定外",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "ドライバが繋がらない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "connect"
+        ],
+        "summary": "切断する。クッキーを消し、ドライバを閉じる",
+        "responses": {
+          "200": {
+            "description": "接続状態。未接続でも 200 を返す",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "connected": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        }
+                      },
+                      "required": [
+                        "connected"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "connected": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "uri": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "manual",
+                            "dev-auto"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "connected",
+                        "uri",
+                        "mode"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

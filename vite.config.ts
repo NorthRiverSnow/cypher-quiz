@@ -10,7 +10,10 @@ export default defineConfig({
     //   - `:root { /* light */ }` の1行スキーマが複数行に展開され、図解の意図が消える
     //   - `rgba(15,26,36,.06)` が `rgba(15, 26, 36, 0.06)` に書き換わり「実測値」でなくなる
     // ため対象外にする。表の桁揃えは魅力的だが、代償が大きい。
-    ignorePatterns: ["docs/**"],
+    // openapi/openapi.json は生成物。整形すると
+    //   packages/api/scripts/openapi.ts の出力と一致しなくなり、
+    //   vp run openapi:check が「古い」と言い続ける
+    ignorePatterns: ["docs/**", "openapi/**"],
   },
   test: {
     /* why: 各パッケージの vite.config.ts を使わせる。root で束ねると

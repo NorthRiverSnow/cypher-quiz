@@ -1,12 +1,58 @@
-import { ConnectRequestSchema, isOk } from "@cypher-quiz/shared";
-import { Hono } from "hono";
+import {
+  ApiErrorSchema,
+  ConnectRequestSchema,
+  ConnectionStatusSchema,
+  isOk,
+} from "@cypher-quiz/shared";
+import { createRoute } from "@hono/zod-openapi";
 
 import type { ConnectController } from "../controller/connect";
 import { type CookieDeps, clearSessionId, readSessionId, setSessionId } from "../cookie";
-import type { LogVariables } from "../middleware/requestLog";
-import { bodyOf, statusOf } from "./http";
+import { createRouter, statusOf } from "./http";
 
 export type ConnectDeps = CookieDeps & Readonly<{ controller: ConnectController }>;
+
+const TAGS = ["connect"];
+
+const status = {
+  content: { "application/json": { schema: ConnectionStatusSchema } },
+  description: "接続状態。未接続でも 200 を返す",
+};
+
+const failed = (description: string) => ({
+  content: { "application/json": { schema: ApiErrorSchema } },
+  description,
+});
+
+const get = createRoute({
+  method: "get",
+  path: "/",
+  tags: TAGS,
+  summary: "接続状態を返す",
+  responses: { 200: status },
+});
+
+const post = createRoute({
+  method: "post",
+  path: "/",
+  tags: TAGS,
+  summary: "接続する。識別子は httpOnly クッキーで返す",
+  request: { body: { content: { "application/json": { schema: ConnectRequestSchema } } } },
+  responses: {
+    200: status,
+    422: failed("リクエストの形が正しくない"),
+    500: failed("想定外"),
+    502: failed("ドライバが繋がらない"),
+  },
+});
+
+const remove = createRoute({
+  method: "delete",
+  path: "/",
+  tags: TAGS,
+  summary: "切断する。クッキーを消し、ドライバを閉じる",
+  responses: { 200: status },
+});
 
 /**
  * 接続の 3 本。**やることは、クッキーの読み書きと Result をステータスに写すことだけ。**
@@ -15,32 +61,28 @@ export type ConnectDeps = CookieDeps & Readonly<{ controller: ConnectController 
  * localStorage に置く道が開く
  */
 export const connectRoutes = ({ controller, secure }: ConnectDeps) =>
-  new Hono<{ Variables: LogVariables }>()
-    .get("/", async (c) => {
+  createRouter()
+    .openapi(get, async (c) => {
       // TODO: C-6 で dev 自動接続をここに足す（クッキーが無く、有効なら繋いで返す）
-      return c.json(await controller.status(readSessionId(c)));
+      return c.json(await controller.status(readSessionId(c)), 200);
     })
-    .post("/", async (c) => {
-      const body = await bodyOf(c, ConnectRequestSchema);
-
-      if (!isOk(body)) {
-        return c.json(body.error, statusOf(body.error));
-      }
-
-      const opened = await controller.open(readSessionId(c), body.value);
+    .openapi(post, async (c) => {
+      const opened = await controller.open(readSessionId(c), c.req.valid("json"));
 
       if (!isOk(opened)) {
-        return c.json(opened.error, statusOf(opened.error));
+        /* why: statusOf は kind 7 通りの status を返す。このルートが返しうるのは
+           宣言した 3 つだけだが、どれになるかは controller が決めるので型では絞れない */
+        return c.json(opened.error, statusOf(opened.error) as 422 | 500 | 502);
       }
 
       setSessionId(c, opened.value.id, { secure });
 
-      return c.json(opened.value.status);
+      return c.json(opened.value.status, 200);
     })
-    .delete("/", async (c) => {
-      const status = await controller.close(readSessionId(c));
+    .openapi(remove, async (c) => {
+      const closed = await controller.close(readSessionId(c));
 
       clearSessionId(c, { secure });
 
-      return c.json(status);
+      return c.json(closed, 200);
     });

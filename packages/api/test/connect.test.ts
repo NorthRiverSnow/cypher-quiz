@@ -92,12 +92,32 @@ describe("/api/connect — 失敗", () => {
     expect(res.headers.get("set-cookie")).toBeNull();
   });
 
-  it("形が違えば 422", async () => {
+  /* why: 検証は OpenAPI の validator が先に走る。素通しだと Hono 既定の 400 が返る */
+  it("形が違えば 422 で項目名を返す", async () => {
     const { send } = createTestApi();
     const res = await send("POST", CONNECT, { body: { uri: URI, user: "neo4j" } });
 
     expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({
+      kind: "invalid-request",
+      message: "リクエストの形が正しくありません: password",
+    });
+  });
+
+  it("壊れた JSON でも決まった形で返す", async () => {
+    const { send } = createTestApi();
+    const res = await send("POST", CONNECT, { raw: "{ こわれている" });
+
+    expect(res.status).toBe(422);
     expect(await res.json()).toMatchObject({ kind: "invalid-request" });
+  });
+
+  /* why: パスワードが入りうる。文に値を入れると、そのままログにも応答にも出る */
+  it("検証の文に値を入れない", async () => {
+    const { send } = createTestApi();
+    const res = await send("POST", CONNECT, { body: { ...CREDENTIALS, uri: "" } });
+
+    expect(await res.text()).not.toContain(PASSWORD);
   });
 
   /* why: 失敗しても入口と出口が揃う。開いたままの req.start が残らないこと */

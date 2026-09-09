@@ -27,27 +27,51 @@ packages/shared/src/schema/*.ts        ← Zod スキーマ（唯一の真実）
 > フロントに Hono の依存を持ち込まないために、この形にしている。
 
 ```ts
-// packages/api/src/routes/run.ts
-import { createRoute, z } from '@hono/zod-openapi';
-
-const route = createRoute({
+// packages/api/src/routes/connect.ts
+const post = createRoute({
   method: 'post',
-  path: '/api/run',
+  path: '/',                       // マウント先が付いて /api/connect になる
   request: {
-    body: { content: { 'application/json': { schema: RunRequestSchema } } },
+    body: { content: { 'application/json': { schema: ConnectRequestSchema } } },
   },
   responses: {
-    200: {
-      content: { 'application/json': { schema: RunResponseSchema } },
-      description: 'クエリの実行結果',
-    },
-    403: {
-      content: { 'application/json': { schema: ErrorSchema } },
-      description: '書き込みクエリのため拒否',
-    },
+    200: { content: { 'application/json': { schema: ConnectionStatusSchema } },
+           description: '接続状態。未接続でも 200 を返す' },
+    502: { content: { 'application/json': { schema: ApiErrorSchema } },
+           description: 'ドライバが繋がらない' },
   },
 });
 ```
+
+**宣言した `responses` に無い status は返せない**——`c.json(x, 404)` は型で止まる。
+逆に、返しうる status を宣言し忘れるとルートが書けないので、表とドキュメントがずれない。
+
+### 器は `createRouter()` から作る
+
+`new OpenAPIHono()` を直に書かない。**検証エラーを `ApiError` の形にそろえる `defaultHook`
+を渡し忘れたルートだけ、Hono 既定の 400 を返す**ようになるため。
+
+```ts
+// packages/api/src/routes/http.ts
+export const createRouter = () =>
+  new OpenAPIHono<{ Variables: LogVariables }>({ defaultHook: /* ZodError → ApiError 422 */ });
+```
+
+検証は validator が走らせるので、ルートは `c.req.valid('json')` を受け取るだけ。
+**JSON として読めないボディだけは validator に届かず throw する**ので、`app.ts` の
+`readJson` が先に読んで `invalid-request` にする（素通しだと 500 になる）。
+
+### 再帰するスキーマには id を付ける
+
+`Cell` は自分をリストとして含む。**そのままだと OpenAPI の生成が展開を続けてスタックが尽きる。**
+
+```ts
+// packages/shared/src/schema/query.ts — 素の zod のまま
+export const CellSchema: z.ZodType<Cell> = z.lazy(() => z.union([…])).meta({ id: 'Cell' });
+```
+
+`id` があると `#/components/schemas/Cell` の `$ref` になり、展開が 1 度で止まる。
+**`.meta()` は zod の機能**なので、`shared` に Hono の依存は増えない。
 
 ### 成果物としての `openapi.json` と乖離検出
 
@@ -59,6 +83,11 @@ const route = createRoute({
 | `vp run openapi:check` | 再生成して差分を取り、ズレていたら **exit 1** |
 
 これで「スキーマを変えたのに `openapi.json` を更新し忘れる」が起きなくなる。
+`vp run test:api` も同じ比較をする——`/doc` の中身とコミット済みの `openapi.json` が
+一致しなければ失敗する。
+
+**`openapi/` はフォーマッタの対象外**（`vite.config.ts` の `fmt.ignorePatterns`）。
+整形すると生成器の出力と一致しなくなり、`openapi:check` が「古い」と言い続ける。
 
 ドキュメント UI は Scalar（`@scalar/hono-api-reference`）を `/docs` に置く。
 

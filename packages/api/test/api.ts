@@ -3,11 +3,9 @@ import { randomBytes } from "node:crypto";
 import neo4j, { type Driver } from "neo4j-driver";
 import { afterEach } from "vite-plus/test";
 
-import { createApp } from "../src/app";
-import { createConnectController } from "../src/controller/connect";
+import { createApi } from "../src/api";
 import { createLogger } from "../src/log";
 import { createDriverStore } from "../src/neo4j/driverStore";
-import { connectRoutes } from "../src/routes/connect";
 
 export const URI = process.env.NEO4J_TEST_URI ?? "bolt://localhost:7688";
 export const PASSWORD = process.env.NEO4J_PASSWORD ?? "";
@@ -20,7 +18,12 @@ afterEach(async () => {
   await Promise.all(drivers.splice(0).map((driver) => driver.close()));
 });
 
-export type Sent = Readonly<{ cookie?: string; body?: unknown }>;
+export type Sent = Readonly<{
+  cookie?: string;
+  body?: unknown;
+  /** JSON にせずそのまま送る。壊れたボディを試すため */
+  raw?: string;
+}>;
 
 export type TestApi = Readonly<{
   send: (method: string, path: string, sent?: Sent) => Promise<Response>;
@@ -34,8 +37,8 @@ export const jar = (res: Response): string => res.headers.get("set-cookie")?.spl
  * 本物だけで組んだ API を返す。**偽物は 1 つも挟まない**
  * （ミドルウェア → ルート → controller → store → ドライバ → neo4j-test）。
  *
- * why: 注入するのは時刻・reqId・ログの出力先だけ。ここを偽物に置き換えると、
- * 層の繋ぎ間違いが出なくなる（docs/02_architecture.md#テストは-2-段に置く）
+ * why: 組み立ては createApi に任せる。ここで組み直すと、載せ忘れたルートが
+ * テストの中だけ存在しない状態になる（docs/02_architecture.md#テストは-2-段に置く）
  */
 export const createTestApi = (): TestApi => {
   const written: string[] = [];
@@ -57,21 +60,23 @@ export const createTestApi = (): TestApi => {
     maxSessions: 20,
   });
 
-  const app = createApp({ log, newReqId: () => `req-${++issued}`, now: () => new Date(0) });
-
-  app.route(
-    "/api/connect",
-    connectRoutes({ controller: createConnectController({ store }), secure: false }),
-  );
+  const app = createApi({
+    log,
+    store,
+    newReqId: () => `req-${++issued}`,
+    now: () => new Date(0),
+    secure: false,
+  });
 
   return {
-    send: async (method, path, { cookie, body } = {}) =>
+    send: async (method, path, { cookie, body, raw } = {}) =>
       app.request(path, {
         method,
         headers: {
           "content-type": "application/json",
           ...(cookie === undefined || cookie === "" ? {} : { cookie }),
         },
+        ...(raw === undefined ? {} : { body: raw }),
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       }),
     events: () => written.map((line) => JSON.parse(line) as Record<string, unknown>),

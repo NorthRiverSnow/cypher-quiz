@@ -135,6 +135,8 @@ vp run dev                   db のあと web。抜けても DB は残る
 vp run db:stop               dev の DB を止める。データは残る
 vp run db:clean              コンテナと volume を消す
 vp run storybook             Storybook（6006）
+vp run openapi:write         openapi/openapi.json を書き出す
+vp run openapi:check         再生成して差分があれば exit 1
 vp -C packages/web build     root では対象パッケージが必要
 vp run -F './packages/*' <t> packages 配下だけ（`-r` は root も選ぶので使わない）
 vp dlx <pkg>                 npm 同梱の実行コマンドの代わり

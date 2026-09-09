@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "@cypher-quiz/shared": "workspace:*",
+    "@hono/zod-openapi": "^1.6.3",
+    "@scalar/hono-api-reference": "^0.12.1",
     "hono": "^4.13.7",
     "neo4j-driver": "^5.28.0",
     "zod": "^4.5.4"

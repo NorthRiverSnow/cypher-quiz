@@ -1,14 +1,9 @@
-import {
-  type ApiError,
-  type ErrorKind,
-  type Result,
-  attemptAsync,
-  err,
-  ok,
-} from "@cypher-quiz/shared";
-import type { Context } from "hono";
+import type { ApiError, ErrorKind } from "@cypher-quiz/shared";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-import type { ZodError, ZodType } from "zod";
+import type { ZodError } from "zod";
+
+import type { LogVariables } from "../middleware/requestLog";
 
 /* why: Record で受ける。kind を足したときに、ここを埋めるまで型が通らない
    （docs/03_api.md#7-失敗の返し方 の表と 1 対 1） */
@@ -26,8 +21,11 @@ export const statusOf = ({ kind }: ApiError): ContentfulStatusCode => STATUS[kin
 
 const INVALID = "リクエストの形が正しくありません";
 
+/** 項目名が分からないとき。JSON として読めないボディもこれ */
+export const INVALID_BODY: ApiError = { kind: "invalid-request", message: INVALID };
+
 /* why: 文に値を入れない。ボディにはパスワードが入りうるので、出すのは項目名だけ。
-   Zod の既定の文も使わない——英語で、値を含むことがある */
+   Zod の既定の文も使わない——英語で、期待した形を含む */
 const messageOf = ({ issues }: ZodError): string => {
   const fields = [
     ...new Set(issues.map(({ path }) => path.map(String).join(".")).filter((path) => path !== "")),
@@ -37,24 +35,20 @@ const messageOf = ({ issues }: ZodError): string => {
 };
 
 /**
- * ボディを読んでスキーマに通す。JSON でなくても、形が合わなくても `invalid-request`。
+ * ルートを載せる器。**検証エラーを `ApiError` の形にそろえる hook を必ず持つ。**
  *
- * why: `c.req.json()` は壊れたボディで throw する。ルートごとに包むのをやめ、
- * 通る道を 1 本にする
+ * why: `new OpenAPIHono()` を直に書くと、hook を渡し忘れたルートだけ Hono 既定の
+ * 400 を返す。ルートごとに書かせない
  */
-export const bodyOf = async <T>(c: Context, schema: ZodType<T>): Promise<Result<T, ApiError>> => {
-  const raw = await attemptAsync(
-    () => c.req.json<unknown>(),
-    (): ApiError => ({ kind: "invalid-request", message: INVALID }),
-  );
+export const createRouter = () =>
+  new OpenAPIHono<{ Variables: LogVariables }>({
+    defaultHook: (result, c) => {
+      if (result.success) {
+        return undefined;
+      }
 
-  if (!raw.ok) {
-    return raw;
-  }
+      const error: ApiError = { kind: "invalid-request", message: messageOf(result.error) };
 
-  const parsed = schema.safeParse(raw.value);
-
-  return parsed.success
-    ? ok(parsed.data)
-    : err({ kind: "invalid-request", message: messageOf(parsed.error) });
-};
+      return c.json(error, statusOf(error));
+    },
+  });

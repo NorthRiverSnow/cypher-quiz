@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { ConnectionStatusSchema, ConnectRequestSchema } from "./connect";
 import { ApiErrorSchema, ERROR_KINDS } from "./error";
-import { QueryResultSchema, RunRequestSchema } from "./query";
+import { CellSchema, QueryResultSchema, RunRequestSchema } from "./query";
 
 describe("ConnectRequestSchema", () => {
   it("4 つ揃った要求は正常終了する", () => {
@@ -157,6 +157,14 @@ describe("QueryResultSchema", () => {
     const parsed = QueryResultSchema.safeParse({ columns: ["n"], rows: ["1"], elapsedMs: 1 });
 
     expect(parsed.success).toBe(false);
+  });
+});
+
+/* why: id が無いと OpenAPI の生成が自分を展開し続けてスタックが尽きる。
+   Cell は自分をリストとして含む唯一のスキーマ */
+describe("CellSchema", () => {
+  it("再帰するので id を持つ", () => {
+    expect(CellSchema.meta()).toMatchObject({ id: "Cell" });
   });
 });
 
