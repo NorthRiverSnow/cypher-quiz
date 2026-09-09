@@ -1,4 +1,15 @@
-export { type Result, ok, err, isOk, map, mapErr, flatMap, unwrapOr, attempt } from "./result";
+export {
+  type Result,
+  ok,
+  err,
+  isOk,
+  map,
+  mapErr,
+  flatMap,
+  unwrapOr,
+  attempt,
+  recover,
+} from "./result";
 export {
   ConnectRequestSchema,
   type ConnectRequest,

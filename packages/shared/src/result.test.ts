@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { attempt, err, flatMap, isOk, map, mapErr, ok, unwrapOr, type Result } from "./result";
+import {
+  attempt,
+  err,
+  flatMap,
+  isOk,
+  map,
+  mapErr,
+  ok,
+  recover,
+  unwrapOr,
+  type Result,
+} from "./result";
 
 const parseCount = (text: string): Result<number, string> => {
   const n = Number(text);
@@ -8,37 +19,43 @@ const parseCount = (text: string): Result<number, string> => {
   return Number.isInteger(n) ? ok(n) : err(`整数ではない: ${text}`);
 };
 
+const boom = (): never => {
+  throw new Error("QuotaExceededError");
+};
+
 describe("attempt", () => {
   it("throw しなければ戻り値を包む", () => {
-    expect(attempt(() => 13)).toEqual(ok(13));
-  });
-
-  it("throw した値をそのまま渡す", () => {
-    const boom = new Error("QuotaExceededError");
-
     expect(
-      attempt(() => {
-        throw boom;
-      }),
-    ).toEqual(err(boom));
-  });
-
-  /* why: 例外を外へ出さない。呼ぶ側は mapErr か unwrapOr で必ず扱うことになる */
-  it("呼ぶ側に例外を投げない", () => {
-    expect(() =>
-      attempt(() => {
-        throw new Error("boom");
-      }),
-    ).not.toThrow();
-  });
-
-  it("unwrapOr と組むと代わりの値になる", () => {
-    expect(
-      unwrapOr(
-        attempt((): number => JSON.parse("{壊れている")),
-        0,
+      attempt(
+        () => 13,
+        () => "だめ",
       ),
-    ).toBe(0);
+    ).toEqual(ok(13));
+  });
+
+  /* why: 捕まえた値をそのまま持ち回らせない。扱えるエラーに変えることを型で強制する */
+  it("捕まえた値を自分のエラー型に変える", () => {
+    expect(attempt(boom, (cause) => (cause as Error).message)).toEqual(err("QuotaExceededError"));
+    expect(attempt(boom, () => "store-unavailable" as const)).toEqual(err("store-unavailable"));
+  });
+
+  it("呼ぶ側に例外を投げない", () => {
+    expect(() => attempt(boom, () => "だめ")).not.toThrow();
+  });
+});
+
+describe("recover", () => {
+  it("throw しなければ戻り値をそのまま返す", () => {
+    expect(recover(() => 13, 0)).toBe(13);
+  });
+
+  /* why: 知らせる必要のない失敗に使う。壊れた保存を空から始めるのがこれ */
+  it("throw したら代わりの値で続ける", () => {
+    expect(recover((): number => JSON.parse("{壊れている"), 0)).toBe(0);
+  });
+
+  it("呼ぶ側に例外を投げない", () => {
+    expect(() => recover(boom, "代わり")).not.toThrow();
   });
 });
 

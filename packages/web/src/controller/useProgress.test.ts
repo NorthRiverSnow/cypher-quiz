@@ -11,8 +11,8 @@ afterEach(cleanup);
 const BOXES = { "match:forward": 1 as Box, "match:reverse": 2 as Box };
 
 /** setItem が例外を throw するかどうかを、テストの途中で切り替えられる偽ストア */
-const switchableStore = () => {
-  const items = new Map<string, string>();
+const switchableStore = (initial: Record<string, string> = {}) => {
+  const items = new Map(Object.entries(initial));
   const state = { broken: false };
 
   const store: Store = {
@@ -98,9 +98,18 @@ describe("useProgress", () => {
     expect(saved).toEqual({ ok: false, error: "store-unavailable" });
   });
 
-  /* why: 保存が無くても空で始める。読み出しは失敗として扱わない */
+  /* why: 保存が無くても、壊れていても空で始める。読み出しは知らせる失敗ではない */
   it("保存が無ければ空を読む", () => {
     const { store } = switchableStore();
+    const { result } = setup(store);
+
+    expect(result.current.progress.load()).toEqual({});
+    expect(result.current.notices.items).toEqual([]);
+  });
+
+  /* why: 壊れていても知らせない。進捗が無くてもクイズは解ける */
+  it("保存が壊れていても空を読み、通知は出さない", () => {
+    const { store } = switchableStore({ "cypher-quiz:progress": "{壊れている" });
     const { result } = setup(store);
 
     expect(result.current.progress.load()).toEqual({});

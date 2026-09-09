@@ -6,7 +6,7 @@ import type { Notices } from "./useNotices";
 
 export type Progress = Readonly<{
   load: () => Boxes;
-  save: (boxes: Boxes) => Result<undefined, "store-unavailable">;
+  save: (boxes: Boxes) => Result<void, "store-unavailable">;
 }>;
 
 /**

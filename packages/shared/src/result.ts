@@ -27,15 +27,30 @@ export const unwrapOr = <T, E>(result: Result<T, E>, fallback: T): T =>
   result.ok ? result.value : fallback;
 
 /**
- * throw する処理を Result に変える。捕まえた値は unknown のまま渡す。
+ * throw する処理を Result に変える。
  *
- * why: try を書く場所をここだけにする。呼ぶ側は mapErr で自分のエラー型に変えるか、
- * unwrapOr で代わりの値を返すかを選ぶ——どちらも「握り潰していない」ことが形に出る
+ * why: try を書く場所をここだけにする。失敗を自分のエラー型に変えることを強制するので、
+ * unknown のまま持ち回れない
+ *
+ * @param onError 捕まえた値を、扱えるエラーに変える
  */
-export const attempt = <T>(fn: () => T): Result<T, unknown> => {
+export const attempt = <T, E>(fn: () => T, onError: (cause: unknown) => E): Result<T, E> => {
   try {
     return ok(fn());
-  } catch (error) {
-    return err(error);
+  } catch (cause) {
+    return err(onError(cause));
+  }
+};
+
+/**
+ * 必ず実行し、throw したら代わりの値で続ける。
+ *
+ * why: 知らせる必要のない失敗に使う。握り潰しと違い、名前で「回復」だと分かる
+ */
+export const recover = <T>(fn: () => T, fallback: T): T => {
+  try {
+    return fn();
+  } catch {
+    return fallback;
   }
 };

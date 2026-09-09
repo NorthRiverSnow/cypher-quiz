@@ -47,6 +47,7 @@ describe("saveBoxes と loadBoxes", () => {
 });
 
 describe("壊れた保存", () => {
+  /* why: 進捗が無くても解けるので、知らせずに空から始める */
   it("JSON でなければ空を返す", () => {
     expect(loadBoxes(fakeStore({ [KEY]: "{壊れている" }).store)).toEqual({});
   });

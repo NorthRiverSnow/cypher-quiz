@@ -88,6 +88,21 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => { ... };
 | 想定内の失敗 | 接続失敗、書き込み拒否、構文エラー、タイムアウト | `Result` の `err` |
 | 想定外 | バグ | `throw` する。`Result` に包まない |
 
+### 失敗の経路
+
+```
+model            Result で返す。throw する API は shared の attempt で包む
+controller       report(kind, result, describe) に渡す。err で積み、ok で取り下げる
+view             通知を props で受けて描くだけ
+```
+
+**想定外の例外は 2 箇所で受ける。どちらも 1 度きりの仕掛け。**
+
+| | 拾うもの | 置き場所 |
+|---|---|---|
+| `view/templates/ErrorBoundary` | 描画中の例外 | `main.tsx` が `AppRoutes` を包む |
+| `controller/useGlobalErrors` | `window` の `error` / `unhandledrejection` | `routes.tsx` で 1 回だけ呼ぶ |
+
 `shared` に 30 行程度の自前 `Result` を置く（`ok` / `err` / `map` / `mapErr` / `flatMap` / `unwrapOr` / `isOk`）。
 
 ```ts
