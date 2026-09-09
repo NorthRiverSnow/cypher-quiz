@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router";
 
+import { useGlobalErrors } from "./controller/useGlobalErrors";
+import { useNotices } from "./controller/useNotices";
 import { useTheme } from "./controller/useTheme";
 import { OPTIONAL_MATCH, SET_REMOVE, WITH } from "./fixtures/cards";
 import { ThemeToggle } from "./view/atoms/ThemeToggle/ThemeToggle";
 import type { ConnectInput } from "./view/organisms/ConnectForm/ConnectForm";
+import { NoticeList } from "./view/organisms/NoticeList/NoticeList";
 import { ConnectPage } from "./view/pages/ConnectPage/ConnectPage";
 import { QuizPage, type QuizFace } from "./view/pages/QuizPage/QuizPage";
 import { ResultPage } from "./view/pages/ResultPage/ResultPage";
@@ -21,18 +24,21 @@ const DECK = [OPTIONAL_MATCH, WITH, SET_REMOVE] as const;
 
 const EMPTY: ConnectInput = { uri: "", user: "", password: "", database: "" };
 
-const Start = () => {
+type Slot = { notices: ReactNode };
+
+const Start = ({ notices }: Slot) => {
   const navigate = useNavigate();
 
-  return <StartPage onStart={() => void navigate("/connect")} />;
+  return <StartPage notices={notices} onStart={() => void navigate("/connect")} />;
 };
 
-const Connect = () => {
+const Connect = ({ notices }: Slot) => {
   const navigate = useNavigate();
   const [values, setValues] = useState<ConnectInput>(EMPTY);
 
   return (
     <ConnectPage
+      notices={notices}
       values={values}
       onChange={(field, value) => setValues((prev) => ({ ...prev, [field]: value }))}
       onConnect={() => void navigate("/quiz")}
@@ -42,7 +48,7 @@ const Connect = () => {
   );
 };
 
-const Quiz = () => {
+const Quiz = ({ notices }: Slot) => {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number>();
@@ -104,14 +110,15 @@ const Quiz = () => {
 
   const done = index + (answered ? 1 : 0);
 
-  return <QuizPage counts={[DECK.length - done, 0, done]} face={face} />;
+  return <QuizPage notices={notices} counts={[DECK.length - done, 0, done]} face={face} />;
 };
 
-const Result = () => {
+const Result = ({ notices }: Slot) => {
   const navigate = useNavigate();
 
   return (
     <ResultPage
+      notices={notices}
       counts={[0, 0, DECK.length]}
       summary={{
         asked: DECK.length,
@@ -128,6 +135,11 @@ const Result = () => {
 
 export const AppRoutes = () => {
   const [theme, toggleTheme] = useTheme();
+  const notices = useNotices();
+
+  useGlobalErrors(notices);
+
+  const band = <NoticeList items={notices.items} onDismiss={notices.dismiss} />;
 
   return (
     <>
@@ -135,10 +147,10 @@ export const AppRoutes = () => {
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </Corner>
       <Routes>
-        <Route path="/" element={<Start />} />
-        <Route path="/connect" element={<Connect />} />
-        <Route path="/quiz" element={<Quiz />} />
-        <Route path="/result" element={<Result />} />
+        <Route path="/" element={<Start notices={band} />} />
+        <Route path="/connect" element={<Connect notices={band} />} />
+        <Route path="/quiz" element={<Quiz notices={band} />} />
+        <Route path="/result" element={<Result notices={band} />} />
         {/* why: 知らない URL はスタートへ送る。空白の画面を出さない */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
