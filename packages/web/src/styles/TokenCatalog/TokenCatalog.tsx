@@ -1,13 +1,13 @@
 import type { CSSProperties } from "react";
 
-import { CodeBlock, type CodeSegment } from "../../view/atoms/CodeBlock/CodeBlock";
+import type { CodeSegment } from "../../types";
+import { CodeBlock } from "../../view/atoms/CodeBlock/CodeBlock";
 import { ResultBlock } from "../../view/atoms/ResultBlock/ResultBlock";
 import { Text } from "../../view/atoms/Text/Text";
 import { Note } from "../../view/molecules/Note/Note";
 import { ENTITIES, INKS, SEMANTIC, SURFACES, TINTS, type Token } from "./tokenList";
 
-/* このファイルの style は見本を並べるためのものだけ。字の型は Text が持つ
-   （docs/07_design.md#5-文字の段階） */
+/* このファイルの style は見本を並べるためのものだけ */
 
 const PAGE: CSSProperties = {
   background: "var(--ground)",
@@ -95,8 +95,8 @@ const Group = ({ title, tokens, tint = false }: GroupProps) => (
         {title}
       </Text>
     </div>
-    {tokens.map((t) =>
-      tint ? <TintSwatch key={t.name} {...t} /> : <Swatch key={t.name} {...t} />,
+    {tokens.map((token) =>
+      tint ? <TintSwatch key={token.name} {...token} /> : <Swatch key={token.name} {...token} />,
     )}
   </section>
 );

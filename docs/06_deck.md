@@ -16,13 +16,13 @@ guide が変わったら作り直す。変わったことは SessionStart のフ
 | `03_cypher_reference_ja.html` | `73b5930c5247be06a375f2a1fae56066` |
 
 カード 30 枚。id は guide の `div.card` の id で、
-[`02_architecture.md`](./02_architecture.md#4-デッキ生成) の `CardId` と同じ値。
+[`02_architecture.md`](./02_architecture.md#4-デッキ) の `CardId` と同じ値。
 
 載せていないもの:
 
 - **`§ Prerequisite`** — [`05_reference.md`](./05_reference.md#データセット) が同じ表を持つ
 - **ハイライトの範囲** — `span.kw` などの位置は文字数で持つ値で、
-  フェーズ B の `tools/extract_deck.ts` が HTML から直接拾う
+  出題データ（`model/deck.data.ts`）は色分けをセグメントの列で持つ
 - **実行結果の強調** — `<b>` は fence の中では記法にならないので、値だけが残る
 
 ---

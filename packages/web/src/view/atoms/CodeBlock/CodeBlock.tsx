@@ -1,14 +1,11 @@
 import type { CSSProperties } from "react";
 
+import type { CodeKind, CodeSegment } from "../../../types";
 import { TEXT, Text } from "../Text/Text";
-
-export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
-
-export type CodeSegment = { text: string; kind?: CodeKind };
 
 export type CodeBlockProps = {
   code: readonly CodeSegment[];
-  /* 親が枠を持つときに使う。面も罫線も角丸も描かない */
+  /** 親が枠を持つときに使う。面も罫線も角丸も描かない */
   bare?: boolean;
 };
 
@@ -43,11 +40,12 @@ const LINE: CSSProperties = {
   textIndent: "-2ch",
 };
 
+/** 改行を含むセグメントの列を、行ごとのセグメントの列に割る */
 const toLines = (code: readonly CodeSegment[]): CodeSegment[][] => {
   const lines: CodeSegment[][] = [[]];
   for (const segment of code) {
-    segment.text.split("\n").forEach((text, i) => {
-      if (i > 0) lines.push([]);
+    segment.text.split("\n").forEach((text, idx) => {
+      if (idx > 0) lines.push([]);
       lines[lines.length - 1]?.push({ ...segment, text });
     });
   }
@@ -60,13 +58,13 @@ export const CodeBlock = ({ code, bare = false }: CodeBlockProps) => (
   <pre style={bare ? BARE : SURFACE}>
     {/* why: pre > code は HTML の定型。字は Text の段階表から引く */}
     <Text as="code" variant="code">
-      {toLines(code).map((line, i) => (
-        <span key={i} style={LINE}>
-          {line.map((segment, j) =>
+      {toLines(code).map((line, lineIdx) => (
+        <span key={lineIdx} style={LINE}>
+          {line.map((segment, segmentIdx) =>
             segment.kind === undefined ? (
               segment.text
             ) : (
-              <span key={j} style={SEGMENT[segment.kind]}>
+              <span key={segmentIdx} style={SEGMENT[segment.kind]}>
                 {segment.text}
               </span>
             ),

@@ -1,7 +1,8 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
-import { CodeBlock, type CodeSegment } from "./CodeBlock";
+import type { CodeSegment } from "../../../types";
+import { CodeBlock } from "./CodeBlock";
 
 afterEach(cleanup);
 

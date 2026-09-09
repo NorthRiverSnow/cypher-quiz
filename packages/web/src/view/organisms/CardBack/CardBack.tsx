@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 
-import { SECTION_LABELS, type SectionId } from "../../../types";
+import { type CodeSegment, SECTION_LABELS, type SectionId } from "../../../types";
 import { Button } from "../../atoms/Button/Button";
-import { CodeBlock, type CodeSegment } from "../../atoms/CodeBlock/CodeBlock";
+import { CodeBlock } from "../../atoms/CodeBlock/CodeBlock";
 import { Card } from "../../atoms/Card/Card";
 import { Icon, type IconName } from "../../atoms/Icon/Icon";
 import { ResultBlock } from "../../atoms/ResultBlock/ResultBlock";
@@ -23,10 +23,10 @@ export type CardBackProps = {
   note?: string;
   warn?: string;
   editor?: Omit<QueryEditorProps, "code">;
-  /* 実行して返ってきた行。期待される実行結果とは別に、下へ積む */
+  /** 実行して返ってきた行。期待される実行結果とは別に、下へ積む */
   result?: ResultTableProps;
   onNext: () => void;
-  /* 最後の 1 枚なら進む先は結果。残っていれば次のカード */
+  /** 最後の 1 枚なら進む先は結果。残っていれば次のカード */
   isLast?: boolean;
 };
 

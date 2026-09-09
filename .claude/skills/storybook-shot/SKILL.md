@@ -8,13 +8,13 @@ description: Storybook の story を Chrome headless で撮って自分で見る
 **見た目を変えたら、聞く前に撮る。** ユーザーに確認を頼むのは「どちらが好みか」に絞る。
 アイコンの位置合わせのようにマジックナンバーを調整する作業は、自分で見ないと収束しない。
 
-## 1. Storybook が上がっているか確認する
+## 1. Storybook が起動しているか確認する
 
 ```
 lsof -nP -iTCP:6006 -sTCP:LISTEN
 ```
 
-いなければ上げる。**package.json のスクリプト経由で、バックグラウンドで動かす。**
+いなければ起動する。**package.json のスクリプト経由で、バックグラウンドで動かす。**
 `node_modules/.bin/` を直接叩かない。
 
 ```

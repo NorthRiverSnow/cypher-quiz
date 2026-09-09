@@ -10,7 +10,7 @@ export type TextFieldProps = {
   type?: "text" | "password";
   placeholder?: string;
   disabled?: boolean;
-  /* 入力欄の下に置く補足。何を入れる欄なのかがラベルだけでは分からないときに使う */
+  /** 入力欄の下に出る補足 */
   hint?: string;
 };
 

@@ -1,0 +1,230 @@
+import { describe, expect, it } from "vite-plus/test";
+
+import type { Card } from "./deck";
+import { DECK } from "./deck.data";
+import type { Box } from "./leitner";
+import {
+  allKeys,
+  answerCurrent,
+  cardIdOf,
+  counts,
+  createQuiz,
+  currentKey,
+  directionOf,
+  isComplete,
+  keyOf,
+  type QuizState,
+} from "./quiz";
+import { createRng } from "./rng";
+
+const small: Card[] = [
+  { id: "a", section: "shaping", name: "A", role: "あ", runnable: true, mutates: false },
+  { id: "b", section: "shaping", name: "B", role: "い", runnable: true, mutates: false },
+  { id: "c", section: "lists", name: "C", role: "う", runnable: true, mutates: false },
+];
+
+/** 3 枚 × 2 方向 */
+const QUESTIONS = small.length * 2;
+
+/** 1 問につき 2 回続けて正解すると完了する（docs/01_spec.md#6-復習間隔反復） */
+const TO_COMPLETE = QUESTIONS * 2;
+
+const answerAll = (state: QuizState, correct: boolean, times: number) => {
+  let next = state;
+  for (let i = 0; i < times; i++) next = answerCurrent(next, correct);
+
+  return next;
+};
+
+describe("キー", () => {
+  it("カードと方向を往復できる", () => {
+    const key = keyOf("optional-match", "reverse");
+
+    expect(cardIdOf(key)).toBe("optional-match");
+    expect(directionOf(key)).toBe("reverse");
+  });
+
+  it("30 枚から 60 問できる", () => {
+    expect(allKeys(DECK)).toHaveLength(60);
+    expect(new Set(allKeys(DECK)).size).toBe(60);
+  });
+});
+
+describe("createQuiz", () => {
+  it("全問が box 0 から始まる", () => {
+    const state = createQuiz(DECK, createRng(1));
+
+    expect(state.queue).toHaveLength(60);
+    expect(counts(state)).toEqual([60, 0, 0]);
+  });
+
+  it("同じシードなら同じ出題順になる", () => {
+    expect(createQuiz(DECK, createRng(4)).queue).toEqual(createQuiz(DECK, createRng(4)).queue);
+  });
+
+  it("シードが違えば出題順が変わる", () => {
+    expect(createQuiz(DECK, createRng(4)).queue).not.toEqual(createQuiz(DECK, createRng(5)).queue);
+  });
+
+  it("完了済みは出題しない", () => {
+    const boxes = { [keyOf("a", "forward")]: 2 as Box, [keyOf("a", "reverse")]: 2 as Box };
+    const state = createQuiz(small, createRng(1), boxes);
+
+    expect(state.queue).toHaveLength(4);
+    expect(state.queue).not.toContain(keyOf("a", "forward"));
+  });
+
+  /* why: まとめて混ぜると、覚えていないもの（box 0）が後半に流れる */
+  it("box の低いものを先に出す", () => {
+    const boxes = Object.fromEntries(
+      allKeys(small).map((key, idx) => [key, (idx < 3 ? 1 : 0) as Box]),
+    );
+    const state = createQuiz(small, createRng(2), boxes);
+    const boxOrder = state.queue.map((key) => boxes[key]);
+
+    expect(boxOrder).toEqual([0, 0, 0, 1, 1, 1]);
+  });
+});
+
+describe("続きから始める", () => {
+  it("保存した box を引き継ぐ", () => {
+    const boxes = {
+      [keyOf("a", "forward")]: 2 as Box,
+      [keyOf("a", "reverse")]: 1 as Box,
+      [keyOf("b", "forward")]: 1 as Box,
+    };
+
+    const state = createQuiz(small, createRng(1), boxes);
+
+    expect(counts(state)).toEqual([3, 2, 1]);
+    expect(state.boxes[keyOf("a", "reverse")]).toBe(1);
+  });
+
+  it("残りだけが出題され、完了済みは並ばない", () => {
+    const boxes = {
+      [keyOf("a", "forward")]: 2 as Box,
+      [keyOf("a", "reverse")]: 2 as Box,
+      [keyOf("b", "forward")]: 1 as Box,
+    };
+
+    const state = createQuiz(small, createRng(1), boxes);
+
+    expect(state.queue).toHaveLength(QUESTIONS - 2);
+    expect(state.queue).toContain(keyOf("b", "forward"));
+    expect(state.queue).not.toContain(keyOf("a", "forward"));
+  });
+
+  /* why: 保存に無いキーは 0 として扱う。カードが増えた回でも前回の進捗を捨てない */
+  it("保存に無いカードは box 0 から始まる", () => {
+    const state = createQuiz(small, createRng(1), { [keyOf("a", "forward")]: 1 as Box });
+
+    expect(state.boxes[keyOf("c", "reverse")]).toBe(0);
+    expect(counts(state)).toEqual([5, 1, 0]);
+  });
+
+  /* why: 教材からカードが消えても、残った box だけで組み直せる */
+  it("デッキに無いキーは持ち込まない", () => {
+    const state = createQuiz(small, createRng(1), { "zz:forward": 1 as Box });
+
+    expect(Object.keys(state.boxes)).toHaveLength(QUESTIONS);
+    expect(state.boxes["zz:forward"]).toBeUndefined();
+  });
+
+  it("途中まで解いた状態から再開すると、解き終えた分だけ減る", () => {
+    const first = answerAll(createQuiz(small, createRng(1)), true, 4);
+    const resumed = createQuiz(small, createRng(2), first.boxes);
+
+    expect(counts(resumed)).toEqual(counts(first));
+    expect(resumed.queue).toHaveLength(QUESTIONS - counts(first)[2]);
+  });
+});
+
+describe("answerCurrent", () => {
+  it("正解すると box が 1 つ上がる", () => {
+    const state = createQuiz(small, createRng(1));
+    const key = currentKey(state) as string;
+    const next = answerCurrent(state, true);
+
+    expect(next.boxes[key]).toBe(1);
+  });
+
+  it("2 回正解すると出題から消える", () => {
+    let state = createQuiz(small, createRng(1));
+    const key = currentKey(state) as string;
+
+    state = answerCurrent(state, true);
+    expect(state.queue).toContain(key);
+
+    state = answerAll(state, true, state.queue.indexOf(key as never) + 1);
+    expect(state.queue).not.toContain(key);
+  });
+
+  /* why: 1 回目の正解でも間を空ける。すぐ次に出すと、覚えたのではなく直前の答えを見て正解できる */
+  it("正解しても完了前なら後ろへ回る", () => {
+    const state = createQuiz(small, createRng(1));
+    const key = currentKey(state) as string;
+    const next = answerCurrent(state, true);
+
+    expect(next.queue.indexOf(key as never)).toBe(next.queue.length - 1);
+  });
+
+  /* why: 数問後ろに差し戻す。すぐ次に出すと、覚えたのではなく直前の答えを見て正解できる */
+  it("不正解は box 0 に戻り、数問後ろに差し戻される", () => {
+    const state = createQuiz(small, createRng(1));
+    const key = currentKey(state) as string;
+    const next = answerCurrent(state, false);
+
+    expect(next.boxes[key]).toBe(0);
+    expect(next.queue).toHaveLength(state.queue.length);
+    expect(next.queue[0]).not.toBe(key);
+    expect(next.queue.indexOf(key as never)).toBe(3);
+  });
+
+  it("残りが少なければ末尾に差し戻す", () => {
+    let state = createQuiz(small, createRng(1));
+    state = answerAll(state, true, TO_COMPLETE);
+
+    expect(isComplete(state)).toBe(true);
+    expect(state.queue).toEqual([]);
+  });
+
+  it("キューが空なら何も起きない", () => {
+    const empty: QuizState = { queue: [], boxes: {} };
+
+    expect(answerCurrent(empty, true)).toEqual(empty);
+  });
+});
+
+describe("完了と集計", () => {
+  it("全問 2 回正解で完了する", () => {
+    const state = answerAll(createQuiz(small, createRng(1)), true, TO_COMPLETE);
+
+    expect(counts(state)).toEqual([0, 0, QUESTIONS]);
+    expect(isComplete(state)).toBe(true);
+    expect(currentKey(state)).toBeUndefined();
+  });
+
+  it("1 問でも残っていれば完了しない", () => {
+    const state = answerAll(createQuiz(small, createRng(1)), true, TO_COMPLETE - 2);
+
+    expect(isComplete(state)).toBe(false);
+  });
+});
+
+/* サマリの「不正解だけもう一度」は、前回の box を渡して組み直すだけ */
+describe("残りだけで組み直す", () => {
+  it("完了していないものだけがキューに入る", () => {
+    const boxes = Object.fromEntries(allKeys(small).map((key) => [key, 2 as Box]));
+    const missed = keyOf("c", "reverse");
+
+    const retried = createQuiz(small, createRng(1), { ...boxes, [missed]: 0 as Box });
+
+    expect(retried.queue).toEqual([missed]);
+  });
+
+  it("残りが無ければ空になる", () => {
+    const boxes = Object.fromEntries(allKeys(small).map((key) => [key, 2 as Box]));
+
+    expect(createQuiz(small, createRng(1), boxes).queue).toEqual([]);
+  });
+});

@@ -1,9 +1,4 @@
-/* デザイントークン。値と制約の仕様は docs/07_design.md。
- *
- * why: dark を 2 ブロックに分けてある。@media 側は OS 設定への追従で、
- * :root:not([data-theme="light"]) にすることで手動の light 指定に負ける。
- * :root[data-theme="dark"] は手動指定なので OS 設定より優先される。
- */
+/* デザイントークン。値と制約は docs/07_design.md */
 :root {
   /* 面と文字 */
   --ground: #eef5fa;
@@ -15,8 +10,7 @@
   --rule: #c8d6e2;
   --rule-soft: #e0e9f1;
 
-  /* 意味色。淡い面（*-bg）に文字を置くときは --ink / --ink-soft を使う。
-   * 自色は罫線とアイコンに限る（docs/07_design.md#淡い面に自色を載せない） */
+  /* 意味色（docs/07_design.md#淡い面に自色を載せない） */
   --accent: #006bf0; /* 構造・キーワード → 選択中の肢、進捗バー */
   --accent-bg: #dbe9ff;
   --keep: #008509; /* 正解 → 罫線と正しい肢、コード中のリレーション型 */
@@ -26,7 +20,7 @@
   --warn: #8f6d00; /* 注意 → 罠、引っかけの注記 */
   --warn-bg: #faeed1;
 
-  /* エンティティ色。結果表でノードとして返った値の字 */
+  /* エンティティ色 */
   --team: #bf5000;
   --engineer: #a144d8;
   --service: #008076;
@@ -48,7 +42,7 @@
   --radius-card: 4px;
   --radius-pill: 999px;
 
-  /* 余白。gap / padding / margin はこの 6 段から選ぶ */
+  /* 余白 */
   --space-2xs: 0.15rem;
   --space-xs: 0.4rem;
   --space-sm: 0.7rem;

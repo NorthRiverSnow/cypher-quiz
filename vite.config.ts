@@ -1,5 +1,9 @@
 import { defineConfig } from "vite-plus";
 
+/* why: View の各層に同じ patterns を書き足す。同じファイルに override が 2 つ当たると
+   後の設定が前を置き換えるので、アトミックデザインの規則だけを書くと MVC の禁止が消える */
+const NO_LOGIC = ["**/model/**", "**/controller/**"];
+
 export default defineConfig({
   fmt: {
     // docs/ は guide からの逐語引用を載せる参照資料。整形させると
@@ -19,12 +23,40 @@ export default defineConfig({
     options: { typeAware: true, typeCheck: true },
     overrides: [
       {
-        // atoms は他の層を知らない
+        // Model は React も DOM も、上の層も知らない
+        files: ["packages/web/src/model/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            { patterns: ["react", "react-dom", "**/view/**", "**/controller/**"] },
+          ],
+        },
+      },
+      {
+        // View はロジックも副作用も知らない。型は types.ts と @cypher-quiz/shared から取る
+        files: ["packages/web/src/view/**"],
+        rules: { "no-restricted-imports": ["error", { patterns: NO_LOGIC }] },
+      },
+      {
+        // 結線の層。controller は呼ぶが、model には触らない
+        files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
+        rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**"] }] },
+      },
+      // アトミックデザインの層。下の層しか import できない
+      {
         files: ["packages/web/src/view/atoms/**"],
         rules: {
           "no-restricted-imports": [
             "error",
-            { patterns: ["**/molecules/**", "**/organisms/**", "**/templates/**", "**/pages/**"] },
+            {
+              patterns: [
+                ...NO_LOGIC,
+                "**/molecules/**",
+                "**/organisms/**",
+                "**/templates/**",
+                "**/pages/**",
+              ],
+            },
           ],
         },
       },
@@ -33,20 +65,25 @@ export default defineConfig({
         rules: {
           "no-restricted-imports": [
             "error",
-            { patterns: ["**/organisms/**", "**/templates/**", "**/pages/**"] },
+            {
+              patterns: [...NO_LOGIC, "**/organisms/**", "**/templates/**", "**/pages/**"],
+            },
           ],
         },
       },
       {
         files: ["packages/web/src/view/organisms/**"],
         rules: {
-          "no-restricted-imports": ["error", { patterns: ["**/templates/**", "**/pages/**"] }],
+          "no-restricted-imports": [
+            "error",
+            { patterns: [...NO_LOGIC, "**/templates/**", "**/pages/**"] },
+          ],
         },
       },
       {
         files: ["packages/web/src/view/templates/**"],
         rules: {
-          "no-restricted-imports": ["error", { patterns: ["**/pages/**"] }],
+          "no-restricted-imports": ["error", { patterns: [...NO_LOGIC, "**/pages/**"] }],
         },
       },
     ],

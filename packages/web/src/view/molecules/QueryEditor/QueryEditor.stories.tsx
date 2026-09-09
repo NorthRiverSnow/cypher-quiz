@@ -29,16 +29,14 @@ type Story = StoryObj<typeof meta>;
 
 export const 既定: Story = {};
 
-/* 編集すると色が消える。色分けは出題データが持っていて、編集後の文字列は解析しない。
-   ここでは DISTINCT を外した版——答えが 13 から 20 に飛ぶ罠 */
+/* DISTINCT を外した版——答えが 13 から 20 に飛ぶ罠 */
 export const 編集済み: Story = { args: { value: EDITED } };
 
 export const 実行中: Story = { args: { value: EDITED, status: "running" } };
 
 export const 未接続: Story = { args: { status: "offline" } };
 
-/* 書き込み系のカードは実行ボタンを出さないので、ここに来るのは
-   実行できるカードのクエリを書き込みに書き換えた場合（docs/04_roadmap.md の検証 11） */
+/* 実行できるカードのクエリを書き込みに書き換えた場合（docs/04_roadmap.md の検証 11） */
 export const 書き込みで拒否: Story = { args: { value: "CREATE (x:Tmp)", status: "rejected" } };
 
 export const 実行エラー: Story = {
@@ -96,8 +94,7 @@ export const 編集済みで折り返す: Story = {
   },
 };
 
-/* 折り返し位置が無い連なりの扱いは要素で違う。pre は溢れて横スクロールするが、
-   textarea は強制的に割る。編集中に横スクロールは起きない */
+/* 編集中に横スクロールが起きないことを見る */
 export const 編集済みで割れる: Story = {
   args: {
     value:

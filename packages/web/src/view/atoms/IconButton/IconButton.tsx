@@ -3,7 +3,7 @@ import styles from "./IconButton.module.css";
 
 export type IconButtonProps = {
   icon: IconName;
-  /* 読み上げの名前と、ポインタを載せたときの説明。記号だけでは意味が伝わらない */
+  /** 読み上げの名前と、ポインタを載せたときの説明 */
   label: string;
   onClick: () => void;
   disabled?: boolean;

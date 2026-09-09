@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { Button } from "../../atoms/Button/Button";
 import { Card } from "../../atoms/Card/Card";
@@ -6,8 +6,9 @@ import { Text } from "../../atoms/Text/Text";
 import { QuizLayout } from "../../templates/QuizLayout/QuizLayout";
 
 export type StartPageProps = {
+  notices?: ReactNode;
   onStart: () => void;
-  /* 前回の続きがあるときの残り問題数。無い（未着手）なら渡さない */
+  /** 前回の続きがあるときの残り問題数。渡さなければ未着手 */
   remaining?: number;
 };
 
@@ -37,8 +38,8 @@ const POINT_ITEMS: readonly { key: string; text: string }[] = [
   { key: "任意", text: "DB に繋ぐと、裏面のサンプルクエリを編集して実行できます" },
 ];
 
-export const StartPage = ({ onStart, remaining }: StartPageProps) => (
-  <QuizLayout>
+export const StartPage = ({ notices, onStart, remaining }: StartPageProps) => (
+  <QuizLayout notices={notices}>
     <Card>
       <div style={STACK}>
         <Text as="h1" variant="display">

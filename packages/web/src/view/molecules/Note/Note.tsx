@@ -16,37 +16,45 @@ export type NoteProps = {
   tone: NoteTone;
   icon?: IconName;
   iconLabel?: string;
+  /** 本文の右端に置く操作。閉じるボタンなど */
+  action?: ReactNode;
   children: ReactNode;
 };
 
-/* why: アイコンの箱を本文の 1 行と同じ高さにする。em ではなく段階表から計算するのは、
-   箱が Text の外にあり、em が本文ではなく親（body）の字の大きさで解決されるため */
-const ICON_BOX = `calc(${TEXT.annotation.fontSize} * ${TEXT.annotation.lineHeight})`;
+/* 揃え方と実測値は docs/07_design.md#注記のアイコンの位置 */
+const ICON_SHIFT = "translateY(0.29rem)";
 
-export const Note = ({ tone, icon, iconLabel, children }: NoteProps) => {
+const LINE_BOX = `calc(${TEXT.annotation.fontSize} * ${TEXT.annotation.lineHeight})`;
+
+export const Note = ({ tone, icon, iconLabel, action, children }: NoteProps) => {
   const { fg, bg } = TONES[tone];
 
   return (
     <div
       style={{
         display: "flex",
-        alignItems: "flex-start",
+        alignItems: "baseline",
         gap: "var(--space-xs)",
         background: `var(${bg})`,
         borderLeft: `var(--border-width-bold) solid var(${fg})`,
         padding: "var(--space-xs) var(--space-sm)",
       }}
     >
-      {/* why: 本文の行box と同じ高さの箱に入れて中央寄せすると、1 行目に揃いつつ
-          折り返しの字下げが保たれる。margin で押し下げると字の大きさ変更で崩れる */}
       {icon !== undefined && (
-        <span style={{ flex: "none", display: "grid", placeItems: "center", height: ICON_BOX }}>
+        <span style={{ flex: "none", transform: ICON_SHIFT }}>
           <Icon name={icon} label={iconLabel} color={`var(${fg})`} />
         </span>
       )}
-      <Text variant="annotation" tone="soft">
-        {children}
-      </Text>
+      <span style={{ flex: 1 }}>
+        <Text variant="annotation" tone="soft">
+          {children}
+        </Text>
+      </span>
+      {action !== undefined && (
+        <span style={{ flex: "none", display: "grid", placeItems: "center", height: LINE_BOX }}>
+          {action}
+        </span>
+      )}
     </div>
   );
 };

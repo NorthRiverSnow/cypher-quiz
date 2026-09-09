@@ -86,9 +86,39 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => { ... };
 | 分類 | 例 | 扱い |
 |---|---|---|
 | 想定内の失敗 | 接続失敗、書き込み拒否、構文エラー、タイムアウト | `Result` の `err` |
-| 想定外 | バグ | 例外として上げる |
+| 想定外 | バグ | `throw` する。`Result` に包まない |
 
-`shared` に 30 行程度の自前 `Result` / `Option` を置く。
+### 失敗の経路
+
+```
+model            Result で返す。throw する API は shared の attempt / recover で包む
+controller       report(kind, result, describe) に渡す。err で積み、ok で取り下げる
+view             通知を props で受けて描くだけ
+```
+
+**`try` を書くのは `shared/result.ts` の 2 つだけ。** どちらを使うかは
+[利用者に知らせるか](./01_spec.md#8-失敗の伝え方)で決まる。
+
+| | 使うもの | 返るもの |
+|---|---|---|
+| 知らせる | `attempt` | `Result`。controller が `report` に渡す |
+| 知らせない | `recover` | 値そのもの。throw したら代わりの値 |
+
+**`recover` は握り潰しではない。** 握り潰しは、知らせるべき失敗が誰にも見えない状態のこと。
+`recover` は知らせないと決めた失敗にだけ使い、決めた理由をコードに `why:` で書く。
+
+**通知の帯は `routes.tsx` が `<Routes>` の外で組み、ページに props で渡す。**
+ページの中で組むと遷移のたびに作り直され、読む前に消える。context は使わない——
+View が controller を知らない構造を保つため、渡すのは `ReactNode` の穴だけにする。
+
+**想定外の例外は 2 箇所で受ける。どちらも 1 度きりの仕掛け。**
+
+| | 拾うもの | 置き場所 |
+|---|---|---|
+| `view/templates/ErrorBoundary` | 描画中の例外 | `main.tsx` が `AppRoutes` を包む |
+| `controller/useGlobalErrors` | `window` の `error` / `unhandledrejection` | `routes.tsx` で 1 回だけ呼ぶ |
+
+`shared` に自前の `Result` を置く（`ok` / `err` / `isOk` / `map` / `mapErr` / `flatMap` / `unwrapOr` / `attempt` / `recover`）。
 
 ```ts
 // packages/shared/src/result.ts
@@ -115,53 +145,52 @@ export type Result<T, E> =
 
 ```ts
 // vite.config.ts（抜粋）
+const NO_LOGIC = ["**/model/**", "**/controller/**"];
+
 lint: {
   options: { typeAware: true, typeCheck: true },
   overrides: [
     {
+      // Model は React も DOM も、上の層も知らない
       files: ["packages/web/src/model/**"],
       rules: {
-        // Model は React も DOM も知らない
         "no-restricted-imports": ["error", {
-          patterns: ["react", "react-dom", "../view/*", "../controller/*"],
+          patterns: ["react", "react-dom", "**/view/**", "**/controller/**"],
         }],
-        "prefer-const": "error",
       },
     },
     {
+      // View はロジックも副作用も知らない。型は types.ts と @cypher-quiz/shared から取る
       files: ["packages/web/src/view/**"],
-      rules: {
-        // View はロジックを知らない。型は @cypher-quiz/shared から取る
-        "no-restricted-imports": ["error", {
-          patterns: ["../model/*", "../controller/*"],
-        }],
-      },
+      rules: { "no-restricted-imports": ["error", { patterns: NO_LOGIC }] },
+    },
+    {
+      // 結線の層。controller は呼ぶが、model には触らない
+      files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
+      rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**"] }] },
     },
     // アトミックデザインの層。下の層しか import できない
     {
       files: ["packages/web/src/view/atoms/**"],
       rules: {
         "no-restricted-imports": ["error", {
-          patterns: ["**/molecules/**", "**/organisms/**", "**/templates/**", "**/pages/**"],
+          patterns: [...NO_LOGIC, "**/molecules/**", "**/organisms/**", "**/templates/**", "**/pages/**"],
         }],
       },
     },
-    {
-      files: ["packages/web/src/view/molecules/**"],
-      rules: {
-        "no-restricted-imports": ["error", {
-          patterns: ["**/organisms/**", "**/templates/**", "**/pages/**"],
-        }],
-      },
-    },
-    // organisms は templates / pages を、templates は pages を禁止（以下同様）
+    // molecules / organisms / templates も同じ形（上の層と NO_LOGIC を並べる）
   ],
 }
 ```
 
+**View の各層には `NO_LOGIC` を書き足す。** 同じファイルに override が 2 つ当たると
+**後の設定が前を置き換える**（マージされない）ので、アトミックデザインの規則だけを書くと
+MVC の禁止が消える。
+
 `**/molecules/**` のような glob が `../../molecules/Note` のような相対 import にも一致することは実測済み。
-**4 方向すべて確認した**——atoms→molecules はエラーになり、molecules→atoms は通り、
-organisms→molecules は通り、organisms→pages はエラーになる。
+**7 方向を確認した**——`view` → `model`、`view` → `controller`、`pages` → `model`、
+`routes.tsx` → `model`、`model` → `react`、`atoms` → `molecules` はすべてエラーになり、
+`controller` → `model` は通る。
 
 ### 各層の禁止事項
 
@@ -255,6 +284,15 @@ story ファイルに書いてよいのは、被写体の並べ方（`render`）
 | 不変性 | **TypeScript の `Readonly<>` / `readonly`** | 型エラーになる。ただし付けた所だけ・浅くだけ（下記） |
 | クラス禁止 | — | **機械では守らない**（下記） |
 
+### クラスを使う唯一の場所
+
+`view/templates/ErrorBoundary`。**React に hook 版の境界が無い**ため、ここだけクラスで書く。
+境界が無いと、描画中の例外で React が木ごと外して**白い画面**になる。
+
+持たせるのは `componentDidCatch` と `getDerivedStateFromError` だけで、出す画面は
+`fallback` として外から渡す（中身を知らないまま包む）。**スタックはコンソールに残し、
+画面には文言だけを出す。**
+
 **クラス禁止だけは機械化していない。** Oxlint に該当ルールが無く、クラスは「うっかり書く」ものではないので、レビューで足りると判断した。どうしても止めたければ Oxlint の JS プラグイン（`vite.config.ts` の `lint.jsPlugins`。Vite+ 自身も 1 つ登録している）で `ClassDeclaration` を検出してエラーにする 15 行程度のプラグインを書けば済む。
 
 ### `Readonly` は付ける場所を選ぶ
@@ -266,7 +304,7 @@ story ファイルに書いてよいのは、被写体の並べ方（`render`）
 | 型 | なぜ |
 |---|---|
 | `QuizState` とその中身 | reducer の状態。`(state, event) => state` で回すので、書き換えると React の変更検知と Model の純粋性が同時に壊れる |
-| `Card` / `Sample` | `deck.generated.ts` はモジュール共有データ。1 箇所で書き換えると全出題に波及する |
+| `Card` | `deck.data.ts` はモジュール共有データ。1 箇所で書き換えると全出題に波及する |
 
 付けない（短命、または誰も書き換えない）:
 
@@ -299,11 +337,17 @@ View は Model の**型**は要るがロジックは要らない。型を `share
 
 ---
 
-## 4. デッキ生成
+## 4. デッキ
 
-`guides/03_cypher_reference_ja.html` を単一の真実として扱い（`nordwind-workshop` 側の運用思想と揃える）、そこから `deck.generated.ts` を吐く。
+30 枚は `model/deck.data.ts` の**固定データ**として持つ。値の出どころは
+[`06_deck.md`](./06_deck.md)（guide 03 の本文）。
 
-**生成物はコミットする**ので、このリポジトリは単体で完結する。
+**抽出器は置かない。** 教材はこのリポジトリの外にあり、生成器を持つと外部への依存が残る。
+30 枚は動かないデータなので、更新するときは手で直す。
+
+**デッキはフロントだけが持つ。** API を通らないので `shared/schema/` にも入れない。
+バックエンドの仕事はグラフクエリの実行だけで、[接続しなくても解ける](./01_spec.md#5-db-への接続)
+という仕様がこれで成立する。
 
 章は 6 つ。**id は安定した slug、日本語は表示ラベルとして別に持つ。** `section` は「不正解の肢を同じ章から引く」（[`01_spec.md` §2](./01_spec.md#2-出題形式)）ために使う機能上のキーなので、文言を直しても壊れない値にする必要がある。
 
@@ -343,24 +387,20 @@ export type Card = Readonly<{
   warn?:    string;      // 罠
 }>;
 
-export type Sample = Readonly<{
-  cypher:     string;                  // タグを剥がした素のクエリ
-  highlights: readonly Token[];        // span.kw/.rel/.hl/.bad/.cm の範囲
-  expected?:  string;                  // 期待される実行結果
-  runnable:   boolean;                 // 22 枚が true
-  mutates:    boolean;                 // 5 枚が true
-}>;
+// src/types.ts — Model と View が共有する
+export type CodeKind = 'kw' | 'rel' | 'hl' | 'bad' | 'cm';
+export type CodeSegment = { text: string; kind?: CodeKind };
 ```
 
-### `runnable` / `mutates` は自動判定しない
+`code` は `CodeBlock` がそのまま描けるセグメントの列で持つ。範囲（開始位置と長さ）で
+持つと、View に変換の処理が要る。
 
-`tools/extract_deck.ts` の**明示テーブル**で持つ。30 枚しかなく、誤判定のほうが高くつく。
+**`CodeSegment` は `src/types.ts` に置く。** View は lint で `model/**` を import できないので、
+`model/deck.ts` に置くと View 側が同じ型を二重に定義することになる。
 
-### 抽出元はこのリポジトリの外
+### `runnable` / `mutates` はデータに書く
 
-`../nordwind-workshop/guides/03_cypher_reference_ja.html`。パスは引数で渡し、既定値をそこに向ける。
-
-**guide が無い環境ではコミット済みの `deck.generated.ts` が使われるので、ビルドは壊れない。**
+判定の処理を持たない。30 枚しかなく、誤判定のほうが高くつく。
 
 ---
 
@@ -376,16 +416,14 @@ cypher-quiz/
 ├─ tsconfig.base.json
 ├─ openapi/openapi.json             # 生成物。乖離を CI で検出
 ├─ seed/dataset/                    # nordwind-workshop/dataset/ のスナップショット
-├─ tools/extract_deck.ts
 └─ packages/
    │
    ├─ shared/src/
-   │  ├─ schema/                    # ★ Zod。型・検証・OpenAPI の唯一の真実
-   │  │  ├─ card.ts
+   │  ├─ schema/                    # ★ Zod。API を通るものだけ。型・検証・OpenAPI の源
    │  │  ├─ query.ts
    │  │  ├─ connect.ts
    │  │  └─ error.ts
-   │  ├─ result.ts                  # Result / Option
+   │  ├─ result.ts                  # Result
    │  └─ index.ts
    │
    ├─ api/src/
@@ -402,9 +440,12 @@ cypher-quiz/
    └─ web/
       ├─ .storybook/
       └─ src/
+         ├─ main.tsx               # BrowserRouter と ErrorBoundary を張る。副作用の端
+         ├─ routes.tsx             # URL とページの対応。通知の帯と道具もここで組む
+         ├─ types.ts               # ★ 層をまたぐ型。model も view も import できる
          ├─ model/                  # ★ React も DOM も知らない純粋 TS
-         │  ├─ deck.generated.ts
-         │  ├─ deck.ts
+         │  ├─ deck.data.ts          # 30 枚の固定データ
+         │  ├─ deck.ts               # Card の型。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
          │  ├─ quiz.ts              # QuizState / reduceQuiz / セレクタ
          │  ├─ leitner.ts           # box 遷移
@@ -419,6 +460,7 @@ cypher-quiz/
          │  │  └─ CodeBlock/        # guides の .kw/.rel/.hl/.cm 体系
          │  ├─ molecules/           # atoms の組み合わせ。1 つの役割
          │  │  ├─ Note/             # Icon + 本文。注意・補足
+         │  │  ├─ Notice/           # Note + 閉じるボタン
          │  │  ├─ ChoiceList/
          │  │  ├─ ResultTable/
          │  │  └─ QueryEditor/
@@ -426,24 +468,31 @@ cypher-quiz/
          │  │  ├─ FlashCard/
          │  │  ├─ CardBack/
          │  │  ├─ ConnectForm/
+         │  │  ├─ NoticeList/       # 通知を縦に積む。空なら何も描かない
+         │  │  ├─ ErrorScreen/      # 描画に失敗したときの全面表示
          │  │  └─ Summary/
          │  ├─ templates/           # 配置だけ。データを知らない
-         │  │  └─ QuizLayout/       # 1 カラム。進捗の穴を持つ
+         │  │  ├─ ErrorBoundary/    # クラスを使う唯一の場所
+         │  │  ├─ Corner/           # 画面の隅に道具を固定する
+         │  │  └─ QuizLayout/       # 1 カラム。通知と進捗の穴を持つ
          │  └─ pages/               # 全状態を props で受ける
          │     ├─ StartPage/
          │     ├─ ConnectPage/
          │     ├─ QuizPage/         # 表か裏のどちらか
          │     └─ ResultPage/
          │
-         ├─ controller/
+         ├─ controller/             # model の副作用を呼べる唯一の層
+         │  ├─ useNotices.ts        # 通知の一覧。report が失敗の唯一の入口
+         │  ├─ useGlobalErrors.ts   # 境界が拾えない例外を通知に積む
+         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所
          │  ├─ useTheme.ts          # data-theme と localStorage。View の外
          │  ├─ useQuiz.ts
          │  └─ useConnection.ts
          │
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
          ├─ styles/
+         │  ├─ index.ts             # CSS の入口。アプリと Storybook が同じものを読む
          │  ├─ tokens.css
-         │  ├─ app.css
          │  └─ TokenCatalog/        # tokens.css の story。層の外なので view に置かない
          └─ api/client.ts           # fetch のみ
 ```

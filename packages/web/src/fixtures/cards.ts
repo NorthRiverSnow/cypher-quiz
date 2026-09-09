@@ -1,9 +1,8 @@
-import type { SectionId } from "../types";
-import type { CodeSegment } from "../view/atoms/CodeBlock/CodeBlock";
+import type { CodeSegment, SectionId } from "../types";
 
 /* Storybook とテストが共有するサンプル。値は docs/06_deck.md から取っている。
  *
- * TODO: フェーズ B で tools/extract_deck.ts の生成物に置き換える。
+ * TODO: フェーズ D で model/deck.data.ts に置き換える。
  * 今は手で書く——抽出器を先に作ると、雰囲気を見る前にデータ形式が固まる
  * （docs/04_roadmap.md#fixtures-を-a-4-で作る理由）
  */
@@ -11,7 +10,7 @@ export type CardFixture = {
   section: SectionId;
   name: string;
   role: string;
-  /* 不正解の肢は同じ章から引く。answer が正しい肢の位置 */
+  /** choices の中で正しい肢の位置 */
   choices: readonly string[];
   answer: number;
   code?: readonly CodeSegment[];
@@ -101,7 +100,6 @@ const WRITING_ROLES = [
   "消す。リレーションが残っているノードは普通には消せない",
 ];
 
-/* 書き込み系。実行させないので、期待される実行結果を持たない */
 export const SET_REMOVE: CardFixture = {
   section: "writing",
   name: "SET / REMOVE",

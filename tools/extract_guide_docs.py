@@ -8,7 +8,7 @@
 why: HTML パーサで読む。正規表現で div の入れ子を数えると、カードの中の warn と
 カードの外の warn を取り違える。
 
-why: Python で書く。フェーズ B の tools/extract_deck.ts は Token の範囲まで拾って
+why: Python で書く。出題データ（model/deck.data.ts）は色分けをセグメントで持って
 TypeScript を吐くもので、こちらは docs 向けの本文だけを拾う別の仕事。
 """
 
@@ -24,7 +24,7 @@ DECK_GUIDE = "03_cypher_reference_ja.html"
 WATCHED = ("01_depends_on_traversal_ja.html", "02_match_and_with_ja.html", DECK_GUIDE)
 OUT = ROOT / "docs" / "06_deck.md"
 
-# guide の h2 と SectionId（docs/02_architecture.md#4-デッキ生成）の対応
+# guide の h2 と SectionId（docs/02_architecture.md#4-デッキ）の対応
 SECTIONS = {
     "読み取りの骨格": "skeleton",
     "パターンの書き方": "patterns",
@@ -289,13 +289,13 @@ def render(src):
         *checks,
         "",
         f"カード {total} 枚。id は guide の `div.card` の id で、",
-        "[`02_architecture.md`](./02_architecture.md#4-デッキ生成) の `CardId` と同じ値。",
+        "[`02_architecture.md`](./02_architecture.md#4-デッキ) の `CardId` と同じ値。",
         "",
         "載せていないもの:",
         "",
         "- **`§ Prerequisite`** — [`05_reference.md`](./05_reference.md#データセット) が同じ表を持つ",
         "- **ハイライトの範囲** — `span.kw` などの位置は文字数で持つ値で、",
-        "  フェーズ B の `tools/extract_deck.ts` が HTML から直接拾う",
+        "  出題データ（`model/deck.data.ts`）は色分けをセグメントの列で持つ",
         "- **実行結果の強調** — `<b>` は fence の中では記法にならないので、値だけが残る",
         "",
         "---",

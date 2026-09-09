@@ -1,23 +1,23 @@
 import type { ChangeEvent, CSSProperties } from "react";
 
-import { CodeBlock, type CodeSegment } from "../../atoms/CodeBlock/CodeBlock";
+import type { CodeSegment } from "../../../types";
+import { CodeBlock } from "../../atoms/CodeBlock/CodeBlock";
 import { IconButton } from "../../atoms/IconButton/IconButton";
 import { Toolbar } from "../../atoms/Toolbar/Toolbar";
 import { TEXT } from "../../atoms/Text/Text";
 import { Note, type NoteTone } from "../Note/Note";
 
-/* 実行できない理由。同時に 1 つしか起きない */
 export type QueryStatus = "idle" | "running" | "offline" | "rejected" | "error";
 
 export type QueryEditorProps = {
   code: readonly CodeSegment[];
-  /* 編集後の本文。undefined なら未編集で、色付きのまま出す */
+  /** 編集後の本文。undefined なら未編集で、色付きのまま出す */
   value?: string;
   onChange: (value: string) => void;
   onRun: () => void;
   onReset: () => void;
   status?: QueryStatus;
-  /* status が "error" のときの DB からの文言 */
+  /** status が "error" のときの DB からの文言 */
   errorMessage?: string;
 };
 

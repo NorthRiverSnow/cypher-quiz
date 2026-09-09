@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { ThemeToggle } from "./ThemeToggle";
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 describe("ThemeToggle", () => {

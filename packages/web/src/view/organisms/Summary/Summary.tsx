@@ -24,7 +24,7 @@ export type SummaryProps = {
   correct: number;
   bySection: readonly SectionScore[];
   missed: readonly MissedCard[];
-  /* 一覧の行を押したとき。そのカードの裏をもう一度開く */
+  /** 一覧の行を押したとき。そのカードの裏をもう一度開く */
   onOpenCard: (card: MissedCard) => void;
   onRestart: () => void;
   onRetryMissed: () => void;

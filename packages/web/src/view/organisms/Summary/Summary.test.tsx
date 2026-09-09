@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { type MissedCard, type SectionScore, Summary, type SummaryProps } from "./Summary";
 
-/* why: vitest の globals を切っているので RTL の自動 cleanup が実行されない */
 afterEach(cleanup);
 
 const BY_SECTION: readonly SectionScore[] = [
