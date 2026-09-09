@@ -550,12 +550,41 @@ router は `react-router`（`BrowserRouter` + `Routes`）。`main.tsx` が `Brow
 
 ```yaml
 services:
-  neo4j:       # neo4j:5。7474 / 7687 を公開。NEO4J_AUTH は .env の変数から
-  seed:        # 一度だけ走り dataset を投入して終了
+  neo4j:       # neo4j:5。7474 / 7687。NEO4J_AUTH は .env の変数から
+  neo4j-test:  # テスト専用。7475 / 7688。同じグラフを投入する
+  seed:        # 一度だけ走り、両方に投入して終了する
   api:         # Hono を watch 起動。同じ .env の変数で自動接続する
-  neo4j-test:  # テスト専用。別ポート。同じ dataset を投入する
   test:        # vitest をコンテナの中で走らせる。neo4j-test に繋ぐ
 ```
+
+### 起動と終了は `vp run` から
+
+**`docker compose` を直に叩かない。** compose のサービス名とプロファイルを覚えないと使えず、
+テスト用 DB の片付けを忘れる。
+
+| コマンド | 何が起きるか |
+|---|---|
+| `vp run db` | dev の DB を起動して投入する。**既に動いていても同じ結果**になる |
+| `vp run dev` | `db` のあと web を前面で起動する |
+| `vp run db:stop` | dev の DB を止める。**データは残る**ので次の `db` で続きから |
+| `vp run db:clean` | コンテナと volume を消す。次は空から投入し直す |
+| `vp run test:api` | テスト用 DB を立てて api のテストを実行し、**結果に関わらず消す** |
+
+**web や api を終了しても DB は残る。** `vp run dev` は DB を `--detach` で起動してから
+前面のプロセスを動かすので、`Ctrl-C` で止まるのは前面だけ。止めたいときは `db:stop`。
+
+**テスト用のコンテナはテスト中しか存在しない。** `profiles: [test]` を付けてあるので
+`docker compose up` の対象から外れ、片付けは `trap` で必ず走る。
+volume を持たないので、コンテナが消えればデータも残らない。
+
+**片付けに `down -v` を使わない。** project の named volume を全て消すので、
+dev の `neo4j-data` まで消える。テスト用のサービスだけを名指しで消す。
+
+### コンテナの外側
+
+**必要なのは `docker` と `docker compose` だけ。** VM の提供元は問わない
+（Docker Desktop / colima / OrbStack のどれでもよい）。**`vp` は linux/arm64 でも動く**ので、
+コンテナの中でもホストと同じコマンドが使える。
 
 **`web` と Storybook はホストで動かす。** Vite の dev proxy が `/api` をコンテナへ送るので、
 クッキーは同一オリジンのまま通る。バインドマウント越しの HMR を避けられ、
@@ -569,27 +598,38 @@ dev と分けるにはインスタンスを分けるしかない。
 分ける理由は、**dev の DB がどんな状態でもテストが同じ結果を出すこと。**
 `73 / 153` のような実数を検証に使う以上、手で触れる DB を相手にはできない。
 
-```
-vp run test                     ホスト。DB を要らないテストだけ（model / shared / view）
-docker compose run --rm test    コンテナ。neo4j-test に繋ぐものを含めて全部
-```
+**web と api のテストは分ける。** 混ぜると、フロントを 1 行直しただけで DB が立ち上がる。
 
-**DB を要るテストはホストでは実行しない。** 接続先が無ければ失敗するだけなので、
-`vp run test` の対象から外す（vitest の project を分ける）。
+| コマンド | 対象 | DB |
+|---|---|---|
+| `vp run test` | `shared` + `web` | 要らない。ホストで数秒 |
+| `vp run test:web` | `web` だけ | 要らない |
+| `vp run test:api` | `api` だけ | `neo4j-test` を立て、終わったら消す |
+
+**`api` を root の `test.projects` に並べない。** 並べると `vp run test` が DB を求めて失敗する。
+走らせる口は `test:api` の 1 つだけにする。
 
 ### `.env` は 1 つ。資格情報の出どころを分けない
 
 `neo4j` コンテナの `NEO4J_AUTH` と、api の自動接続が**同じ `NEO4J_PASSWORD` を読む**。ズレて繋がらなくなる余地を作らない。`.env` は `.gitignore` に入れ、`.env.example` だけをコミットする。詳細は [`03_api.md`](./03_api.md#4-開発時の自動接続dev-限定)。
 
-### データセットはスナップショットとしてコピーする
+### データセットは投入用の Cypher に焼き込む
 
-`seed/dataset/` に置く。`nordwind-workshop` は**兄弟の別リポジトリ**で、Docker のビルドコンテキストから素直に参照できないため。
+`seed/nordwind.cypher` の 1 ファイル。`nordwind-workshop` は**兄弟の別リポジトリ**で、
+Docker のビルドコンテキストから素直に参照できない。
 
-元との一致は `manifest.json` の checksum で検証できる：
+**JSON を置いて読み込み器を書く形は取らない。** 読み込み器を動かすために seed コンテナへ
+Node か Python を入れることになる。焼き込めば `neo4j:5` の `cypher-shell` だけで投入でき、
+依存が 1 つも増えない（デッキを固定データで持つのと同じ判断）。
+
+投入の順序と `MERGE` の形は nordwind-workshop の session3 と同じ。ノードを先に作り、
+リレーションシップは両端が揃ってから繋ぐ。元との一致はファイル先頭の checksum で辿れる：
 
 ```
 9d4eb12de6e731df3ee4d050df931922
 ```
+
+**先頭で `MATCH (n) DETACH DELETE n` する。** 何度流しても同じ 73 / 153 になる。
 
 ### Storybook は Docker を要らない
 

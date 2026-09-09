@@ -122,8 +122,8 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
    ホストの `vp run web` の `http://localhost:5173` から `/api` がコンテナへ通る
 4. `MATCH (n) RETURN count(n)` が **73**、`MATCH ()-[r]->() RETURN count(r)` が **153**
 5. **`neo4j-test` にも同じ dataset が入る。** 別ポートで繋いで 73 / 153
-6. `docker compose run --rm test` が**全テストを通す。**
-   ホストの `vp run test` は DB 要りを含まず、それでも通る
+6. `vp run test:api` が**api のテストを通し、終わったらテスト用のコンテナが残っていない。**
+   `vp run test`（shared + web）は DB を立てずに通る
 7. **`.env` を置いて `docker compose up` すると、接続画面を経ずに繋がった状態で始まる**
    画面に `dev-auto` である旨が出ている
 8. **フロントに識別子が無いことを確認する**

@@ -4,8 +4,13 @@
   "type": "module",
   "scripts": {
     "build-storybook": "vp -C packages/web run build-storybook",
+    "db": "docker compose up --detach --wait neo4j && docker compose run --rm seed",
+    "db:clean": "docker compose --profile test down --volumes --remove-orphans",
+    "db:stop": "docker compose stop neo4j",
+    "dev": "vp run db && vp run web",
     "storybook": "vp -C packages/web run storybook",
     "test": "vp test run",
+    "test:api": "bash scripts/with-test-db.sh vp -C packages/api run test",
     "test:web": "vp -C packages/web run test",
     "typecheck": "vp run -F './packages/*' typecheck",
     "web": "vp -C packages/web dev"

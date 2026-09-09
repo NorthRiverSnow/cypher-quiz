@@ -126,9 +126,14 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 export PATH="$HOME/.local/share/vite-plus/bin:$PATH"   # vp はシェル関数。実体に PATH が要る
 
 vp check                     fmt + lint + typecheck
-vp run test                  Vitest（root から全パッケージ）
-vp run test:web              Vitest（フロントエンドだけ）
+vp run test                  Vitest（shared + web。DB を要らないものだけ）
+vp run test:web              Vitest（web だけ）
+vp run test:api              Vitest（api だけ）。テスト用 DB を立て、終わったら必ず消す
 vp run web                   アプリの dev server（5173）
+vp run db                    dev の DB を起動して投入する。何度実行してもよい
+vp run dev                   db のあと web。抜けても DB は残る
+vp run db:stop               dev の DB を止める。データは残る
+vp run db:clean              コンテナと volume を消す
 vp run storybook             Storybook（6006）
 vp -C packages/web build     root では対象パッケージが必要
 vp run -F './packages/*' <t> packages 配下だけ（`-r` は root も選ぶので使わない）

@@ -14,8 +14,11 @@ export default defineConfig({
   },
   test: {
     /* why: 各パッケージの vite.config.ts を使わせる。root で束ねると
-       packages/web の test.environment（happy-dom）が効かず DOM が無いまま走る */
-    projects: ["packages/*"],
+       packages/web の test.environment（happy-dom）が効かず DOM が無いまま走る
+
+       why: packages/api を並べない。api のテストは Neo4j に繋ぐので、DB の無い
+       ホストでは失敗する。走らせる口は vp run test:api（テスト用 DB を立てる） */
+    projects: ["packages/shared", "packages/web"],
   },
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],

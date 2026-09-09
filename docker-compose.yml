@@ -1,0 +1,81 @@
+name: cypher-quiz
+
+# why: 2 つの Neo4j は同じ image・同じ資格情報で、違うのはポートとデータの残り方だけ。
+# Community Edition はユーザ DB を 1 つしか持てないので、dev と test を分けるには
+# インスタンスを分けるしかない（docs/02_architecture.md#テスト用の-db-はコンテナを分ける）
+x-neo4j: &neo4j
+  image: neo4j:5
+  environment:
+    NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?.env に NEO4J_PASSWORD が要る}
+    # why: 6GB の VM に 2 インスタンス載る。既定のままだと片方が起動しない
+    NEO4J_server_memory_heap_max__size: 512m
+    NEO4J_server_memory_pagecache_size: 256m
+  healthcheck:
+    # why: コンテナの中に NEO4J_PASSWORD は無い（あるのは NEO4J_AUTH）。
+    # NEO4J_ で始まる変数は neo4j が設定名として読むので、増やさず compose 側で展開する
+    test: ["CMD-SHELL", 'cypher-shell -u neo4j -p "${NEO4J_PASSWORD}" "RETURN 1" || exit 1']
+    interval: 5s
+    timeout: 5s
+    retries: 30
+    start_period: 20s
+
+x-seed: &seed
+  image: neo4j:5
+  environment:
+    NEO4J_PASSWORD: ${NEO4J_PASSWORD:?.env に NEO4J_PASSWORD が要る}
+  volumes:
+    - ./seed:/seed:ro
+  entrypoint: ["/bin/bash", "-c"]
+
+services:
+  neo4j:
+    <<: *neo4j
+    container_name: cypher-quiz-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+
+  seed:
+    <<: *seed
+    container_name: cypher-quiz-seed
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    command:
+      - |
+        set -e
+        cypher-shell -a neo4j://neo4j:7687 -u neo4j -p "$$NEO4J_PASSWORD" -f /seed/nordwind.cypher
+        cypher-shell -a neo4j://neo4j:7687 -u neo4j -p "$$NEO4J_PASSWORD" \
+          "MATCH (n) RETURN count(n) AS nodes"
+        cypher-shell -a neo4j://neo4j:7687 -u neo4j -p "$$NEO4J_PASSWORD" \
+          "MATCH ()-[r]->() RETURN count(r) AS rels"
+
+  # why: profiles を付けると `docker compose up` の対象から外れる。
+  # テストのときだけ立て、終わったら消す（volume を持たないので消えれば残らない）
+  neo4j-test:
+    <<: *neo4j
+    container_name: cypher-quiz-neo4j-test
+    profiles: [test]
+    ports:
+      - "7475:7474"
+      - "7688:7687"
+
+  seed-test:
+    <<: *seed
+    container_name: cypher-quiz-seed-test
+    profiles: [test]
+    depends_on:
+      neo4j-test:
+        condition: service_healthy
+    command:
+      - |
+        set -e
+        cypher-shell -a neo4j://neo4j-test:7687 -u neo4j -p "$$NEO4J_PASSWORD" \
+          -f /seed/nordwind.cypher
+        cypher-shell -a neo4j://neo4j-test:7687 -u neo4j -p "$$NEO4J_PASSWORD" \
+          "MATCH (n) RETURN count(n) AS nodes"
+
+volumes:
+  neo4j-data:
