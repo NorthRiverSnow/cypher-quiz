@@ -28,7 +28,7 @@ D. 結線
 
 | # | やること | story で見る state |
 |---|---|---|
-| A-0 | `docs/` の章 ID を [`SectionId`](./02_architecture.md#4-デッキ生成) に揃える。**コードは書かない** | — |
+| A-0 | `docs/` の章 ID を [`SectionId`](./02_architecture.md#4-デッキ) に揃える。**コードは書かない** | — |
 | A-1 | モノレポの足場（lint の層境界）/ `styles/tokens.css`（`:root` 3 ブロック）/ Storybook / `styles/TokenCatalog/` | light / dark |
 | A-2 | `CodeBlock` / `Icon` / `Note` | 語句の種別、横に溢れる行、注記の色調 |
 | A-3 | `Card` / `Button` / `ChoiceList` / `FlashCard`。**まだ裏面は作らない** | 正順 / 逆順、未選択 / 選択中、回答ボタンの有効 / 無効 |
@@ -69,8 +69,12 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 | B-1 | `shared/schema/` の Zod と `result.ts` |
 | B-2 | `model/deck.data.ts`（30 枚の固定データ）と `deck.ts` の型 |
 | B-3 | `question.ts` / `leitner.ts` / `quiz.ts` / `rng.ts` / `progress.ts` |
+| B-4 | 失敗の経路。lint の MVC 境界 / `useNotices` / `useProgress` / `Notice` と `NoticeList` / `ErrorBoundary` と `useGlobalErrors` |
 
-**全て純関数なので、React 抜きでユニットテストが書ける。**
+**B-3 まで全て純関数なので、React 抜きでユニットテストが書ける。**
+
+**B-4 をフェーズ C の前に置く理由。** `Result` を作っても、消費する側が無ければ失敗は画面に出ない。
+[`/api/run` と `/api/connect`](./03_api.md) の失敗を受ける器が先に無いと、フェーズ C で同じ穴を掘る。
 
 ---
 
@@ -141,23 +145,39 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 13. 不正解のカードが数枚後に再出題され、全て 2 回正解するとサマリに到達する
 14. リロードしても `box` は残る
 
+### 失敗の伝わり方
+
+15. **実際に壊して、画面に出るか見る。**
+    - `localStorage.setItem` が throw する状態にして回答する → 金の帯が出る
+    - 保存できる状態に戻して回答する → 帯が**手を触れずに取り下げられる**
+    - 保存された進捗を壊す → 何も出さずに最初から始まる（[知らせない失敗](./01_spec.md#8-失敗の伝え方)）
+16. **白い画面にならない。**
+    - 描画中に throw させる → `ErrorScreen` と「読み込み直す」が出る
+    - `Promise` を reject させる → 赤の帯が出る（境界は描画中しか拾わない）
+
+**15 の保存まわりはフェーズ D で実測する。** `useProgress` を呼ぶのは `useQuiz` で、
+それまでは保存する `Boxes` が存在しない。B-4 の時点では偽ストアを渡すユニットテストで代替する。
+
 ### 境界とテスト
 
-15. `vp check`（fmt + lint + typecheck）が MVC 境界違反を検出する
-    - `view/` から `../model/` を import してみて赤くなるか
-    - `model/` で `react` を import してみて赤くなるか
+17. `vp check`（fmt + lint + typecheck）が MVC 境界違反を検出する
+    - `view/` から `../model/` を import してエラーになるか
+    - `view/` から `../controller/` を import してエラーになるか
+    - `routes.tsx` から `./model/` を import してエラーになるか
+    - `model/` で `react` を import してエラーになるか
+    - `controller/` から `../model/` は**エラーにならない**か（唯一の通り道を塞いでいないこと）
     - `QuizState` を書き換えてみて**型エラー**になるか（`Readonly` を付けた所だけが対象。[運用ルール](./02_architecture.md#readonly-は付ける場所を選ぶ)）
     （`class` は機械では止めない。[理由](./02_architecture.md#何を機械が守り何を守らないか)）
-16. `vp test` — `model/` と `toPlainJson` のユニットテスト
+18. `vp test` — `model/` と `toPlainJson` のユニットテスト
     - 不正解の肢が正解と重複しない
     - 同じシードで出題順が一致し、シードが違えば変わる
     - Leitner の遷移
     - Neo4j 型の変換
-17. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
+19. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
 
 ### 再現性
 
-18. `docker compose down -v && docker compose up` で全て再現する
+20. `docker compose down -v && docker compose up` で全て再現する
 
 ---
 
@@ -167,7 +187,7 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 
 | # | 判断 | 理由 | 代替案 |
 |---:|---|---|---|
-| 1 | `Result` は自前 30 行 | 必要な合成が浅い | `neverthrow` |
+| 1 | `Result` は自前 | 必要な合成が浅い | `neverthrow` |
 | 2 | **ESLint を入れず Oxlint だけにする** | 層境界は `no-restricted-imports` で守れ、不変性は `Readonly<>` で型が守る（付けた所だけ・浅くだけ）。クラス禁止だけ機械化を諦めた | Oxlint の JS プラグインで `ClassDeclaration` を検出してエラーにする |
 | 3 | フロントは OpenAPI からコード生成しない | 同じ Zod が源なので `z.infer` で足りる | `openapi-typescript` |
 | 4 | 書き込み系 5 枚は実行させない | 接続先で挙動が変わると説明が難しい | Docker のローカル DB のときだけ書き込ませる |

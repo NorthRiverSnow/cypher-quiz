@@ -16,7 +16,7 @@ guide が変わったら作り直す。変わったことは SessionStart のフ
 | `03_cypher_reference_ja.html` | `73b5930c5247be06a375f2a1fae56066` |
 
 カード 30 枚。id は guide の `div.card` の id で、
-[`02_architecture.md`](./02_architecture.md#4-デッキ生成) の `CardId` と同じ値。
+[`02_architecture.md`](./02_architecture.md#4-デッキ) の `CardId` と同じ値。
 
 載せていないもの:
 

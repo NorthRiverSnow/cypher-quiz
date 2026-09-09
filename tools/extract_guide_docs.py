@@ -24,7 +24,7 @@ DECK_GUIDE = "03_cypher_reference_ja.html"
 WATCHED = ("01_depends_on_traversal_ja.html", "02_match_and_with_ja.html", DECK_GUIDE)
 OUT = ROOT / "docs" / "06_deck.md"
 
-# guide の h2 と SectionId（docs/02_architecture.md#4-デッキ生成）の対応
+# guide の h2 と SectionId（docs/02_architecture.md#4-デッキ）の対応
 SECTIONS = {
     "読み取りの骨格": "skeleton",
     "パターンの書き方": "patterns",
@@ -289,7 +289,7 @@ def render(src):
         *checks,
         "",
         f"カード {total} 枚。id は guide の `div.card` の id で、",
-        "[`02_architecture.md`](./02_architecture.md#4-デッキ生成) の `CardId` と同じ値。",
+        "[`02_architecture.md`](./02_architecture.md#4-デッキ) の `CardId` と同じ値。",
         "",
         "載せていないもの:",
         "",

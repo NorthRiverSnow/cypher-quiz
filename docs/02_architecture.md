@@ -91,10 +91,25 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => { ... };
 ### 失敗の経路
 
 ```
-model            Result で返す。throw する API は shared の attempt で包む
+model            Result で返す。throw する API は shared の attempt / recover で包む
 controller       report(kind, result, describe) に渡す。err で積み、ok で取り下げる
 view             通知を props で受けて描くだけ
 ```
+
+**`try` を書くのは `shared/result.ts` の 2 つだけ。** どちらを使うかは
+[利用者に知らせるか](./01_spec.md#8-失敗の伝え方)で決まる。
+
+| | 使うもの | 返るもの |
+|---|---|---|
+| 知らせる | `attempt` | `Result`。controller が `report` に渡す |
+| 知らせない | `recover` | 値そのもの。throw したら代わりの値 |
+
+**`recover` は握り潰しではない。** 握り潰しは、知らせるべき失敗が誰にも見えない状態のこと。
+`recover` は知らせないと決めた失敗にだけ使い、決めた理由をコードに `why:` で書く。
+
+**通知の帯は `routes.tsx` が `<Routes>` の外で組み、ページに props で渡す。**
+ページの中で組むと遷移のたびに作り直され、読む前に消える。context は使わない——
+View が controller を知らない構造を保つため、渡すのは `ReactNode` の穴だけにする。
 
 **想定外の例外は 2 箇所で受ける。どちらも 1 度きりの仕掛け。**
 
@@ -103,7 +118,7 @@ view             通知を props で受けて描くだけ
 | `view/templates/ErrorBoundary` | 描画中の例外 | `main.tsx` が `AppRoutes` を包む |
 | `controller/useGlobalErrors` | `window` の `error` / `unhandledrejection` | `routes.tsx` で 1 回だけ呼ぶ |
 
-`shared` に 30 行程度の自前 `Result` を置く（`ok` / `err` / `map` / `mapErr` / `flatMap` / `unwrapOr` / `isOk`）。
+`shared` に自前の `Result` を置く（`ok` / `err` / `isOk` / `map` / `mapErr` / `flatMap` / `unwrapOr` / `attempt` / `recover`）。
 
 ```ts
 // packages/shared/src/result.ts
@@ -425,9 +440,12 @@ cypher-quiz/
    └─ web/
       ├─ .storybook/
       └─ src/
+         ├─ main.tsx               # BrowserRouter と ErrorBoundary を張る。副作用の端
+         ├─ routes.tsx             # URL とページの対応。通知の帯と道具もここで組む
+         ├─ types.ts               # ★ 層をまたぐ型。model も view も import できる
          ├─ model/                  # ★ React も DOM も知らない純粋 TS
          │  ├─ deck.data.ts          # 30 枚の固定データ
-         │  ├─ deck.ts               # Card / SectionId / Direction。API を通らない
+         │  ├─ deck.ts               # Card の型。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
          │  ├─ quiz.ts              # QuizState / reduceQuiz / セレクタ
          │  ├─ leitner.ts           # box 遷移
@@ -442,6 +460,7 @@ cypher-quiz/
          │  │  └─ CodeBlock/        # guides の .kw/.rel/.hl/.cm 体系
          │  ├─ molecules/           # atoms の組み合わせ。1 つの役割
          │  │  ├─ Note/             # Icon + 本文。注意・補足
+         │  │  ├─ Notice/           # Note + 閉じるボタン
          │  │  ├─ ChoiceList/
          │  │  ├─ ResultTable/
          │  │  └─ QueryEditor/
@@ -449,24 +468,31 @@ cypher-quiz/
          │  │  ├─ FlashCard/
          │  │  ├─ CardBack/
          │  │  ├─ ConnectForm/
+         │  │  ├─ NoticeList/       # 通知を縦に積む。空なら何も描かない
+         │  │  ├─ ErrorScreen/      # 描画に失敗したときの全面表示
          │  │  └─ Summary/
          │  ├─ templates/           # 配置だけ。データを知らない
-         │  │  └─ QuizLayout/       # 1 カラム。進捗の穴を持つ
+         │  │  ├─ ErrorBoundary/    # クラスを使う唯一の場所
+         │  │  ├─ Corner/           # 画面の隅に道具を固定する
+         │  │  └─ QuizLayout/       # 1 カラム。通知と進捗の穴を持つ
          │  └─ pages/               # 全状態を props で受ける
          │     ├─ StartPage/
          │     ├─ ConnectPage/
          │     ├─ QuizPage/         # 表か裏のどちらか
          │     └─ ResultPage/
          │
-         ├─ controller/
+         ├─ controller/             # model の副作用を呼べる唯一の層
+         │  ├─ useNotices.ts        # 通知の一覧。report が失敗の唯一の入口
+         │  ├─ useGlobalErrors.ts   # 境界が拾えない例外を通知に積む
+         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所
          │  ├─ useTheme.ts          # data-theme と localStorage。View の外
          │  ├─ useQuiz.ts
          │  └─ useConnection.ts
          │
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
          ├─ styles/
+         │  ├─ index.ts             # CSS の入口。アプリと Storybook が同じものを読む
          │  ├─ tokens.css
-         │  ├─ app.css
          │  └─ TokenCatalog/        # tokens.css の story。層の外なので view に置かない
          └─ api/client.ts           # fetch のみ
 ```
