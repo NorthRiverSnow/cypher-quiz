@@ -458,7 +458,9 @@ cypher-quiz/
    │  ├─ log.ts                     # ★ JSON 1 行 = 1 イベント。時刻と出力先は注入
    │  ├─ reqContext.ts              # ★ reqId を AsyncLocalStorage に載せる。引数に足さない
    │  ├─ redact.ts                  # ★ 外へ出る文字列から資格情報を取り除く唯一の関数
+   │  ├─ cookie.ts                  # ★ セッションクッキーの名前と属性。読み書きはここだけ
    │  ├─ routes/
+   │  │  ├─ http.ts                # ★ kind → ステータスの表。ボディの検証
    │  │  ├─ connect.ts
    │  │  └─ run.ts
    │  └─ neo4j/

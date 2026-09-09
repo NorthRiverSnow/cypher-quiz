@@ -209,7 +209,11 @@ type ConnectionStatus =
   | { connected: true; uri: string; mode: 'manual' | 'dev-auto' };
 ```
 
-クッキーの属性: `HttpOnly` / `SameSite=Strict` / `Path=/api` / 本番では `Secure` / **`Max-Age` を付けない**（セッションクッキー。タブを閉じれば消える）。
+クッキーの属性: `HttpOnly` / `SameSite=Strict` / `Path=/api` / 本番では `Secure` / **`Max-Age` を付けない**（セッションクッキー。タブを閉じれば消える）。名前は `cq_session`。
+
+読み書きは `api/src/cookie.ts` だけが行う。**属性を書く場所を 1 箇所にする**ため——
+ルートごとに書くと、`HttpOnly` の付いていないルートが 1 本できる。dev で `Secure` を
+付けないのは、http では送られず「繋がったまま切れた」ように見えるから。
 
 Vite の dev proxy で同一オリジンになるので、`fetch` は `credentials: 'same-origin'` で足りる。
 
@@ -400,7 +404,14 @@ type ApiError = { kind: ErrorKind; message: string; queryType?: string };
 `kind` は文言ではなく機械が読む値なので、**フロントは `message` で分岐しない。**
 
 **この表と `ERROR_KINDS` は 1 対 1。** 片方だけ増えると、対応するステータスの無い `kind` が
-500 に落ちる。`schema.test.ts` が 7 つであることを固定している。
+500 に落ちる。`schema.test.ts` が 7 つであることを固定し、`routes/http.ts` の `statusOf` が
+`Record<ErrorKind, …>` で受けるので、**`kind` を足したらここを埋めるまで型が通らない。**
+
+### `invalid-request` の文に値を入れない
+
+ボディの検証は `routes/http.ts` の `bodyOf` を通す。返す `message` に載せるのは
+**項目名だけ**——`/api/connect` のボディにはパスワードが入るので、値を入れると
+[ログにも応答にも出る](#出さないもの)。Zod の既定の文も使わない（英語で、期待した形を含む）。
 
 ### 経路は 1 本
 
