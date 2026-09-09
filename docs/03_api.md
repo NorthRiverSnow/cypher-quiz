@@ -245,6 +245,7 @@ type ConnectionStatus =
 付けないのは、http では送られず「繋がったまま切れた」ように見えるから。
 
 Vite の dev proxy で同一オリジンになるので、`fetch` は `credentials: 'same-origin'` で足りる。
+api は **8787**、web は 5173。`packages/web/vite.config.ts` の `server.proxy` が `/api` を送る。
 
 ### 正直に言っておくこと
 

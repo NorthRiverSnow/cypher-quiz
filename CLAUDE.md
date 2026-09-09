@@ -129,9 +129,10 @@ vp check                     fmt + lint + typecheck
 vp run test                  Vitest（shared + web。DB を要らないものだけ）
 vp run test:web              Vitest（web だけ）
 vp run test:api              Vitest（api だけ）。テスト用 DB を立て、終わったら必ず消す
-vp run web                   アプリの dev server（5173）
+vp run web                   web だけ（5173）。/api は 8787 へ proxy
+vp run api                   db のあと api だけ（8787。watch 付き）
 vp run db                    dev の DB を起動して投入する。何度実行してもよい
-vp run dev                   db のあと web。抜けても DB は残る
+vp run dev                   db のあと api と web を並行で。抜けても DB は残る
 vp run db:stop               dev の DB を止める。データは残る
 vp run db:clean              コンテナと volume を消す
 vp run storybook             Storybook（6006）

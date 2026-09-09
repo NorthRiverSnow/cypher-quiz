@@ -86,14 +86,33 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 | C-1 | Docker Compose（`neo4j` / `seed` / `neo4j-test`）+ `.env` / `.env.example` | 両方に投入して 73 / 153 |
 | C-2 | **`readOnly.ts` と実測** | **下の検証 14 をここで通す。通らなければ先に進まない** |
 | C-3 | ログの土台（`log.ts`）と `app.onError` | [ログ](./03_api.md#8-ログ) / [失敗の返し方](./03_api.md#7-失敗の返し方) |
-| C-4 | `driverStore` / **`tx.ts`** / `/api/connect`（GET / POST / DELETE）/ `/api/run` / `toPlainJson`、`api` サービス | クッキーは httpOnly。**フロントに識別子を渡さない** |
+| C-4 | `driverStore` / **`tx.ts`** / `/api/connect`（GET / POST / DELETE）/ `/api/run` / `toPlainJson` / `server.ts` | クッキーは httpOnly。**フロントに識別子を渡さない** |
 | C-5 | 統合テスト（`test` サービスから `neo4j-test` へ） | vitest の project を分け、DB 要りをホストから外す |
 | C-6 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
 | C-7 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
+| C-8 | **api をコンテナで動かす** | `Dockerfile` と compose の `api` サービス。**C-0 をここで実測する** |
 
 **OpenAPI は最初のルートが 1 本できた時点で入れる。** 後から入れると、既に書いた
 ルートを `createRoute` に書き直すことになる。C-4 の途中（`/api/connect` の直後）で
 C-7 を先に済ませた。
+
+### C-8 — api をコンテナで動かす
+
+**今は api をホストで動かしている**（`vp run api` / `vp run dev`）。
+[Docker で実行できること](#前提として置いた判断)を api まで広げる。
+
+| やること | 中身 |
+|---|---|
+| **C-0 を実測する** | `docker compose run --rm api vp --version`。動かなければ `node_modules/.bin` を直に叩く形へ |
+| `packages/api/Dockerfile` | linux/arm64 の `node_modules` を**イメージの中で作る**。ホストのものは native binary が合わない |
+| compose の `api` サービス | 8787。ソースをバインドマウントして `tsx watch`。`node_modules` は**マウントで隠さない**（named volume で退避する） |
+| `vp run api` / `vp run dev` | 中身をコンテナ経由に差し替える。**コマンド名は変えない** |
+| `.env` | 今と同じ 1 つ。コンテナからは `neo4j:7687`、ホストからは `localhost:7687` |
+
+**web と Storybook はホストのまま。** proxy の宛先は 8787 で変わらないので、
+`packages/web/vite.config.ts` は触らない。
+
+**`vp run test:api` は今の形を保つ。** テストのコンテナ化は C-5 で別に扱う。
 
 **ログを API より先に作る。** 後から足すと、既に書いたルートに 1 本ずつ差し込むことになり、
 差し込み漏れが**そのまま「出ないログ」**になる。土台を先に置けば、以降は書いた時点で出る。
@@ -122,8 +141,9 @@ C-7 を先に済ませた。
 
 2. **コンテナの中でツールチェーンが動く。** `docker compose run --rm test vp --version` が答える
    （動かなければ `node_modules/.bin/vp` を直に叩く形に切り替える。**C-0 で先に確かめる**）
-3. `docker compose up` → `http://localhost:7474`（Neo4j Browser）が開き、
-   ホストの `vp run web` の `http://localhost:5173` から `/api` がコンテナへ通る
+3. `vp run db` → `http://localhost:7474`（Neo4j Browser）が開き、`vp run dev` の
+   `http://localhost:5173` から `/api` がホストの api（8787）へ通る。
+   `http://localhost:8787/docs` で API リファレンスが開く
 4. `MATCH (n) RETURN count(n)` が **73**、`MATCH ()-[r]->() RETURN count(r)` が **153**
 5. **`neo4j-test` にも同じ dataset が入る。** 別ポートで繋いで 73 / 153
 6. `vp run test:api` が**api のテストを通し、終わったらテスト用のコンテナが残っていない。**
@@ -218,9 +238,17 @@ C-7 を先に済ませた。
 26. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
     （`vp run test:api` も同じ比較をする。`/doc` の中身とコミット済みの内容が一致すること）
 
+### api のコンテナ（C-8）
+
+27. **ホストに Node が無くても api が動く。** `vp run dev` で
+    `http://localhost:5173` から `/api` がコンテナの api へ通り、
+    `http://localhost:8787/docs` が開く
+28. **ソースを 1 行直すとコンテナの中で再起動する**（バインドマウント越しの watch）
+29. **api を止めても DB は残る**（`vp run db:stop` まで生きている）
+
 ### 結果の正規化
 
-27. **ドライバの型が残らない**（`vp run test:api`。[対応表](./03_api.md#セル-1-つの対応)）
+30. **ドライバの型が残らない**（`vp run test:api`。[対応表](./03_api.md#セル-1-つの対応)）
     - `count(n)` が `73`、2^53 を超える整数は文字列
     - `Incident.date` が `'2025-08-05'`
     - ノード・リレーション・パス・マップに `kind` のタグが付き、リストは中まで変換される
@@ -228,7 +256,7 @@ C-7 を先に済ませた。
 
 ### 再現性
 
-28. `docker compose down -v && docker compose up` で全て再現する
+31. `docker compose down -v && docker compose up` で全て再現する
 
 ---
 

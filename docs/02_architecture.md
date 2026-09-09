@@ -625,9 +625,13 @@ services:
   neo4j:       # neo4j:5。7474 / 7687。NEO4J_AUTH は .env の変数から
   neo4j-test:  # テスト専用。7475 / 7688。同じグラフを投入する
   seed:        # 一度だけ走り、両方に投入して終了する
-  api:         # Hono を watch 起動。同じ .env の変数で自動接続する
+  api:         # Hono を watch 起動。8787。C-8 で入れる
   test:        # vitest をコンテナの中で走らせる。neo4j-test に繋ぐ
 ```
+
+**`api` は今ホストで動いている。** コンテナへ移すのは
+[C-8](./04_roadmap.md#c-8--api-をコンテナで動かす)。コマンド名（`vp run api` / `vp run dev`）は
+そのままで、中身だけ差し替える。
 
 ### 起動と終了は `vp run` から
 
@@ -637,7 +641,9 @@ services:
 | コマンド | 何が起きるか |
 |---|---|
 | `vp run db` | dev の DB を起動して投入する。**既に動いていても同じ結果**になる |
-| `vp run dev` | `db` のあと web を前面で起動する |
+| `vp run api` | `db` のあと api を前面で起動する（8787。watch 付き）。**今はホスト、C-8 でコンテナへ** |
+| `vp run web` | web だけ（5173）。`/api` は 8787 へ proxy される |
+| `vp run dev` | `db` のあと **api と web を並行**で前面に起動する |
 | `vp run db:stop` | dev の DB を止める。**データは残る**ので次の `db` で続きから |
 | `vp run db:clean` | コンテナと volume を消す。次は空から投入し直す |
 | `vp run test:api` | テスト用 DB を立てて api のテストを実行し、**結果に関わらず消す** |
@@ -658,8 +664,19 @@ dev の `neo4j-data` まで消える。テスト用のサービスだけを名�
 （Docker Desktop / colima / OrbStack のどれでもよい）。**`vp` は linux/arm64 でも動く**ので、
 コンテナの中でもホストと同じコマンドが使える。
 
-**`web` と Storybook はホストで動かす。** Vite の dev proxy が `/api` をコンテナへ送るので、
-クッキーは同一オリジンのまま通る。バインドマウント越しの HMR を避けられ、
+### api をコンテナへ移すときに要るもの
+
+**先に片付ける 3 つ**（[C-8](./04_roadmap.md#c-8--api-をコンテナで動かす)）。
+
+| | |
+|---|---|
+| `node_modules` | linux/arm64 のものを**イメージの中で作る**。ホストのものは native binary が合わない |
+| watch | ソースはバインドマウント。**`node_modules` はマウントで隠さない**（named volume で退避する） |
+| ツールチェーン | `vp` がコンテナの中で動くかを実測する（[C-0](./04_roadmap.md#フェーズ-c--バックエンド)） |
+
+**`web` と Storybook はホストのまま。** Vite の dev proxy が `/api` を 8787 へ送るので、
+クッキーは同一オリジンのまま通る（実測）。宛先はコンテナへ移しても 8787 のままなので、
+`packages/web/vite.config.ts` は触らない。
 [Storybook は今まで通り Docker 抜きで動く](#storybook-は-docker-を要らない)。
 
 ### テスト用の DB はコンテナを分ける

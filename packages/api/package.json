@@ -3,11 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "vp test run"
+    "dev": "tsx watch src/server.ts",
+    "openapi:check": "tsx scripts/openapi.ts --check",
+    "openapi:write": "tsx scripts/openapi.ts",
+    "test": "vp test run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@cypher-quiz/shared": "workspace:*",
+    "@hono/node-server": "^2.1.1",
     "@hono/zod-openapi": "^1.6.3",
     "@scalar/hono-api-reference": "^0.12.1",
     "hono": "^4.13.7",
@@ -15,6 +19,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "tsx": "^4.23.13",
     "vite": "catalog:",
     "vite-plus": "catalog:"
   }
