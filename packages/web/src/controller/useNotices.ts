@@ -1,22 +1,12 @@
 import { type Result } from "@cypher-quiz/shared";
 import { useCallback, useState } from "react";
 
-import type { NoticeTone } from "../view/molecules/Notice/Notice";
+import type { NoticeItem, NoticeKind } from "../types";
 
-/** 失敗の出どころ。種類ごとに 1 件だけ持つ */
-export type NoticeKind = "progress-save" | "connect" | "run" | "unexpected";
-
-export type Notice = Readonly<{
-  kind: NoticeKind;
-  tone: NoticeTone;
-  title: string;
-  detail?: string;
-}>;
-
-export type NoticeBody = Omit<Notice, "kind">;
+export type NoticeBody = Omit<NoticeItem, "kind">;
 
 export type Notices = Readonly<{
-  items: readonly Notice[];
+  items: readonly NoticeItem[];
   dismiss: (kind: NoticeKind) => void;
   /**
    * err なら通知に積み、ok ならその種類の通知を取り下げる。
@@ -31,7 +21,7 @@ export type Notices = Readonly<{
 }>;
 
 export const useNotices = (): Notices => {
-  const [items, setItems] = useState<readonly Notice[]>([]);
+  const [items, setItems] = useState<readonly NoticeItem[]>([]);
 
   const dismiss = useCallback((kind: NoticeKind) => {
     setItems((prev) => prev.filter((notice) => notice.kind !== kind));

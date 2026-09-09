@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 export type QuizLayoutProps = {
+  notices?: ReactNode;
   progress?: ReactNode;
   children: ReactNode;
 };
@@ -14,9 +15,10 @@ const COLUMN: CSSProperties = {
   gap: "var(--space-lg)",
 };
 
-export const QuizLayout = ({ progress, children }: QuizLayoutProps) => (
+export const QuizLayout = ({ notices, progress, children }: QuizLayoutProps) => (
   <div style={PAGE}>
     <div style={COLUMN}>
+      {notices}
       {progress}
       {children}
     </div>

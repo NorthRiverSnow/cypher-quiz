@@ -1,5 +1,5 @@
-/* Model と View が共有する型（docs/02_architecture.md「型は共有、ロジックは非共有」）。
- * lint が View から model/** を禁止しているので、両方が要る型はここに置く。
+/* Model・Controller と View が共有する型（docs/02_architecture.md「型は共有、ロジックは非共有」）。
+ * lint が View から model/** と controller/** を禁止しているので、両方が要る型はここに置く。
  *
  * TODO: フェーズ C で packages/shared へ移す。shared は API と型を共有するために作るもので、
  * 今は web しか読まない。
@@ -30,3 +30,17 @@ export const DIRECTION_LABELS: Record<Direction, string> = {
   forward: "構文 → 目的",
   reverse: "目的 → 構文",
 };
+
+/** 失敗の重さ。alarm は操作が失敗した、warn は続けられるが不都合がある */
+export type NoticeTone = "alarm" | "warn";
+
+/** 失敗の出どころ。種類ごとに 1 件だけ持つ */
+export type NoticeKind = "progress-save" | "connect" | "run" | "unexpected";
+
+export type NoticeItem = Readonly<{
+  kind: NoticeKind;
+  tone: NoticeTone;
+  title: string;
+  /** サーバやブラウザからの文言 */
+  detail?: string;
+}>;

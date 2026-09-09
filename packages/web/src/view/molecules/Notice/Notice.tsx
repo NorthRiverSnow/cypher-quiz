@@ -1,8 +1,6 @@
+import type { NoticeTone } from "../../../types";
 import { IconButton } from "../../atoms/IconButton/IconButton";
 import { Note } from "../Note/Note";
-
-/** 失敗の重さ。alarm は操作が失敗した、warn は続けられるが不都合がある */
-export type NoticeTone = "alarm" | "warn";
 
 export type NoticeProps = {
   tone: NoticeTone;

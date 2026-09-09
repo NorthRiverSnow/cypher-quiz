@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ProgressBar } from "../../atoms/ProgressBar/ProgressBar";
 import { Card } from "../../atoms/Card/Card";
 import { Text } from "../../atoms/Text/Text";
+import { NoticeList } from "../../organisms/NoticeList/NoticeList";
 import { QuizLayout } from "./QuizLayout";
 
 const meta = {
@@ -37,6 +38,36 @@ export const 中身が複数: Story = {
           <Text variant="prose">2 枚目</Text>
         </Card>
       </>
+    ),
+  },
+};
+
+export const 通知あり: Story = {
+  args: {
+    notices: (
+      <NoticeList
+        items={[{ kind: "progress-save", tone: "warn", title: "進捗を保存できません" }]}
+        onDismiss={() => {}}
+      />
+    ),
+  },
+};
+
+export const 通知が複数: Story = {
+  args: {
+    notices: (
+      <NoticeList
+        items={[
+          {
+            kind: "run",
+            tone: "alarm",
+            title: "クエリを実行できません",
+            detail: "Variable e.nam not defined (line 2, column 8)",
+          },
+          { kind: "progress-save", tone: "warn", title: "進捗を保存できません" },
+        ]}
+        onDismiss={() => {}}
+      />
     ),
   },
 };
