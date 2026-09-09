@@ -82,11 +82,20 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 
 | # | やること | 備考 |
 |---:|---|---|
-| C-1 | Docker Compose（`neo4j` + `seed`）+ `.env` / `.env.example` | 投入後に 73 / 153 を確認 |
-| C-2 | **`readOnly.ts` と実測** | **下の検証 8 をここで通す。通らなければ先に進まない** |
-| C-3 | `driverStore` / `/api/connect`（GET / POST / DELETE）/ `/api/run` / ログ抑制 / `toPlainJson` | クッキーは httpOnly。**フロントに識別子を渡さない** |
-| C-4 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
-| C-5 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
+| C-0 | **コンテナの中で `vp` が動くか実測** | 動かなければ以降の作り方が変わる。下の検証 2 |
+| C-1 | Docker Compose（`neo4j` / `seed` / `neo4j-test`）+ `.env` / `.env.example` | 両方に投入して 73 / 153 |
+| C-2 | **`readOnly.ts` と実測** | **下の検証 14 をここで通す。通らなければ先に進まない** |
+| C-3 | ログの土台（`log.ts`）と `app.onError` | [ログ](./03_api.md#8-ログ) / [失敗の返し方](./03_api.md#7-失敗の返し方) |
+| C-4 | `driverStore` / **`tx.ts`** / `/api/connect`（GET / POST / DELETE）/ `/api/run` / `toPlainJson`、`api` サービス | クッキーは httpOnly。**フロントに識別子を渡さない** |
+| C-5 | 統合テスト（`test` サービスから `neo4j-test` へ） | vitest の project を分け、DB 要りをホストから外す |
+| C-6 | dev 自動接続と歯止め 5 項目 | [`03_api.md`](./03_api.md#歯止め) |
+| C-7 | OpenAPI | `/docs`（Scalar）、`openapi:write`、`openapi:check` |
+
+**ログを API より先に作る。** 後から足すと、既に書いたルートに 1 本ずつ差し込むことになり、
+差し込み漏れが**そのまま「出ないログ」**になる。土台を先に置けば、以降は書いた時点で出る。
+
+**`web` と Storybook はホストのまま。** Docker に入れるのは DB と API。
+理由は [`02_architecture.md`](./02_architecture.md#6-dockerdev)。
 
 ---
 
@@ -107,16 +116,22 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 
 ### 環境
 
-2. `docker compose up` → `http://localhost:5173` と `http://localhost:7474` が開く
-3. `MATCH (n) RETURN count(n)` が **73**、`MATCH ()-[r]->() RETURN count(r)` が **153**
-4. **`.env` を置いて `docker compose up` すると、接続画面を経ずに繋がった状態で始まる**
+2. **コンテナの中でツールチェーンが動く。** `docker compose run --rm test vp --version` が答える
+   （動かなければ `node_modules/.bin/vp` を直に叩く形に切り替える。**C-0 で先に確かめる**）
+3. `docker compose up` → `http://localhost:7474`（Neo4j Browser）が開き、
+   ホストの `vp run web` の `http://localhost:5173` から `/api` がコンテナへ通る
+4. `MATCH (n) RETURN count(n)` が **73**、`MATCH ()-[r]->() RETURN count(r)` が **153**
+5. **`neo4j-test` にも同じ dataset が入る。** 別ポートで繋いで 73 / 153
+6. `docker compose run --rm test` が**全テストを通す。**
+   ホストの `vp run test` は DB 要りを含まず、それでも通る
+7. **`.env` を置いて `docker compose up` すると、接続画面を経ずに繋がった状態で始まる**
    画面に `dev-auto` である旨が出ている
-5. **フロントに識別子が無いことを確認する**
+8. **フロントに識別子が無いことを確認する**
    - DevTools の Application → Cookies に `HttpOnly` の印が付いている
    - コンソールで `document.cookie` を叩いて**そのクッキーが見えない**
    - `localStorage` に接続系のキーが無い（`box` の進捗だけがある）
-6. 切断ボタンで手入力の接続画面に戻り、`bolt://localhost:7687` と dev 資格情報で接続できる（本番経路の確認）
-7. **歯止めが働く**
+9. 切断ボタンで手入力の接続画面に戻り、`bolt://localhost:7687` と dev 資格情報で接続できる（本番経路の確認）
+10. **歯止めが働く**
    - `.env` の `NEO4J_PASSWORD` を変えて `docker compose up` → コンテナ側も変わるので**繋がる**（出どころが 1 箇所である証拠）
    - `NEO4J_URI` をリモートに向けて自動接続 → 拒否される
    - `NODE_ENV=production` かつ `DEV_AUTO_CONNECT=true` → **起動が失敗する**
@@ -124,43 +139,55 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 
 ### クエリの実行と編集
 
-8. `optional-match` カードで実行 → **`Killua Zoldyck 0`**（guides の実測値と一致）
-9. 同じクエリを `OPTIONAL MATCH` → `MATCH` に**編集して再実行** → 29 行になり Killua が消える
-10. `varlen` で `*1..3` → `*1..1` → 7 件が **4 件**になる
+11. `optional-match` カードで実行 → **`Killua Zoldyck 0`**（guides の実測値と一致）
+12. 同じクエリを `OPTIONAL MATCH` → `MATCH` に**編集して再実行** → 29 行になり Killua が消える
+13. `varlen` で `*1..3` → `*1..1` → 7 件が **4 件**になる
 
 ### ★ 書き込みが拒否されること（フェーズ C の最初にやる）
 
-11. 以下を全て確認する。
+14. 以下を全て確認する。
 
     - `CREATE (x:Tmp)` に書き換えて実行 → **第 1 層で拒否される**
     - Neo4j Browser で `MATCH (x:Tmp) RETURN count(x)` が **0**（本当に実行されていない証拠）
     - **`EXPLAIN CREATE (x:Tmp)` の `queryType` を実際に出力して確認する**
       `'r'` なら第 1 層を `summary.plan` の演算子判定に切り替える（[03_api.md 参照](./03_api.md#第-1-層--explain-によるサーバ権威の分類主防御)）
     - 第 1 層を一時的に外し、**第 2 層だけで止まるか**を実測する
+    - `tx.ts` の外に `driver.session()` の呼び出しが**無い**（grep で確認する）
 
-12. `create` カードには実行ボタンが無く、実行前後の状態が静的に出ている
+15. `create` カードには実行ボタンが無く、実行前後の状態が静的に出ている
 
 ### 学習フロー
 
-13. 不正解のカードが数枚後に再出題され、全て 2 回正解するとサマリに到達する
-14. リロードしても `box` は残る
+16. 不正解のカードが数枚後に再出題され、全て 2 回正解するとサマリに到達する
+17. リロードしても `box` は残る
 
 ### 失敗の伝わり方
 
-15. **実際に壊して、画面に出るか見る。**
+18. **実際に壊して、画面に出るか見る。**
     - `localStorage.setItem` が throw する状態にして回答する → 金の帯が出る
     - 保存できる状態に戻して回答する → 帯が**手を触れずに取り下げられる**
     - 保存された進捗を壊す → 何も出さずに最初から始まる（[知らせない失敗](./01_spec.md#8-失敗の伝え方)）
-16. **白い画面にならない。**
+19. **白い画面にならない。**
     - 描画中に throw させる → `ErrorScreen` と「読み込み直す」が出る
     - `Promise` を reject させる → 赤の帯が出る（境界は描画中しか拾わない）
 
-**15 の保存まわりはフェーズ D で実測する。** `useProgress` を呼ぶのは `useQuiz` で、
+**18 の保存まわりはフェーズ D で実測する。** `useProgress` を呼ぶのは `useQuiz` で、
 それまでは保存する `Boxes` が存在しない。B-4 の時点では偽ストアを渡すユニットテストで代替する。
+
+### ログ
+
+20. **1 リクエストが追える。** `/api/run` を 1 回叩き、`req.start` → `query.run` → `req.end` が
+    **同じ `reqId`** で並ぶ
+21. **実行したクエリが残る。** `query.run` の `cypher` が送った文字列と一致する。
+    書き込みで拒否したときも残り、`req.end` が 403 になる
+22. **ボディが出ていない。** `/api/connect` を叩いたあと、ログ全体からパスワードと
+    生の接続 URI を検索して **1 件も出ない**。`/api/run` でも `cypher` 以外は残らない
+23. **エラーが残る。** 想定外の例外を起こすと `error` の行にスタックが出る。
+    **クライアントへの応答にはスタックが無い**
 
 ### 境界とテスト
 
-17. `vp check`（fmt + lint + typecheck）が MVC 境界違反を検出する
+24. `vp check`（fmt + lint + typecheck）が MVC 境界違反を検出する
     - `view/` から `../model/` を import してエラーになるか
     - `view/` から `../controller/` を import してエラーになるか
     - `routes.tsx` から `./model/` を import してエラーになるか
@@ -168,16 +195,16 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
     - `controller/` から `../model/` は**エラーにならない**か（唯一の通り道を塞いでいないこと）
     - `QuizState` を書き換えてみて**型エラー**になるか（`Readonly` を付けた所だけが対象。[運用ルール](./02_architecture.md#readonly-は付ける場所を選ぶ)）
     （`class` は機械では止めない。[理由](./02_architecture.md#何を機械が守り何を守らないか)）
-18. `vp test` — `model/` と `toPlainJson` のユニットテスト
+25. `vp test` — DB を要らないユニットテスト（DB 要りは検証 6）
     - 不正解の肢が正解と重複しない
     - 同じシードで出題順が一致し、シードが違えば変わる
     - Leitner の遷移
     - Neo4j 型の変換
-19. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
+26. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
 
 ### 再現性
 
-20. `docker compose down -v && docker compose up` で全て再現する
+27. `docker compose down -v && docker compose up` で全て再現する
 
 ---
 

@@ -120,6 +120,21 @@ View が controller を知らない構造を保つため、渡すのは `ReactNo
 
 `shared` に自前の `Result` を置く（`ok` / `err` / `isOk` / `map` / `mapErr` / `flatMap` / `unwrapOr` / `attempt` / `recover`）。
 
+**バックエンドも同じ道具で同じ形にする。**
+
+```
+neo4j / 検証     Result で返す。throw する API は attempt で包む
+tx.ts            セッションを開き、閉じ、失敗を ApiError に変える。ルートは session() を呼ばない
+ルート           Result を HTTP に変える。ここだけが status を決める
+app.onError      すり抜けた例外。500 と error ログ。スタックは外に出さない
+```
+
+**1 リクエスト = 1 トランザクション。** 並行処理が無いので、それ以上の粒度を持たない。
+読み取りモード・タイムアウト・クエリログを 1 箇所に寄せられる（[`03_api.md`](./03_api.md#9-トランザクション)）。
+
+返す形とログの規約は [`03_api.md`](./03_api.md#7-失敗の返し方)。**フロントは `code` で分岐し、
+`message` の文言では分岐しない。**
+
 ```ts
 // packages/shared/src/result.ts
 export type Result<T, E> =
@@ -434,6 +449,7 @@ cypher-quiz/
    │  │  └─ run.ts
    │  └─ neo4j/
    │     ├─ driverStore.ts          # クロージャ。状態はここだけ
+   │     ├─ tx.ts                   # ★ session() を呼ぶ唯一の場所。1 API 1 トランザクション
    │     ├─ readOnly.ts             # EXPLAIN 判定。純粋関数と実行関数を分離
    │     └─ toPlainJson.ts          # 純粋
    │
@@ -534,11 +550,32 @@ router は `react-router`（`BrowserRouter` + `Routes`）。`main.tsx` が `Brow
 
 ```yaml
 services:
-  neo4j:    # neo4j:5。7474 / 7687 を公開。NEO4J_AUTH は .env の変数から
-  seed:     # 一度だけ走り dataset を投入して終了
-  api:      # Hono を watch 起動。同じ .env の変数で自動接続する
-  web:      # Vite dev server。/api を api へ proxy（クッキーが同一オリジンで通る）
+  neo4j:       # neo4j:5。7474 / 7687 を公開。NEO4J_AUTH は .env の変数から
+  seed:        # 一度だけ走り dataset を投入して終了
+  api:         # Hono を watch 起動。同じ .env の変数で自動接続する
+  neo4j-test:  # テスト専用。別ポート。同じ dataset を投入する
+  test:        # vitest をコンテナの中で走らせる。neo4j-test に繋ぐ
 ```
+
+**`web` と Storybook はホストで動かす。** Vite の dev proxy が `/api` をコンテナへ送るので、
+クッキーは同一オリジンのまま通る。バインドマウント越しの HMR を避けられ、
+[Storybook は今まで通り Docker 抜きで動く](#storybook-は-docker-を要らない)。
+
+### テスト用の DB はコンテナを分ける
+
+**Neo4j Community Edition はユーザ DB を 1 つしか持てない**（`neo4j` と `system` だけ）。
+dev と分けるにはインスタンスを分けるしかない。
+
+分ける理由は、**dev の DB がどんな状態でもテストが同じ結果を出すこと。**
+`73 / 153` のような実数を検証に使う以上、手で触れる DB を相手にはできない。
+
+```
+vp run test                     ホスト。DB を要らないテストだけ（model / shared / view）
+docker compose run --rm test    コンテナ。neo4j-test に繋ぐものを含めて全部
+```
+
+**DB を要るテストはホストでは実行しない。** 接続先が無ければ失敗するだけなので、
+`vp run test` の対象から外す（vitest の project を分ける）。
 
 ### `.env` は 1 つ。資格情報の出どころを分けない
 

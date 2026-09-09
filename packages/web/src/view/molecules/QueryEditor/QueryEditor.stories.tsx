@@ -36,7 +36,7 @@ export const 実行中: Story = { args: { value: EDITED, status: "running" } };
 
 export const 未接続: Story = { args: { status: "offline" } };
 
-/* 実行できるカードのクエリを書き込みに書き換えた場合（docs/04_roadmap.md の検証 11） */
+/* 実行できるカードのクエリを書き込みに書き換えた場合（docs/04_roadmap.md の検証 14） */
 export const 書き込みで拒否: Story = { args: { value: "CREATE (x:Tmp)", status: "rejected" } };
 
 export const 実行エラー: Story = {

@@ -80,7 +80,10 @@ NordWind ワークショップの Cypher 教材を、読むだけの資料から
 | スキーマ | Zod。**型・実行時検証・OpenAPI の唯一の真実** |
 | セッション | **httpOnly クッキー。フロントは識別子を持たない** |
 | DB ドライバ | `neo4j-driver` v5 |
-| dev 環境 | Docker Compose |
+| トランザクション | **1 リクエスト = 1 つ。** `neo4j/tx.ts` が `session()` を呼ぶ唯一の場所 |
+| dev 環境 | Docker Compose。**DB と API はコンテナ、web と Storybook はホスト** |
+| テスト | **DB を要るものはコンテナの中で、専用の `neo4j-test` に対して実行する** |
+| ログ | **JSON 1 行 = 1 イベント。** リクエストの開始と終了、実行クエリ、エラーを出す。**ボディと行データは出さない** |
 | 構成 | pnpm workspaces のモノレポ（Vite+ が pnpm をそのまま使う） |
 | 境界の担保 | **Oxlint + TypeScript**（規約ではなく機械でエラーにする） |
 | 失敗の扱い | 想定内は `Result`。**`try` は `shared/result.ts` だけ**、通知は controller の `report` が唯一の入口 |
