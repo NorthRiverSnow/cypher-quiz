@@ -92,30 +92,68 @@ const route = createRoute({
 
 `'r'` 以外は実行に進まない。**Cypher パーサ自身の判定なので自前パーサより正確**で、構文エラーもここで拾える。
 
-```ts
-const plan = await runOnce(session, `EXPLAIN ${cypher}`);   // 実行はされない
+**判定は「`'r'` だけ通す」の形で書く。** 拒否する分類を並べると、Neo4j が分類を増やしたときに
+新しい分類が素通りする。判定そのものは `neo4j/readOnly.ts` の純粋関数で、
+`EXPLAIN` を投げるのは [`tx.ts`](#9-トランザクション)。
 
-if (plan.summary.queryType !== 'r') {
-  return err({ kind: 'read-only-violation', queryType: plan.summary.queryType });
-}
-```
+### 実測した分類
 
-> ### ⚠ 実装の最初に実測で確定させること
->
-> `EXPLAIN CREATE (x:Tmp)` の `queryType` が
-> - 内側のクエリを反映して **`'rw'`** を返すのか
-> - EXPLAIN 自体が読み取りなので **`'r'`** を返すのか
->
-> は、公式ドキュメントから確定できなかった。
->
-> **`'r'` を返す場合は第 1 層が機能しない。** そのときは `summary.plan` の**演算子ツリー**を見る方式に切り替える（`CreateNode` / `MergeNode` / `SetProperty` / `Delete` などの書き込み演算子が出るかを判定）。これもサーバのプランナ出力なので、**サーバ権威のまま**である点は変わらない。
+`EXPLAIN` は内側のクエリを反映する。**`CREATE` は `'w'` を返し、第 1 層は機能する。**
+
+| クエリ | `queryType` |
+|---|---|
+| `MATCH (n) RETURN count(n)` / `CALL db.labels()` / `SHOW INDEXES` | `'r'` |
+| 読み取りだけの `CALL { }` | `'r'` |
+| `CREATE` / `MERGE` / `SET` / `REMOVE` / `DELETE` / `FOREACH` | `'w'` |
+| `CALL { }` の中で書き込む | `'rw'` |
+| `CREATE INDEX` / `DROP INDEX` / `CREATE CONSTRAINT` / `DROP CONSTRAINT` | `'s'` |
+| `CREATE USER` / `DROP USER` / `ALTER USER` / `RENAME USER` / `SHOW USERS` | `'s'` |
+| `CREATE ROLE` / `GRANT` / `DENY` / `REVOKE` / `SHOW PRIVILEGES` | `'s'`（下記） |
+| `CREATE DATABASE` / `DROP DATABASE` / `STOP DATABASE` / `SHOW DATABASES` | `'s'`（下記） |
+| 構文エラー | `EXPLAIN` の時点で `Neo.ClientError.Statement.SyntaxError` を throw |
+
+**`CREATE INDEX` は `'w'` ではなく `'s'`。** 拒否する側を並べていたら、スキーマ変更だけが
+通っていた——「`'r'` だけ通す」にする理由がこれ。**ユーザ作成・権限付与・データベース削除も
+すべて `'s'`** なので、同じ 1 行で止まる。
+
+**権限とデータベースのコマンドは Community では動かない。** パースの時点で
+`Neo.ClientError.Statement.UnsupportedAdministrationCommand` になる。利用者は
+[自分の Aura にも繋げる](./01_spec.md#5-db-への接続)ので、**Enterprise でも `'s'` になることを
+別途実測した**（評価版のコンテナを一時的に立てて確認。テストには入れられない）。
+
+この表は `packages/api/src/neo4j/queryType.test.ts` が実 DB に対して固定している。
+**Neo4j を上げて分類が変われば、そこが失敗する。**
+
+### `'r'` に分類される抜け道
+
+**分類が `'r'` でも、グラフの読み取りとは限らない。** 実測で 4 つ見つかった。
+
+| クエリ | プランの演算子 | 何ができてしまうか |
+|---|---|---|
+| `LOAD CSV FROM 'http://…'` | `LoadCSV` | サーバに外部の URL を取りに行かせる |
+| `TERMINATE TRANSACTIONS …` | `TerminateTransactions` | **他人の実行中のクエリを止める** |
+| `SHOW TRANSACTIONS` | `ShowTransactions` | 他人が実行中のクエリが見える |
+| `SHOW SETTINGS` | `ShowSettings` | サーバの設定が見える |
+
+どれも第 2 層（読み取りアクセスモード）も通る。**`queryType` だけでは止まらない。**
+
+そこで `ResultSummary.plan` の演算子を見て、この 4 つを拒否する。
+プランはサーバのプランナ出力なので、**キーワードの正規表現マッチとは違い、
+コメントや文字列リテラルに騙されない。**
+
+**ここだけは拒否側を並べる。** 読み取りの演算子は 100 を超え、Neo4j を上げるたびに増えるので
+許可側を並べきれない。見つけたら足す運用にして、`readOnly.ts` にその旨を書いてある。
+
+> `operatorType` は `LoadCSV@neo4j` の形で、`@` の後ろは繋いだデータベース名。照合の前に切り落とす。
 
 ### 第 2 層 — ドライバの読み取りアクセスモード（保険）
 
 `session.executeRead(...)` で実行する。第 1 層をすり抜けた場合の最後の砦。
 **掛ける場所は [§9 の `tx.ts`](#9-トランザクション) 1 箇所**なので、ルートごとに付け忘れる余地が無い。
 
-単一インスタンスで実際に書き込みを拒否するかも実測で確認する。**拒否しなくても第 1 層が主防御なので設計は変わらない**が、どちらなのかは知っておく。
+**単一インスタンスでも実際に拒否する。** 第 1 層を通さずに `CREATE` を投げると
+`Neo.ClientError.Statement.AccessMode` になり、ノードは 1 つも増えない（実測）。
+`CREATE INDEX` も同じく拒否される。
 
 ### RBAC は使えない前提で組む
 
@@ -150,7 +188,7 @@ if (plan.summary.queryType !== 'r') {
 
 接続画面
   uri / user / pass ──POST /api/connect──▶ driver 生成
-                                           verifyConnectivity()
+                                           getServerInfo() で疎通を確かめる
                                            Map<SessionId, Driver> に載せる
    Set-Cookie (httpOnly)  ◀───────────────  （パスワードは保持しない）
    { connected: true, uri, mode }           JS から読めない不透明値

@@ -4,6 +4,13 @@
 #   bash scripts/with-test-db.sh vp -C packages/api run test
 set -uo pipefail
 
+# why: テストは NEO4J_PASSWORD を process.env から読む。vitest は .env を読まないので、
+# ここで環境に載せてから渡す
+set -a
+# shellcheck disable=SC1091
+[ -f .env ] && . ./.env
+set +a
+
 # why: down -v は project の named volume を全て消す。dev の neo4j-data まで消えるので、
 # 対象のサービスだけを名指しで消す（--volumes は匿名 volume だけを消す）
 cleanup() {

@@ -1,0 +1,17 @@
+{
+  "name": "@cypher-quiz/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@cypher-quiz/shared": "workspace:*",
+    "neo4j-driver": "^5.28.0"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

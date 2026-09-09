@@ -149,10 +149,15 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
 
     - `CREATE (x:Tmp)` に書き換えて実行 → **第 1 層で拒否される**
     - Neo4j Browser で `MATCH (x:Tmp) RETURN count(x)` が **0**（本当に実行されていない証拠）
-    - **`EXPLAIN CREATE (x:Tmp)` の `queryType` を実際に出力して確認する**
-      `'r'` なら第 1 層を `summary.plan` の演算子判定に切り替える（[03_api.md 参照](./03_api.md#第-1-層--explain-によるサーバ権威の分類主防御)）
     - 第 1 層を一時的に外し、**第 2 層だけで止まるか**を実測する
     - `tx.ts` の外に `driver.session()` の呼び出しが**無い**（grep で確認する）
+
+    - **ユーザ作成・権限付与・データベース削除も拒否される**
+      （`CREATE USER` / `GRANT` / `DROP DATABASE`。[実測した分類](./03_api.md#実測した分類)）
+    - **`'r'` の抜け道が塞がっている**（`LOAD CSV` / `TERMINATE TRANSACTIONS` /
+      `SHOW TRANSACTIONS` / `SHOW SETTINGS`。[抜け道](./03_api.md#r-に分類される抜け道)）
+
+    分類と抜け道の実測は `vp run test:api` が毎回やり直す。
 
 15. `create` カードには実行ボタンが無く、実行前後の状態が静的に出ている
 
