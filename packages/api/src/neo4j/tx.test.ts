@@ -139,7 +139,7 @@ describe("runReadOnly — セッション", () => {
 /* why: 第 2 層（読み取りモード）とセッションの後始末は、実 DB では観測できない。
    第 1 層が先に拒否するので第 2 層に届かず、閉じ忘れも数十回では枯れない */
 describe("runReadOnly — ドライバへの渡し方", () => {
-  const stub = (onRun?: () => never) => {
+  const stub = ({ onRun, onClose }: { onRun?: () => never; onClose?: () => never } = {}) => {
     const seen: { session?: unknown; tx?: unknown; closed: number } = { closed: 0 };
 
     const result = {
@@ -160,6 +160,8 @@ describe("runReadOnly — ドライバへの渡し方", () => {
           },
           close: async () => {
             seen.closed += 1;
+
+            return onClose?.();
           },
         };
       },
@@ -169,12 +171,13 @@ describe("runReadOnly — ドライバへの渡し方", () => {
   };
 
   const call = async (driver: Driver, database?: string) => {
-    const { log } = captured();
-
-    return runReadOnly(
+    const { log, events } = captured();
+    const result = await runReadOnly(
       { log, timeoutMs: 1234 },
       { driver, reqId: "r1", cypher: "MATCH (n) RETURN n", ...(database ? { database } : {}) },
     );
+
+    return Object.assign(result, { events: events() });
   };
 
   it("読み取りモードでセッションを開く", async () => {
@@ -213,13 +216,31 @@ describe("runReadOnly — ドライバへの渡し方", () => {
   });
 
   it("throw で抜けてもセッションを閉じる", async () => {
-    const { driver, seen } = stub(() => {
-      throw new Error("壊れた");
+    const { driver, seen } = stub({
+      onRun: () => {
+        throw new Error("壊れた");
+      },
     });
 
     const result = await call(driver);
 
     expect(isOk(result)).toBe(false);
     expect(seen.closed).toBe(1);
+  });
+
+  /* why: 閉じられなくても結果は返す。知らせる先が無いので warn に残すだけ */
+  it("閉じられなかったら warn に残して結果は返す", async () => {
+    const { driver } = stub({
+      onClose: () => {
+        throw new Error("閉じられない");
+      },
+    });
+
+    const result = await call(driver);
+
+    expect(isOk(result)).toBe(true);
+    expect(result.events).toContainEqual(
+      expect.objectContaining({ level: "warn", name: "SessionCloseFailed" }),
+    );
   });
 });

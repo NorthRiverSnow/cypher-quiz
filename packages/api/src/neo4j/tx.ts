@@ -2,8 +2,9 @@ import { type ApiError, type Result, attemptAsync, err, isOk, ok } from "@cypher
 import neo4j, { type Driver, type ManagedTransaction, type QueryResult } from "neo4j-driver";
 
 import type { Logger } from "../log";
+import { closeQuietly } from "./closeQuietly";
 import { acceptReadOnly } from "./readOnly";
-import { detailOf, toApiError } from "./toApiError";
+import { reportDriverError } from "./toApiError";
 
 export type TxDeps = Readonly<{
   log: Logger;
@@ -30,15 +31,6 @@ const runQuery = async (tx: ManagedTransaction, cypher: string): Promise<QueryOu
   const running = tx.run(cypher);
 
   return { keys: await running.keys(), result: await running };
-};
-
-/* why: 閉じられなくても結果は返す。知らせる先が無いので warn に留める */
-const close = async (log: Logger, reqId: string, session: { close: () => Promise<void> }) => {
-  const closed = await attemptAsync(() => session.close(), detailOf);
-
-  if (!closed.ok) {
-    log({ event: "error", reqId, name: "SessionCloseFailed", message: closed.error }, "warn");
-  }
 };
 
 /**
@@ -73,20 +65,12 @@ export const runReadOnly = async (
         },
         { timeout: timeoutMs },
       ),
-    /* why: 変換後の ApiError と、ドライバの元の文の両方を持つ。想定外のときだけ
-       元の文をログに残す——クライアントには返さないので、ここで捨てると追えなくなる */
-    (cause) => ({ api: toApiError(cause), detail: detailOf(cause) }),
+    /* why: ここでは変換しない。閉じたあとに reportDriverError へ渡す——変換と
+       ログを 1 箇所にまとめるため（ドライバを呼ぶ全ての場所で同じ扱いになる） */
+    (cause) => cause,
   );
 
-  await close(log, reqId, session);
+  await closeQuietly(log, reqId, "SessionCloseFailed", session);
 
-  if (ran.ok) {
-    return ran.value;
-  }
-
-  if (ran.error.api.kind === "unexpected") {
-    log({ event: "error", reqId, name: "DriverError", message: ran.error.detail });
-  }
-
-  return err(ran.error.api);
+  return ran.ok ? ran.value : err(reportDriverError(log, reqId, ran.error));
 };

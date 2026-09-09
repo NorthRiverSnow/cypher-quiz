@@ -1,5 +1,6 @@
 import type { ApiError } from "@cypher-quiz/shared";
 
+import type { Logger } from "../log";
 import { redact } from "../redact";
 
 const codeOf = (cause: unknown): string =>
@@ -48,4 +49,20 @@ export const toApiError = (cause: unknown): ApiError => {
   }
 
   return { kind: "unexpected", message: UNEXPECTED };
+};
+
+/**
+ * ドライバの失敗を `ApiError` にする。想定外だったときだけ、元の文をログに残す。
+ *
+ * why: 想定外の文はクライアントに返さない。ここで捨てると何が起きたのか追えなくなるので、
+ * 返す前にログへ移す
+ */
+export const reportDriverError = (log: Logger, reqId: string, cause: unknown): ApiError => {
+  const api = toApiError(cause);
+
+  if (api.kind === "unexpected") {
+    log({ event: "error", reqId, name: "DriverError", message: detailOf(cause) });
+  }
+
+  return api;
 };
