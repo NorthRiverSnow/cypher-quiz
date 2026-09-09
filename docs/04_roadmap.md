@@ -130,6 +130,7 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
    - DevTools の Application → Cookies に `HttpOnly` の印が付いている
    - コンソールで `document.cookie` を叩いて**そのクッキーが見えない**
    - `localStorage` に接続系のキーが無い（`box` の進捗だけがある）
+   - **`POST /api/connect` の応答の本文にも識別子が無い**
 9. 切断ボタンで手入力の接続画面に戻り、`bolt://localhost:7687` と dev 資格情報で接続できる（本番経路の確認）
 10. **歯止めが働く**
    - `.env` の `NEO4J_PASSWORD` を変えて `docker compose up` → コンテナ側も変わるので**繋がる**（出どころが 1 箇所である証拠）
@@ -199,12 +200,17 @@ A-3 までは story の中に置き、`CardBack` が `FlashCard` と同じカー
     - `routes.tsx` から `./model/` を import してエラーになるか
     - `model/` で `react` を import してエラーになるか
     - `controller/` から `../model/` は**エラーにならない**か（唯一の通り道を塞いでいないこと）
+    - api の `routes/` から `../neo4j/` を import してエラーになるか
+    - api の `controller/` から `hono` と `../cookie` を import してエラーになるか
     - `QuizState` を書き換えてみて**型エラー**になるか（`Readonly` を付けた所だけが対象。[運用ルール](./02_architecture.md#readonly-は付ける場所を選ぶ)）
     （`class` は機械では止めない。[理由](./02_architecture.md#何を機械が守り何を守らないか)）
 25. `vp test` — DB を要らないユニットテスト（DB 要りは検証 6）
     - 不正解の肢が正解と重複しない
     - 同じシードで出題順が一致し、シードが違えば変わる
     - Leitner の遷移
+
+    api は 2 段（[置き場所](./02_architecture.md#テストは-2-段に置く)）。`src/` は偽の依存を渡す
+    ユニットテスト、`test/` は `app.request()` から叩く API 経路のテストで**偽物を渡さない**。
 26. `vp run openapi:check` — スキーマを 1 箇所変えて `openapi.json` を更新せずに実行すると **エラーになる**
 
 ### 結果の正規化

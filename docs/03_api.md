@@ -374,12 +374,21 @@ toPlainJson(keys, await running);
 |---|---|---|---|
 | `GET` | `/api/connect` | — | `ConnectionStatus`。未接続でも dev 自動接続が有効ならその場で繋ぐ |
 | `POST` | `/api/connect` | `{ uri, user, password, database? }` | `ConnectionStatus` + `Set-Cookie`(httpOnly) |
-| `DELETE` | `/api/connect` | — | クッキーを消し、`driver.close()` |
+| `DELETE` | `/api/connect` | — | `{ connected: false }`。クッキーを消し、`driver.close()` |
 | `POST` | `/api/run` | `{ cypher }` | `QueryResult`（`columns` / `rows` / `elapsedMs`。読み取り専用で実行） |
 | `GET` | `/doc` | — | OpenAPI ドキュメント（JSON） |
 | `GET` | `/docs` | — | Scalar による API リファレンス UI |
 
 失敗の形とステータスの対応は [§7](#7-失敗の返し方)。
+
+**手順は `controller/` に置き、ルートには書かない**（[層](./02_architecture.md#api-も同じ形にする)）。
+ルートがするのは、クッキーの読み書きとボディの検証、`Result` をステータスに写すことだけ。
+
+**`POST` は繋がったあとに前の接続を閉じる。** 順番が逆だと、資格情報を間違えただけで
+今まで使えていた接続まで失う。閉じないと、繋ぎ直すたびにドライバが積み上がる。
+
+`GET` と `DELETE` はクッキーが無くても `{ connected: false }` を返す。**未接続は失敗ではない**
+——`not-connected` の 401 を返すのは、繋がっている前提のエンドポイント（`/api/run`）だけ。
 
 ---
 

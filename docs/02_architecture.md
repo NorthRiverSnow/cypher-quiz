@@ -205,6 +205,20 @@ lint: {
       },
     },
     // molecules / organisms / templates も同じ形（上の層と NO_LOGIC を並べる）
+    {
+      // api のルートは HTTP だけ。DB には controller を通してしか触らない
+      files: ["packages/api/src/routes/**"],
+      rules: { "no-restricted-imports": ["error", { patterns: ["**/neo4j/**"] }] },
+    },
+    {
+      // api の controller は HTTP を知らない。Hono もクッキーも import しない
+      files: ["packages/api/src/controller/**"],
+      rules: {
+        "no-restricted-imports": ["error", {
+          patterns: ["hono", "hono/*", "**/routes/**", "**/cookie"],
+        }],
+      },
+    },
   ],
 }
 ```
@@ -217,6 +231,37 @@ MVC の禁止が消える。
 **7 方向を確認した**——`view` → `model`、`view` → `controller`、`pages` → `model`、
 `routes.tsx` → `model`、`model` → `react`、`atoms` → `molecules` はすべてエラーになり、
 `controller` → `model` は通る。
+
+api 側も **3 方向を確認した**——`routes` → `neo4j`、`controller` → `hono`、
+`controller` → `cookie` はエラーになり、`controller` → `neo4j` と `routes` → `controller` は通る。
+
+### api も同じ形にする
+
+| 層 | 何を置くか | 禁止 |
+|---|---|---|
+| **routes** | クッキーの読み書き、ボディの検証、`Result` → ステータス | `neo4j/` の import |
+| **controller** | 手順の判断（繋ぐ順番、失効の扱い） | `hono` / `cookie` の import |
+| **neo4j** | ドライバとの往復 | — |
+
+**ルートに手順を書かない。** 書くと、繋ぐ順番のような判断が HTTP の組み立てに埋もれ、
+別のルートから同じ手順を呼べなくなる。ルートを読んで分かるのは
+「何を受け取り、何を返し、どのステータスにするか」だけにする。
+
+### テストは 2 段に置く
+
+| 置き場所 | 何を渡すか | 何を確かめるか |
+|---|---|---|
+| `src/**/*.test.ts` | 偽の依存（偽の `DriverStore` など） | その部品の契約 |
+| `test/*.test.ts` | **本物だけ**（ミドルウェア → ルート → controller → store → ドライバ） | HTTP の入口と出口 |
+
+**`test/` は `app.request()` から叩く。** 偽物を 1 つも置かないので、層の繋ぎ間違い
+（クッキー名の食い違い、渡し忘れ）がここで出る。**境界の lint は `src/` にだけ掛かる**
+——`test/` は全ての層を組むのが仕事なので、掛けると組めない。
+
+組み立ては `test/api.ts` の `createTestApi()` に 1 本化する。**ルートを足したらここに載せる**
+——テストごとに組むと、載せ忘れたルートがテストの中だけ存在しない状態になる。
+`send(method, path, { cookie, body })` と、`Set-Cookie` を次の要求に渡す `jar(res)` も
+ここに置く。開いたドライバは `api.ts` の `afterEach` が閉じる。
 
 ### 各層の禁止事項
 
@@ -452,24 +497,30 @@ cypher-quiz/
    │  ├─ result.ts                  # Result
    │  └─ index.ts
    │
-   ├─ api/src/
-   │  ├─ app.ts                     # OpenAPIHono の組み立て（純粋）
-   │  ├─ server.ts                  # 起動だけ（副作用の端）
-   │  ├─ log.ts                     # ★ JSON 1 行 = 1 イベント。時刻と出力先は注入
-   │  ├─ reqContext.ts              # ★ reqId を AsyncLocalStorage に載せる。引数に足さない
-   │  ├─ redact.ts                  # ★ 外へ出る文字列から資格情報を取り除く唯一の関数
-   │  ├─ cookie.ts                  # ★ セッションクッキーの名前と属性。読み書きはここだけ
-   │  ├─ routes/
-   │  │  ├─ http.ts                # ★ kind → ステータスの表。ボディの検証
-   │  │  ├─ connect.ts
-   │  │  └─ run.ts
-   │  └─ neo4j/
-   │     ├─ driverStore.ts          # クロージャ。状態はここだけ
-   │     ├─ tx.ts                   # ★ session() を呼ぶ唯一の場所。1 API 1 トランザクション
-   │     ├─ readOnly.ts             # EXPLAIN の分類を通すかに変える純粋関数
-   │     ├─ toApiError.ts           # ドライバの例外を ApiError に変える。想定外だけログに残す
-   │     ├─ closeQuietly.ts         # 閉じる失敗を warn に残して続ける。session も driver も
-   │     └─ toPlainJson.ts          # 純粋
+   ├─ api/
+   │  ├─ test/                         # ★ API 経路のテスト。src の外。偽物を渡さない
+   │  │  ├─ api.ts                     # createTestApi / send / jar。テストの土台
+   │  │  └─ connect.test.ts
+   │  └─ src/
+   │     ├─ app.ts                     # OpenAPIHono の組み立て（純粋）
+   │     ├─ server.ts                  # 起動だけ（副作用の端）
+   │     ├─ log.ts                     # ★ JSON 1 行 = 1 イベント。時刻と出力先は注入
+   │     ├─ reqContext.ts              # ★ reqId を AsyncLocalStorage に載せる。引数に足さない
+   │     ├─ redact.ts                  # ★ 外へ出る文字列から資格情報を取り除く唯一の関数
+   │     ├─ cookie.ts                  # ★ クッキーの名前と属性。読み書きはここだけ
+   │     ├─ controller/                # ★ 手順の判断。HTTP もクッキーも知らない
+   │     │  └─ connect.ts
+   │     ├─ routes/                    # ★ HTTP だけ。neo4j/ を import できない
+   │     │  ├─ http.ts                 # kind → ステータスの表。ボディの検証
+   │     │  ├─ connect.ts
+   │     │  └─ run.ts
+   │     └─ neo4j/
+   │        ├─ driverStore.ts          # クロージャ。状態はここだけ
+   │        ├─ tx.ts                   # ★ session() を呼ぶ唯一の場所。1 API 1 トランザクション
+   │        ├─ readOnly.ts             # EXPLAIN の分類を通すかに変える純粋関数
+   │        ├─ toApiError.ts           # ドライバの例外を ApiError に変える。想定外だけログに残す
+   │        ├─ closeQuietly.ts         # 閉じる失敗を warn に残して続ける。session も driver も
+   │        └─ toPlainJson.ts          # 純粋
    │
    └─ web/
       ├─ .storybook/

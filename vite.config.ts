@@ -45,6 +45,21 @@ export default defineConfig({
         files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
         rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**"] }] },
       },
+      {
+        // api のルートは HTTP だけ。DB には controller を通してしか触らない
+        files: ["packages/api/src/routes/**"],
+        rules: { "no-restricted-imports": ["error", { patterns: ["**/neo4j/**"] }] },
+      },
+      {
+        // api の controller は HTTP を知らない。Hono もクッキーも import しない
+        files: ["packages/api/src/controller/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            { patterns: ["hono", "hono/*", "**/routes/**", "**/cookie"] },
+          ],
+        },
+      },
       // アトミックデザインの層。下の層しか import できない
       {
         files: ["packages/web/src/view/atoms/**"],
