@@ -51,7 +51,33 @@ const app = createApi({
   secure: process.env.NODE_ENV === "production",
 });
 
-serve({ fetch: app.fetch, port: PORT }, ({ port }) => {
+const server = serve({ fetch: app.fetch, port: PORT }, ({ port }) => {
   process.stdout.write(`api: http://localhost:${port}\n`);
   process.stdout.write(`API リファレンス: http://localhost:${port}/docs\n`);
 });
+
+const FORCE_EXIT_MS = 3000;
+
+/* why: 保険。SIGTERM に listener を付けると Node の既定（即終了）が無くなるので、
+   閉じ忘れると二度と終われない。unref するのは、何も残っていなければ待たずに終わるため */
+const stop = async () => {
+  setTimeout(() => process.exit(1), FORCE_EXIT_MS).unref();
+
+  server.close();
+
+  /* why: keep-alive の接続は close() では切れない。http2 の型には無いので在るときだけ */
+  if ("closeAllConnections" in server) {
+    server.closeAllConnections();
+  }
+
+  /* why: 閉じ終えても process.exit を呼ばない。呼ぶと閉じ忘れがあっても 0 で終わり、
+     終了コードが「全て閉じた」の証拠にならなくなる（test/shutdown.test.ts） */
+  await store.closeAll();
+};
+
+/* why: once にする。Ctrl-C を連打しても終了処理が重ならない。アプリを閉じる時にセッションは全て終了する */
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.once(signal, () => {
+    void stop();
+  });
+}

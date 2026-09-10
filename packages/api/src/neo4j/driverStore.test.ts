@@ -263,6 +263,34 @@ describe("createDriverStore — 上限", () => {
   });
 });
 
+/* why: 閉じ残すとプロセスが終わらない。tsx watch の再起動が強制終了になる */
+describe("createDriverStore — closeAll", () => {
+  it("開いている接続を全て閉じる", async () => {
+    const { store, drivers } = stubbed();
+
+    await idOf(store);
+    await idOf(store);
+    await store.closeAll();
+
+    expect(drivers.map((driver) => driver.closed)).toEqual([1, 1]);
+  });
+
+  it("閉じたあとは引けない", async () => {
+    const { store } = stubbed();
+    const id = await idOf(store);
+
+    await store.closeAll();
+
+    expect(await store.get(id)).toBeUndefined();
+  });
+
+  it("1 つも開いていなくても失敗しない", async () => {
+    const { store } = stubbed();
+
+    await expect(store.closeAll()).resolves.toBeUndefined();
+  });
+});
+
 describe("createDriverStore — 識別子", () => {
   it("開くたびに違う値になる", async () => {
     const { store } = stubbed();

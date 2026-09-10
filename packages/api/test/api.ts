@@ -5,7 +5,7 @@ import { afterEach } from "vite-plus/test";
 
 import { createApi } from "../src/api";
 import { createLogger } from "../src/log";
-import { createDriverStore } from "../src/neo4j/driverStore";
+import { type DriverStore, createDriverStore } from "../src/neo4j/driverStore";
 
 export const URI = process.env.NEO4J_TEST_URI ?? "bolt://localhost:7688";
 export const PASSWORD = process.env.NEO4J_PASSWORD ?? "";
@@ -28,6 +28,8 @@ export type Sent = Readonly<{
 export type TestApi = Readonly<{
   send: (method: string, path: string, sent?: Sent) => Promise<Response>;
   events: () => Record<string, unknown>[];
+  /** 後始末が本当に効いたかを確かめるために出す。要求は send から出すこと */
+  store: DriverStore;
 }>;
 
 /** Set-Cookie を、次の要求に載せる形で取り出す */
@@ -80,5 +82,6 @@ export const createTestApi = (): TestApi => {
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       }),
     events: () => written.map((line) => JSON.parse(line) as Record<string, unknown>),
+    store,
   };
 };

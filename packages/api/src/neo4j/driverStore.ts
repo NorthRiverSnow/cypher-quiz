@@ -55,6 +55,8 @@ export type DriverStore = {
   close: (id: string | undefined) => Promise<void>;
   /** 閉じた数 */
   sweep: () => Promise<number>;
+  /** 全て閉じる。終了するときに呼ぶ——残すとプロセスが終われない */
+  closeAll: () => Promise<void>;
 };
 
 type Entry = Readonly<{ session: Session; lastUsedAt: number }>;
@@ -167,5 +169,9 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => {
     },
 
     sweep,
+
+    closeAll: async () => {
+      await Promise.all([...entries.keys()].map((id) => drop(id)));
+    },
   };
 };

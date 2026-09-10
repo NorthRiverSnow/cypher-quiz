@@ -82,18 +82,21 @@
                 "properties": {
                   "uri": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "example": "bolt://localhost:7687"
                   },
                   "user": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "example": "neo4j"
                   },
                   "password": {
                     "type": "string",
                     "minLength": 1
                   },
                   "database": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "neo4j"
                   }
                 },
                 "required": [

@@ -43,6 +43,7 @@ const setup = ({ fails = false }: { fails?: boolean } = {}) => {
       }
     },
     sweep: async () => 0,
+    closeAll: async () => undefined,
   };
 
   return {

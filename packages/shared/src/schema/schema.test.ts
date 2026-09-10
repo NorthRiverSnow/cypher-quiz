@@ -28,6 +28,19 @@ describe("ConnectRequestSchema", () => {
 
     expect(parsed.success).toBe(false);
   });
+
+  /* why: 例は /docs の「試す」に初期値として入る。compose のサービス名だとホストから
+     引けず、名前解決の失敗を毎回踏む */
+  it("接続先の例はホストから引ける形にする", () => {
+    expect(ConnectRequestSchema.shape.uri.meta()).toMatchObject({
+      example: "bolt://localhost:7687",
+    });
+  });
+
+  /* why: コミットする openapi.json にパスワードの形を残さない */
+  it("パスワードには例を置かない", () => {
+    expect(ConnectRequestSchema.shape.password.meta()?.["example"]).toBeUndefined();
+  });
 });
 
 describe("ConnectionStatusSchema", () => {

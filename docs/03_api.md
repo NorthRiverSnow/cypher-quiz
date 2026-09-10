@@ -279,7 +279,7 @@ api は **8787**、web は 5173。`packages/web/vite.config.ts` の `server.prox
 | 入力 | 実際に繋ぐ先 |
 |---|---|
 | `bolt://localhost:7687` | そのまま（同じ機械の中） |
-| `neo4j://neo4j:7687` | そのまま（compose のサービス名） |
+| `neo4j://neo4j:7687` | そのまま（compose のサービス名。**コンテナの中からしか引けない**） |
 | `bolt://db.example.com:7687` | **`bolt+s://db.example.com:7687`** |
 | `neo4j://abc.databases.neo4j.io` | **`neo4j+s://abc.databases.neo4j.io`** |
 | `neo4j+s://…` / `bolt+ssc://…` | そのまま（既に暗号化） |
@@ -293,6 +293,10 @@ api は **8787**、web は 5173。`packages/web/vite.config.ts` の `server.prox
 「`bolt://` で繋がっている」と嘘をつく。
 
 ローカルの判定（`isLocal`）は [C-6 の歯止め 2](#歯止め) と同じものを使う。
+
+**ホストから叩くときの接続先は `bolt://localhost:7687`。** `neo4j:7687` は compose の
+ネットワークの中の名前なので、[api がホストで動いている間](./02_architecture.md#api-をコンテナへ移すときに要るもの)は
+`getaddrinfo ENOTFOUND neo4j` になる。`/docs` の「試す」に入る例も `localhost` にしてある。
 
 クッキーは不透明なランダム値。`Max-Age` を付けないのでリロードでは残るが**タブを閉じれば消え**、サーバ側 `Map` も再起動で消えるため、[再入力になる](./01_spec.md#5-db-への接続)。
 
