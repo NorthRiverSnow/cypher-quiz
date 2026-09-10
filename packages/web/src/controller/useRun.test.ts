@@ -5,11 +5,13 @@ import { SWRConfig } from "swr";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import type { ApiClient } from "../api/client";
+import { useNotices } from "./useNotices";
 import { useRun } from "./useRun";
 
 afterEach(cleanup);
 
 const RESULT: QueryResult = { columns: ["n"], rows: [["a"]], elapsedMs: 3 };
+const BROKEN: ApiError = { kind: "unexpected", message: "想定外" };
 const CYPHER = "MATCH (n) RETURN n";
 
 const wrapper = ({ children }: { children: ReactNode }) =>
@@ -29,7 +31,14 @@ const setup = (reply: ApiError | QueryResult = RESULT, connected = true) => {
   };
 
   return {
-    ...renderHook(() => useRun(connected, client), { wrapper }),
+    ...renderHook(
+      () => {
+        const notices = useNotices();
+
+        return { notices, run: useRun(notices, connected, client) };
+      },
+      { wrapper },
+    ),
     asked: () => asked,
   };
 };
@@ -38,15 +47,15 @@ describe("実行していないとき", () => {
   it("繋がっていれば idle", () => {
     const { result } = setup();
 
-    expect(result.current.status).toBe("idle");
-    expect(result.current.result).toBeUndefined();
+    expect(result.current.run.status).toBe("idle");
+    expect(result.current.run.result).toBeUndefined();
   });
 
   /* why: 押しても失敗すると分かる状態を、押す前に見せる */
   it("繋がっていなければ offline", () => {
     const { result } = setup(RESULT, false);
 
-    expect(result.current.status).toBe("offline");
+    expect(result.current.run.status).toBe("offline");
   });
 });
 
@@ -54,7 +63,7 @@ describe("成功したとき", () => {
   it("入力したクエリをそのまま送る", async () => {
     const { result, asked } = setup();
 
-    await act(async () => await result.current.run(CYPHER));
+    await act(async () => await result.current.run.run(CYPHER));
 
     expect(asked()).toEqual([CYPHER]);
   });
@@ -62,53 +71,137 @@ describe("成功したとき", () => {
   it("結果を返し、idle に戻る", async () => {
     const { result } = setup();
 
-    await act(async () => await result.current.run(CYPHER));
+    await act(async () => await result.current.run.run(CYPHER));
 
-    expect(result.current.result).toEqual(RESULT);
-    expect(result.current.status).toBe("idle");
+    expect(result.current.run.result).toEqual(RESULT);
+    expect(result.current.run.status).toBe("idle");
   });
 
   it("reset で結果が消える", async () => {
     const { result } = setup();
 
-    await act(async () => await result.current.run(CYPHER));
-    act(() => result.current.reset());
+    await act(async () => await result.current.run.run(CYPHER));
+    act(() => result.current.run.reset());
 
-    await waitFor(() => expect(result.current.result).toBeUndefined());
+    await waitFor(() => expect(result.current.run.result).toBeUndefined());
+  });
+});
+
+/* why: 送ったクエリが原因の失敗だけカードの中に出す。残りは接続か DB の障害で、
+   繋ぎ直しや読み込み直しが要る（docs/01_spec.md#8-失敗の伝え方） */
+describe("クエリが原因の失敗はカードの中に出す", () => {
+  it.each([
+    ["read-only-violation", "rejected"],
+    ["syntax-error", "error"],
+    ["invalid-request", "error"],
+    ["timeout", "error"],
+  ] as const)("%s は %s になる", async (kind, status) => {
+    const { result } = setup({ kind, message: "だめ" });
+
+    await act(async () => await result.current.run.run(CYPHER));
+
+    expect(result.current.run.status).toBe(status);
+    expect(result.current.notices.items).toEqual([]);
+  });
+});
+
+describe("接続と障害は帯に出す", () => {
+  it.each(["not-connected", "connect-failed", "unexpected"] as const)(
+    "%s は帯に積み、カードには出さない",
+    async (kind) => {
+      const { result } = setup({ kind, message: "DB が応答しません" });
+
+      await act(async () => await result.current.run.run(CYPHER));
+
+      expect(result.current.notices.items).toEqual([
+        {
+          kind: "run",
+          tone: "alarm",
+          title: "クエリを実行できません",
+          detail: "DB が応答しません",
+        },
+      ]);
+      expect(result.current.run.status).toBe("idle");
+      expect(result.current.run.errorMessage).toBeUndefined();
+    },
+  );
+
+  it("成功したら帯を取り下げる", async () => {
+    const replies: (ApiError | QueryResult)[] = [{ kind: "unexpected", message: "だめ" }, RESULT];
+    const client: ApiClient = {
+      status: async () => ok({ connected: false }),
+      connect: async () => ok({ connected: false }),
+      disconnect: async () => ok({ connected: false }),
+      run: async () => {
+        const reply = replies.shift() ?? RESULT;
+
+        return "kind" in reply ? err(reply) : ok(reply);
+      },
+    };
+
+    const { result } = renderHook(
+      () => {
+        const notices = useNotices();
+
+        return { notices, run: useRun(notices, true, client) };
+      },
+      { wrapper },
+    );
+
+    await act(async () => await result.current.run.run(CYPHER));
+    expect(result.current.notices.items).toHaveLength(1);
+
+    await act(async () => await result.current.run.run(CYPHER));
+    expect(result.current.notices.items).toEqual([]);
+  });
+
+  /* why: クエリが原因の失敗に切り替わったら、前の帯は用済み */
+  it("次にクエリが原因で失敗したら帯を取り下げる", async () => {
+    const replies: ApiError[] = [
+      { kind: "unexpected", message: "だめ" },
+      { kind: "syntax-error", message: "RETRUN" },
+    ];
+    const client: ApiClient = {
+      status: async () => ok({ connected: false }),
+      connect: async () => ok({ connected: false }),
+      disconnect: async () => ok({ connected: false }),
+      run: async () => err(replies.shift() ?? BROKEN),
+    };
+
+    const { result } = renderHook(
+      () => {
+        const notices = useNotices();
+
+        return { notices, run: useRun(notices, true, client) };
+      },
+      { wrapper },
+    );
+
+    await act(async () => await result.current.run.run(CYPHER));
+    expect(result.current.notices.items).toHaveLength(1);
+
+    await act(async () => await result.current.run.run(CYPHER));
+    expect(result.current.notices.items).toEqual([]);
+    expect(result.current.run.status).toBe("error");
   });
 });
 
 describe("失敗したとき", () => {
-  it.each([
-    ["not-connected", "offline"],
-    ["read-only-violation", "rejected"],
-    ["syntax-error", "error"],
-    ["timeout", "error"],
-    ["connect-failed", "error"],
-    ["unexpected", "error"],
-  ] as const)("%s は %s になる", async (kind, status) => {
-    const { result } = setup({ kind, message: "だめ" });
-
-    await act(async () => await result.current.run(CYPHER));
-
-    expect(result.current.status).toBe(status);
-  });
-
   it("error のときだけ DB の文言を渡す", async () => {
     const { result } = setup({ kind: "syntax-error", message: "RETRUN は綴りが違います" });
 
-    await act(async () => await result.current.run(CYPHER));
+    await act(async () => await result.current.run.run(CYPHER));
 
-    expect(result.current.errorMessage).toBe("RETRUN は綴りが違います");
+    expect(result.current.run.errorMessage).toBe("RETRUN は綴りが違います");
   });
 
   /* why: rejected と offline は編集欄が決まった文を出す。DB の文言を重ねない */
   it("rejected では文言を渡さない", async () => {
     const { result } = setup({ kind: "read-only-violation", message: "書き込みは実行できません" });
 
-    await act(async () => await result.current.run(CYPHER));
+    await act(async () => await result.current.run.run(CYPHER));
 
-    expect(result.current.errorMessage).toBeUndefined();
+    expect(result.current.run.errorMessage).toBeUndefined();
   });
 
   /* why: 呼ぶ側に try を書かせない。trigger は既定で reject する */
@@ -117,7 +210,7 @@ describe("失敗したとき", () => {
     let threw = false;
 
     await act(async () => {
-      await result.current.run(CYPHER).catch(() => {
+      await result.current.run.run(CYPHER).catch(() => {
         threw = true;
       });
     });
@@ -128,9 +221,9 @@ describe("失敗したとき", () => {
   it("失敗しても結果は空のまま", async () => {
     const { result } = setup({ kind: "syntax-error", message: "だめ" });
 
-    await act(async () => await result.current.run(CYPHER));
+    await act(async () => await result.current.run.run(CYPHER));
 
-    expect(result.current.result).toBeUndefined();
+    expect(result.current.run.result).toBeUndefined();
   });
 });
 
@@ -150,17 +243,24 @@ it("応答を待っている間は running", async () => {
     },
   };
 
-  const { result } = renderHook(() => useRun(true, client), { wrapper });
+  const { result } = renderHook(
+    () => {
+      const notices = useNotices();
 
-  act(() => void result.current.run(CYPHER));
+      return { notices, run: useRun(notices, true, client) };
+    },
+    { wrapper },
+  );
 
-  await waitFor(() => expect(result.current.status).toBe("running"));
+  act(() => void result.current.run.run(CYPHER));
+
+  await waitFor(() => expect(result.current.run.status).toBe("running"));
 
   await act(async () => {
     release?.();
     await Promise.resolve();
   });
 
-  await waitFor(() => expect(result.current.status).toBe("idle"));
-  expect(result.current.result).toEqual(RESULT);
+  await waitFor(() => expect(result.current.run.status).toBe("idle"));
+  expect(result.current.run.result).toEqual(RESULT);
 });
