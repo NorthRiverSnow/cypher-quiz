@@ -1,10 +1,7 @@
 import type { CSSProperties } from "react";
 
+import type { ResultCell } from "../../../types";
 import { Text } from "../../atoms/Text/Text";
-
-export type EntityKind = "team" | "engineer" | "service" | "incident";
-
-export type ResultCell = string | { kind: EntityKind; text: string };
 
 export type ResultTableProps = {
   columns: readonly string[];

@@ -23,6 +23,12 @@ export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
 /** kind が無ければ素の字 */
 export type CodeSegment = { text: string; kind?: CodeKind };
 
+/* 色は docs/07_design.md#エンティティ色。結果表の字にしか出ない */
+export type EntityKind = "team" | "engineer" | "service" | "incident";
+
+/** ノードとして返った値だけ色を持つ。それ以外は素の字 */
+export type ResultCell = string | Readonly<{ kind: EntityKind; text: string }>;
+
 /** クエリ実行の見え方。offline は未接続、rejected は読み取り専用で拒否された */
 export type QueryStatus = "idle" | "running" | "offline" | "rejected" | "error";
 

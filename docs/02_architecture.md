@@ -326,6 +326,31 @@ api 側も **3 方向を確認した**——`routes` → `neo4j`、`controller` 
 | **View** | `model/` と `controller/` の import、`fetch`、`useEffect` | ローカルな入力エコー用の `useState` のみ |
 | **Controller** | — | Model と View の両方を知ってよい唯一の層 |
 
+### 実行結果をセルに直す
+
+`/api/run` が返す [`Cell`](./03_api.md#セル-1-つの対応) を、結果表が描ける
+`ResultCell`（`string` か `{ kind, text }`）に直すのは `model/result.ts`。
+
+| `Cell` | 出るもの |
+|---|---|
+| 文字列・数・真偽 | そのまま文字に |
+| `null` | **`null` と出す。** 空文字にすると、値が無いのか空文字なのかが読めない |
+| ノード | **名前**（`name` → `id` → `title`）。無ければ `(ラベル:ラベル)` |
+| リレーション | `[:TYPE]` |
+| パス | 名前を `→` で繋ぐ |
+| マップ | `{ 名: 値, … }` |
+| リスト | `[値, 値]`。入れ子も同じ |
+
+**色が付くのはノードが単独で返ったときだけ。** ラベルから
+[エンティティ色](./07_design.md#エンティティ色)を引く。`ResultCell` は入れ子を持てないので、
+**リストの中のノードは文字に潰れる。**
+
+**ラベルは複数付く**（`SET n:Upstream` のカード）。並びは Neo4j が決めるので、
+先頭ではなく**既知のものを探して**使う。
+
+**パスの `→` が指すのは辿った順で、リレーションの向きではない。**
+`PathValue` は `nodes` と `relationships` を持つだけで、始点と終点を持たない。
+
 ### View の中の層（アトミックデザイン）
 
 **上の層は下の層だけを import できる。** 横（同じ層どうし）も禁止。
@@ -599,7 +624,8 @@ cypher-quiz/
          │  ├─ quiz.ts              # QuizState / reduceQuiz / セレクタ
          │  ├─ leitner.ts           # box 遷移
          │  ├─ rng.ts               # シード付き擬似乱数
-         │  └─ progress.ts          # localStorage はここだけ
+         │  ├─ progress.ts          # localStorage はここだけ
+         │  └─ result.ts            # Cell → ResultCell。色が付くのはノードだけ
          │
          ├─ view/                   # ★ 純関数。props in / callback out
          │  │                       #   アトミックデザイン。下の層しか import できない

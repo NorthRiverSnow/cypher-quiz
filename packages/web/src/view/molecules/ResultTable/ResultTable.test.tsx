@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
-import { ResultTable, type ResultCell } from "./ResultTable";
+import type { ResultCell } from "../../../types";
+import { ResultTable } from "./ResultTable";
 
 afterEach(cleanup);
 
