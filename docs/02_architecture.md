@@ -502,6 +502,8 @@ cypher-quiz/
    │  ├─ test/                         # ★ API 経路のテスト。src の外。偽物を渡さない
    │  │  ├─ api.ts                     # createTestApi / send / jar。テストの土台
    │  │  ├─ connect.test.ts
+   │  │  ├─ run.test.ts
+   │  │  ├─ shutdown.test.ts            # 後始末。サーバ側の接続が消えること
    │  │  └─ openapi.test.ts
    │  └─ src/
    │     ├─ api.ts                     # ★ 全ルート + /doc + /docs。組み立てはここだけ
@@ -512,7 +514,8 @@ cypher-quiz/
    │     ├─ redact.ts                  # ★ 外へ出る文字列から資格情報を取り除く唯一の関数
    │     ├─ cookie.ts                  # ★ クッキーの名前と属性。読み書きはここだけ
    │     ├─ controller/                # ★ 手順の判断。HTTP もクッキーも知らない
-   │     │  └─ connect.ts
+   │     │  ├─ connect.ts
+   │     │  └─ run.ts
    │     ├─ routes/                    # ★ HTTP だけ。neo4j/ を import できない
    │     │  ├─ http.ts                 # kind → ステータスの表。ボディの検証
    │     │  ├─ connect.ts

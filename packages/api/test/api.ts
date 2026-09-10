@@ -42,7 +42,7 @@ export const jar = (res: Response): string => res.headers.get("set-cookie")?.spl
  * why: 組み立ては createApi に任せる。ここで組み直すと、載せ忘れたルートが
  * テストの中だけ存在しない状態になる（docs/02_architecture.md#テストは-2-段に置く）
  */
-export const createTestApi = (): TestApi => {
+export const createTestApi = ({ timeoutMs = 5000 } = {}): TestApi => {
   const written: string[] = [];
   let issued = 0;
 
@@ -65,6 +65,7 @@ export const createTestApi = (): TestApi => {
   const app = createApi({
     log,
     store,
+    timeoutMs,
     newReqId: () => `req-${++issued}`,
     now: () => new Date(0),
     secure: false,

@@ -73,6 +73,18 @@ export const CellSchema: z.ZodType<Cell> = z.lazy(() => z.union([…])).meta({ i
 `id` があると `#/components/schemas/Cell` の `$ref` になり、展開が 1 度で止まる。
 **`.meta()` は zod の機能**なので、`shared` に Hono の依存は増えない。
 
+**TypeScript の側も同じ問題を起こす。** 再帰する部分は `type` ではなく `interface` で書く——
+`type Cell = … | Cell[]` のままだと、Hono が応答の型を組み立てるときに
+「Type instantiation is excessively deep」で止まる。
+
+```ts
+export type Cell = … | CellList;
+export interface CellList extends ReadonlyArray<Cell> {}
+```
+
+`interface` にすると TypeScript が展開を遅らせる。**`vp check` が通らなくなるので、
+外すとすぐ分かる。**
+
 ### 成果物としての `openapi.json` と乖離検出
 
 `/doc` は常に最新だが、**外部に配る成果物**としての `openapi.json` もコミットする。そして**ズレたら CI をエラーで終了させる**。
@@ -443,7 +455,7 @@ toPlainJson(keys, await running);
 | `GET` | `/api/connect` | — | `ConnectionStatus`。未接続でも dev 自動接続が有効ならその場で繋ぐ |
 | `POST` | `/api/connect` | `{ uri, user, password, database? }` | `ConnectionStatus` + `Set-Cookie`(httpOnly) |
 | `DELETE` | `/api/connect` | — | `{ connected: false }`。クッキーを消し、`driver.close()` |
-| `POST` | `/api/run` | `{ cypher }` | `QueryResult`（`columns` / `rows` / `elapsedMs`。読み取り専用で実行） |
+| `POST` | `/api/run` | `{ cypher }` | `QueryResult`（`columns` / `rows` / `elapsedMs`。読み取り専用で実行）。行数は `req.end` の `rows` に載る |
 | `GET` | `/doc` | — | OpenAPI ドキュメント（JSON） |
 | `GET` | `/docs` | — | Scalar による API リファレンス UI |
 
@@ -470,7 +482,7 @@ type ApiError = { kind: ErrorKind; message: string; queryType?: string };
 
 | `kind` | ステータス | 意味 |
 |---|---:|---|
-| `not-connected` | 401 | クッキーが無い / セッションが失効している |
+| `not-connected` | 401 | クッキーが無い / セッションが失効している。**この 2 つを分けない**（分けると「あなたのセッションは失効しています」と当てられる口ができる） |
 | `read-only-violation` | 403 | [読み取り専用の強制で拒否](#2-読み取り専用の強制多層)。`queryType` を添える |
 | `syntax-error` | 422 | `EXPLAIN` が拾った構文エラー |
 | `invalid-request` | 422 | リクエストの検証エラー |

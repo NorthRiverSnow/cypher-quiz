@@ -2,11 +2,19 @@ import { Scalar } from "@scalar/hono-api-reference";
 
 import { type AppDeps, createApp } from "./app";
 import { createConnectController } from "./controller/connect";
+import { createRunController } from "./controller/run";
 import type { CookieDeps } from "./cookie";
 import type { DriverStore } from "./neo4j/driverStore";
 import { connectRoutes } from "./routes/connect";
+import { runRoutes } from "./routes/run";
 
-export type ApiDeps = AppDeps & CookieDeps & Readonly<{ store: DriverStore }>;
+export type ApiDeps = AppDeps &
+  CookieDeps &
+  Readonly<{
+    store: DriverStore;
+    /** 1 クエリの上限。超えると timeout を返す */
+    timeoutMs: number;
+  }>;
 
 /* why: ドキュメントの見出し。バージョンは openapi.json の差分に出るので、
    上げるのは API の形を変えたときだけ */
@@ -28,6 +36,8 @@ export const createApi = (deps: ApiDeps) => {
     "/api/connect",
     connectRoutes({ controller: createConnectController(deps), secure: deps.secure }),
   );
+
+  app.route("/api/run", runRoutes({ controller: createRunController(deps) }));
 
   app.doc31("/doc", INFO);
   app.get("/docs", Scalar({ url: "/doc" }));

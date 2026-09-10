@@ -48,7 +48,11 @@ export type Cell =
   | RelationshipValue
   | PathValue
   | MapValue
-  | Cell[];
+  | CellList;
+
+/* why: interface にすると TypeScript が展開を遅らせる。type の配列で書くと、
+   Hono の応答の型が「excessively deep」で解決できなくなる */
+export interface CellList extends ReadonlyArray<Cell> {}
 
 /* why: リストは自分自身を含む（`collect()` の入れ子）。z.lazy で参照を遅らせないと、
    定義の途中で自分を読むことになる

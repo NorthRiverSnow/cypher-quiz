@@ -5,9 +5,11 @@ import type { ZodError } from "zod";
 
 import type { LogVariables } from "../middleware/requestLog";
 
-/* why: Record で受ける。kind を足したときに、ここを埋めるまで型が通らない
-   （docs/03_api.md#7-失敗の返し方 の表と 1 対 1） */
-const STATUS: Record<ErrorKind, ContentfulStatusCode> = {
+/* why: satisfies で受ける。kind を足したときに、ここを埋めるまで型が通らない
+   （docs/03_api.md#7-失敗の返し方 の表と 1 対 1）。as const にするのは、
+   返る status を 6 つに絞るため——ContentfulStatusCode のままだと、宣言した
+   responses に収まることをルートの型が確かめられない */
+const STATUS = {
   "not-connected": 401,
   "read-only-violation": 403,
   "syntax-error": 422,
@@ -15,9 +17,12 @@ const STATUS: Record<ErrorKind, ContentfulStatusCode> = {
   timeout: 504,
   "connect-failed": 502,
   unexpected: 500,
-};
+} as const satisfies Record<ErrorKind, ContentfulStatusCode>;
 
-export const statusOf = ({ kind }: ApiError): ContentfulStatusCode => STATUS[kind];
+/** 失敗のときに返しうる status。ルートはこの全てを responses に書けば絞り込まずに返せる */
+export type ErrorStatus = (typeof STATUS)[ErrorKind];
+
+export const statusOf = ({ kind }: ApiError): ErrorStatus => STATUS[kind];
 
 const INVALID = "リクエストの形が正しくありません";
 

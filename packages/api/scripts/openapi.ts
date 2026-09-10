@@ -15,6 +15,7 @@ const document = () => {
     now: () => new Date(0),
     newReqId: () => "-",
     secure: false,
+    timeoutMs: 0,
     store: createDriverStore({
       log,
       now: () => 0,

@@ -5,7 +5,176 @@
     "version": "0.1.0"
   },
   "components": {
-    "schemas": {},
+    "schemas": {
+      "Cell": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "node"
+                ]
+              },
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "props": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "kind",
+              "labels",
+              "props"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "relationship"
+                ]
+              },
+              "type": {
+                "type": "string"
+              },
+              "props": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "kind",
+              "type",
+              "props"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "path"
+                ]
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "node"
+                      ]
+                    },
+                    "labels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "props": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "labels",
+                    "props"
+                  ]
+                }
+              },
+              "relationships": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "relationship"
+                      ]
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "props": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "type",
+                    "props"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "nodes",
+              "relationships"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "map"
+                ]
+              },
+              "props": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "kind",
+              "props"
+            ]
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Cell"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
     "parameters": {}
   },
   "paths": {
@@ -316,6 +485,273 @@
                         "mode"
                       ]
                     }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/run": {
+      "post": {
+        "tags": [
+          "run"
+        ],
+        "summary": "読み取り専用でクエリを実行する",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cypher": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "cypher"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "実行結果。列名は 0 行でも返る",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Cell"
+                        }
+                      }
+                    },
+                    "elapsedMs": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "columns",
+                    "rows",
+                    "elapsedMs"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "クッキーが無い、または失効している",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "書き込みのクエリ。`queryType` にサーバの分類が入る",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "構文エラー、またはリクエストの形が正しくない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "想定外",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "ドライバが繋がらない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "時間切れ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "not-connected",
+                        "read-only-violation",
+                        "syntax-error",
+                        "invalid-request",
+                        "timeout",
+                        "connect-failed",
+                        "unexpected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "queryType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "message"
                   ]
                 }
               }

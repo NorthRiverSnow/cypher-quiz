@@ -18,6 +18,9 @@ recover(
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MINUTE = 60 * 1000;
+
+/* why: 教材のクエリは一瞬で返る。これを超えるのは、止め方を間違えた可変長パスなど */
+const QUERY_TIMEOUT_MS = 5000;
 const LEVELS: readonly LogLevel[] = ["debug", "info", "warn", "error"];
 
 /* why: 知らない値を渡されたら既定に戻す。起動を止めるほどのことではない */
@@ -44,6 +47,7 @@ const store = createDriverStore({
 const app = createApi({
   log,
   store,
+  timeoutMs: QUERY_TIMEOUT_MS,
   now: () => new Date(),
   newReqId: () => randomBytes(9).toString("base64url"),
   /* why: dev は http。Secure を付けるとブラウザがクッキーを送らず、
