@@ -120,6 +120,26 @@ describe("/api/connect — 失敗", () => {
     expect(await res.text()).not.toContain(PASSWORD);
   });
 
+  /* why: 平文のまま外へ出すとパスワードがネットワークに流れる。Neo4j のスキーム
+     でなければ、繋ぎに行く前に断る */
+  it("Neo4j のスキームでなければ 422", async () => {
+    const { send } = createTestApi();
+    const res = await send("POST", CONNECT, { body: { ...CREDENTIALS, uri: "http://x" } });
+
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({ kind: "invalid-request" });
+  });
+
+  it("URI に資格情報を埋めたら 422", async () => {
+    const { send } = createTestApi();
+    const res = await send("POST", CONNECT, {
+      body: { ...CREDENTIALS, uri: `bolt://neo4j:${PASSWORD}@localhost:7687` },
+    });
+
+    expect(res.status).toBe(422);
+    expect(await res.text()).not.toContain(PASSWORD);
+  });
+
   /* why: 失敗しても入口と出口が揃う。開いたままの req.start が残らないこと */
   it("失敗した要求も入口と出口が同じ reqId で並ぶ", async () => {
     const { send, events } = createTestApi();

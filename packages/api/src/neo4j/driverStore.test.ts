@@ -52,12 +52,15 @@ const harness = (override: Partial<StoreDeps> = {}) => {
 /* why: 疎通・TTL・上限は繋ぐ相手の中身に依らない。実 DB を待たずに時計を進める */
 const stubbed = (override: Partial<StoreDeps> = {}, onConnect: () => void = () => undefined) => {
   const drivers: { closed: number }[] = [];
+  const targets: string[] = [];
 
   return {
+    targets,
     ...harness({
-      createDriver: () => {
+      createDriver: ({ uri }) => {
         const state = { closed: 0 };
 
+        targets.push(uri);
         drivers.push(state);
 
         return {
@@ -84,7 +87,7 @@ const idOf = async (store: ReturnType<typeof harness>["store"], request = REAL) 
     throw new Error(result.error.message);
   }
 
-  return result.value;
+  return result.value.id;
 };
 
 describe("createDriverStore — 実 DB", () => {
@@ -138,6 +141,43 @@ describe("createDriverStore — 実 DB", () => {
 
     expect(await store.get("そんなIDは無い")).toBeUndefined();
     expect(await store.get(undefined)).toBeUndefined();
+  });
+});
+
+describe("createDriverStore — 繋ぎ先", () => {
+  /* why: 平文のまま外へ出すとパスワードがネットワークに流れる
+     （docs/03_api.md#経路の暗号化はスキームが決める） */
+  it("ローカル以外は暗号化スキームに繋ぎ変える", async () => {
+    const { store, targets } = stubbed();
+
+    await idOf(store, { ...REAL, uri: "bolt://db.example.com:7687" });
+
+    expect(targets).toEqual(["bolt+s://db.example.com:7687"]);
+  });
+
+  it("ローカルはそのまま繋ぐ", async () => {
+    const { store, targets } = stubbed();
+
+    await idOf(store, { ...REAL, uri: "bolt://localhost:7687" });
+
+    expect(targets).toEqual(["bolt://localhost:7687"]);
+  });
+
+  it("繋ぎ変えた URI を覚えている", async () => {
+    const { store } = stubbed();
+    const id = await idOf(store, { ...REAL, uri: "neo4j://abc.databases.neo4j.io" });
+
+    expect(await store.get(id)).toMatchObject({ uri: "neo4j+s://abc.databases.neo4j.io" });
+  });
+
+  /* why: 知らないスキームでドライバを作らせない。作ってから失敗すると、
+     閉じる相手が増えるだけで何も得られない */
+  it("スキームが違えば繋がずに invalid-request", async () => {
+    const { store, targets } = stubbed();
+    const result = await store.open({ ...REAL, uri: "http://db.example.com" });
+
+    expect(result).toMatchObject({ ok: false, error: { kind: "invalid-request" } });
+    expect(targets).toEqual([]);
   });
 });
 

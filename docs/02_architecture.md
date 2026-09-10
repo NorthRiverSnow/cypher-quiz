@@ -520,6 +520,7 @@ cypher-quiz/
    │     └─ neo4j/
    │        ├─ driverStore.ts          # クロージャ。状態はここだけ
    │        ├─ tx.ts                   # ★ session() を呼ぶ唯一の場所。1 API 1 トランザクション
+   │        ├─ uri.ts                  # ★ 繋ぐ前にスキームを決める純粋関数
    │        ├─ readOnly.ts             # EXPLAIN の分類を通すかに変える純粋関数
    │        ├─ toApiError.ts           # ドライバの例外を ApiError に変える。想定外だけログに残す
    │        ├─ closeQuietly.ts         # 閉じる失敗を warn に残して続ける。session も driver も

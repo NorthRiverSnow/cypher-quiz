@@ -2,7 +2,7 @@ import { type ApiError, type Result, err, ok } from "@cypher-quiz/shared";
 import type { Driver } from "neo4j-driver";
 import { describe, expect, it } from "vite-plus/test";
 
-import type { DriverStore, OpenRequest, Session } from "../neo4j/driverStore";
+import type { DriverStore, Opened, OpenRequest, Session } from "../neo4j/driverStore";
 import { createConnectController } from "./connect";
 
 const URI = "bolt://localhost:7687";
@@ -14,7 +14,7 @@ const setup = ({ fails = false }: { fails?: boolean } = {}) => {
   let issued = 0;
 
   const store: DriverStore = {
-    open: async (request): Promise<Result<string, ApiError>> => {
+    open: async (request): Promise<Result<Opened, ApiError>> => {
       seen.opened.push(request);
 
       if (fails) {
@@ -22,15 +22,17 @@ const setup = ({ fails = false }: { fails?: boolean } = {}) => {
       }
 
       const id = `s${++issued}`;
-
-      sessions.set(id, {
+      const session: Session = {
         driver: {} as Driver,
-        uri: request.uri,
+        /* why: store は繋ぎ変えた URI を返す。controller がそれを status に載せること */
+        uri: `secured:${request.uri}`,
         mode: request.mode,
         ...(request.database === undefined ? {} : { database: request.database }),
-      });
+      };
 
-      return ok(id);
+      sessions.set(id, session);
+
+      return ok({ id, session });
     },
     get: async (id) => (id === undefined ? undefined : sessions.get(id)),
     close: async (id) => {
@@ -72,7 +74,7 @@ describe("status", () => {
 
     expect(await controller.status(opened.ok ? opened.value.id : "")).toEqual({
       connected: true,
-      uri: URI,
+      uri: `secured:${URI}`,
       mode: "manual",
     });
   });
@@ -95,12 +97,14 @@ describe("open", () => {
     expect(opened()[0]).toMatchObject({ database: "deck" });
   });
 
-  it("識別子と接続状態を返す", async () => {
+  /* why: 入力した URI ではなく、store が実際に繋いだ URI を返す。ローカル以外は
+     暗号化スキームに繋ぎ変わるので、入力を返すと画面が嘘になる */
+  it("識別子と、実際に繋いだ接続状態を返す", async () => {
     const { controller } = setup();
 
     expect(await controller.open(undefined, CREDENTIALS)).toEqual({
       ok: true,
-      value: { id: "s1", status: { connected: true, uri: URI, mode: "manual" } },
+      value: { id: "s1", status: { connected: true, uri: `secured:${URI}`, mode: "manual" } },
     });
   });
 

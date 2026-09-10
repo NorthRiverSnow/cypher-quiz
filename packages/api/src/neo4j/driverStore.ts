@@ -11,6 +11,7 @@ import type { Driver } from "neo4j-driver";
 import type { Logger } from "../log";
 import { closeQuietly } from "./closeQuietly";
 import { reportDriverError } from "./toApiError";
+import { secureUri } from "./uri";
 
 /* why: スキーマから引く。接続の経路を増やしたときに 2 箇所直さずに済む */
 type Mode = Extract<ConnectionStatus, { connected: true }>["mode"];
@@ -32,6 +33,9 @@ export type Session = Readonly<{
   mode: Mode;
 }>;
 
+/** 実際に繋いだ内容。`uri` は[繋ぎ変えたあと](./uri.ts)のもの */
+export type Opened = Readonly<{ id: string; session: Session }>;
+
 export type StoreDeps = Readonly<{
   log: Logger;
   now: () => number;
@@ -45,7 +49,7 @@ export type StoreDeps = Readonly<{
 }>;
 
 export type DriverStore = {
-  open: (request: OpenRequest) => Promise<Result<string, ApiError>>;
+  open: (request: OpenRequest) => Promise<Result<Opened, ApiError>>;
   /** 引くたびに idle の起点を今にする。失効していれば undefined */
   get: (id: string | undefined) => Promise<Session | undefined>;
   close: (id: string | undefined) => Promise<void>;
@@ -103,7 +107,13 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => {
     open: async ({ uri, user, password, database, mode }) => {
       await sweep();
 
-      const driver = deps.createDriver({ uri, user, password });
+      const target = secureUri(uri);
+
+      if (!target.ok) {
+        return target;
+      }
+
+      const driver = deps.createDriver({ uri: target.value, user, password });
       /* why: 作っただけでは繋がらない。ここで確かめないと、最初のクエリまで
          失敗が分からない（verifyConnectivity は非推奨） */
       const reached = await attemptAsync(
@@ -120,13 +130,16 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => {
       await evictOverflow();
 
       const id = deps.newId();
+      const session: Session = {
+        driver,
+        uri: target.value,
+        mode,
+        ...(database === undefined ? {} : { database }),
+      };
 
-      entries.set(id, {
-        lastUsedAt: deps.now(),
-        session: { driver, uri, mode, ...(database === undefined ? {} : { database }) },
-      });
+      entries.set(id, { lastUsedAt: deps.now(), session });
 
-      return ok(id);
+      return ok({ id, session });
     },
 
     get: async (id) => {

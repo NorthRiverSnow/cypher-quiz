@@ -50,10 +50,9 @@ export const createConnectController = ({
        今まで使えていた接続まで失う */
     await store.close(id);
 
-    return ok({
-      id: opened.value,
-      status: { connected: true, uri: request.uri, mode: "manual" },
-    });
+    /* why: 返す uri は store が実際に繋いだもの。繋ぎ変えたときに、入力ではなく
+       繋いだ先を画面に出す（docs/03_api.md#経路の暗号化はスキームが決める） */
+    return ok({ id: opened.value.id, status: connectedTo(opened.value.session) });
   },
 
   close: async (id) => {
