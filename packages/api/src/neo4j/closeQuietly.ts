@@ -6,10 +6,9 @@ import { detailOf } from "./toApiError";
 /**
  * 閉じる。閉じられなくても throw せず、warn に残して続ける。
  *
- * why: 閉じ忘れると接続が残り、やがて枯れる。一方で閉じる失敗を呼ぶ側に返しても、
- * できることが無い——結果は既に手元にあり、対象はもう手放している
+ * why: 閉じる失敗を呼ぶ側に返してもできることが無い。結果は既に手元にあり、対象は手放している
  *
- * @param name ログに出す名前。何を閉じられなかったかを残す
+ * @param name ログに出す名前
  */
 export const closeQuietly = async (
   log: Logger,

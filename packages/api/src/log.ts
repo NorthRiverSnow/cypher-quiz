@@ -27,7 +27,6 @@ export type LoggerDeps = Readonly<{
 
 const ORDER: Record<LogLevel, number> = { debug: 1, info: 2, warn: 3, error: 4 };
 
-/* イベントごとの既定の重さ。呼ぶ側が上書きできる */
 const LEVEL: Record<LogEvent["event"], LogLevel> = {
   "req.start": "info",
   "query.run": "info",
@@ -35,8 +34,7 @@ const LEVEL: Record<LogEvent["event"], LogLevel> = {
   error: "error",
 };
 
-/* why: 教材のクエリは長くても数百字。これを超えるのは想定外の入力で、頭が残っていれば
-   何が来たかは判別できる（docs/03_api.md#実行クエリだけは出す） */
+/* docs/03_api.md#実行クエリだけはログに出す */
 const MAX_CYPHER = 1000;
 
 /* why: 先に取り除いてから切る。順番が逆だと、切れ目をまたいだ資格情報が残る */
@@ -62,11 +60,8 @@ const shorten = (event: LogEvent): LogEvent =>
 /**
  * 1 イベントを JSON 1 行にして書き出す。`minLevel` より軽いものは書き出さない。
  *
- * why: 時刻と出力先を渡させる。テストで固定でき、書き出し先を差し替えられる
- * （docs/02_architecture.md#時刻乱数を注入する）
- *
- * why: reqId だけは渡させない。渡させると、呼ぶ側が「今どのリクエストか」を知っている
- * 必要が出る。それを無くすために AsyncLocalStorage から引く
+ * why: 時刻と出力先は渡させるが、reqId だけは渡させない。渡させると呼ぶ側が
+ * 「今どのリクエストか」を知っている必要が出る（docs/03_api.md#reqid-を持ち回さない）
  *
  * @param minLevel 既定は info
  */

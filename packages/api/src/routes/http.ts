@@ -5,10 +5,10 @@ import type { ZodError } from "zod";
 
 import type { LogVariables } from "../middleware/requestLog";
 
-/* why: satisfies で受ける。kind を足したときに、ここを埋めるまで型が通らない
-   （docs/03_api.md#7-失敗の返し方 の表と 1 対 1）。as const にするのは、
-   返る status を 6 つに絞るため——ContentfulStatusCode のままだと、宣言した
-   responses に収まることをルートの型が確かめられない */
+/* 対応は docs/03_api.md#7-失敗の返し方
+
+   why: as const にする。ContentfulStatusCode のままだと戻り値が全 status の union になり、
+   ルートが宣言した responses に収まることを型が確かめられない */
 const STATUS = {
   "not-connected": 401,
   "read-only-violation": 403,
@@ -29,8 +29,7 @@ const INVALID = "リクエストの形が正しくありません";
 /** 項目名が分からないとき。JSON として読めないボディもこれ */
 export const INVALID_BODY: ApiError = { kind: "invalid-request", message: INVALID };
 
-/* why: 文に値を入れない。ボディにはパスワードが入りうるので、出すのは項目名だけ。
-   Zod の既定の文も使わない——英語で、期待した形を含む */
+/* docs/03_api.md#invalid-request-の文に値を入れない */
 const messageOf = ({ issues }: ZodError): string => {
   const fields = [
     ...new Set(issues.map(({ path }) => path.map(String).join(".")).filter((path) => path !== "")),
@@ -39,12 +38,7 @@ const messageOf = ({ issues }: ZodError): string => {
   return fields.length === 0 ? INVALID : `${INVALID}: ${fields.join(", ")}`;
 };
 
-/**
- * ルートを載せる器。**検証エラーを `ApiError` の形にそろえる hook を必ず持つ。**
- *
- * why: `new OpenAPIHono()` を直に書くと、hook を渡し忘れたルートだけ Hono 既定の
- * 400 を返す。ルートごとに書かせない
- */
+/** ルートを載せる器。検証エラーを `ApiError` にそろえる（docs/03_api.md#器は-createrouter-から作る） */
 export const createRouter = () =>
   new OpenAPIHono<{ Variables: LogVariables }>({
     defaultHook: (result, c) => {

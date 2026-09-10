@@ -10,15 +10,14 @@ const codeOf = (cause: unknown): string =>
 export const detailOf = (cause: unknown): string =>
   redact(cause instanceof Error ? cause.message : String(cause));
 
-/* why: 想定外のときは中身をクライアントに返さない。ログにだけ残す
-   （docs/03_api.md#7-失敗の返し方） */
+/* why: 想定外のときは中身をクライアントに返さない（docs/03_api.md#7-失敗の返し方） */
 const UNEXPECTED = "想定外のエラーが起きました";
 
 /**
- * ドライバの例外を、クライアントに返せる形に変える。
+ * ドライバの例外を、クライアントに返せる形に変える。対応表は
+ * docs/03_api.md#ドライバのエラーの対応
  *
- * why: コードで分ける。文言はバージョンで変わるうえ、日本語環境で変わる余地もある。
- * 対応表は docs/03_api.md#ドライバのエラーの対応
+ * why: コードで分ける。文言はバージョンでも環境でも変わる
  */
 export const toApiError = (cause: unknown): ApiError => {
   const code = codeOf(cause);
@@ -52,10 +51,9 @@ export const toApiError = (cause: unknown): ApiError => {
 };
 
 /**
- * ドライバの失敗を `ApiError` にする。想定外だったときだけ、元の文をログに残す。
+ * ドライバの失敗を `ApiError` にする。**想定外だったときだけ、元の文をログに残す。**
  *
- * why: 想定外の文はクライアントに返さない。ここで捨てると何が起きたのか追えなくなるので、
- * 返す前にログへ移す
+ * why: 返さない文をここで捨てると、何が起きたのか追えなくなる
  */
 export const reportDriverError = (log: Logger, cause: unknown): ApiError => {
   const api = toApiError(cause);

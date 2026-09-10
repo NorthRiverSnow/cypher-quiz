@@ -19,23 +19,15 @@ export type RunController = Readonly<{
 export type RunDeps = Readonly<{
   store: DriverStore;
   log: Logger;
-  /** 1 クエリの上限。超えると timeout を返す */
   timeoutMs: number;
 }>;
 
-/* why: クッキーが無いのと失効しているのを分けない。どちらも「繋ぎ直してください」で、
-   分けると「あなたのセッションは失効しています」と当てられる口ができる */
+/* 分けない理由は docs/03_api.md#7-失敗の返し方 */
 const NOT_CONNECTED: ApiError = {
   kind: "not-connected",
   message: "接続していません。接続画面からやり直してください",
 };
 
-/**
- * 繋がっている接続で、読み取り専用にクエリを実行する。**HTTP もクッキーも知らない。**
- *
- * why: 読み取り専用の強制・タイムアウト・ログは `runReadOnly` が持つ。ここがするのは
- * 「どの接続で走らせるか」の解決と、素の JSON への変換だけ
- */
 export const createRunController = ({ store, log, timeoutMs }: RunDeps): RunController => ({
   run: async (id, { cypher }) => {
     const session = await store.get(id);

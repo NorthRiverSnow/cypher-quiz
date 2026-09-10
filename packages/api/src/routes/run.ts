@@ -32,12 +32,7 @@ const post = createRoute({
   },
 });
 
-/**
- * クエリの実行。**やることは、クッキーを読むことと Result をステータスに写すことだけ。**
- *
- * why: 行数を `rows` に入れる。req.end に載って、何行返したかが後から追える
- * （docs/03_api.md#8-ログ）
- */
+/** クエリの実行。`rows` に入れた行数は `req.end` に載る（docs/03_api.md#8-ログ） */
 export const runRoutes = ({ controller }: RunDeps) =>
   createRouter().openapi(post, async (c) => {
     const result = await controller.run(readSessionId(c), c.req.valid("json"));

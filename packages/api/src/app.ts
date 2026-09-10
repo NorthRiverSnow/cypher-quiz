@@ -15,9 +15,8 @@ const UNEXPECTED: ApiError = {
 const asError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error(String(cause));
 
-/* why: 検証は @hono/zod-openapi が走らせるが、JSON として読めないボディはそこへ届く前に
-   throw する。想定外の 500 になってしまうので、先に読んで invalid-request にする。
-   Hono は読んだ本文を持つので、後ろの検証がもう一度読むことにはならない */
+/* why: JSON として読めないボディは検証に届く前に throw する。素通しだと 500 になる。
+   Hono は読んだ本文を持つので、後ろの検証が二度読みすることにはならない */
 const readJson = createMiddleware(async (c, next) => {
   const json = (c.req.header("content-type") ?? "").includes("application/json");
 
@@ -57,11 +56,7 @@ const onUnexpected = (log: Logger, cause: unknown) => {
   });
 };
 
-/**
- * ルートを載せる前の器。ログの入口と、すり抜けた例外の受け皿を持つ。
- *
- * why: 依存を渡させる。時刻・reqId・出力先を固定できないとログをテストできない
- */
+/** ルートを載せる前の器。ログの入口と、すり抜けた例外の受け皿を持つ */
 export const createApp = (deps: AppDeps) => {
   const app = createRouter();
 

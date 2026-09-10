@@ -24,8 +24,8 @@ export type OpenRequest = Credentials &
     mode: Mode;
   }>;
 
-/* why: password を持たない。ドライバに渡したら捨てる——保管庫が持つと、
-   ログにも応答にも出しうる形で残る（docs/03_api.md#正直に言っておくこと） */
+/* why: password を持たない。持つとログにも応答にも出しうる形で残る
+   （docs/03_api.md#正直に言っておくこと） */
 export type Session = Readonly<{
   driver: Driver;
   uri: string;
@@ -61,12 +61,7 @@ export type DriverStore = {
 
 type Entry = Readonly<{ session: Session; lastUsedAt: number }>;
 
-/**
- * 接続を持つ唯一の場所。**プロセスの中だけ**——再起動で全て消える。
- *
- * why: クラスではなくクロージャにする。Map への変更をこの関数の中に閉じられる
- * （docs/02_architecture.md#バックエンド--クロージャを返すファクトリ）
- */
+/** 接続を持つ唯一の場所。**プロセスの中だけ**——再起動で全て消える */
 export const createDriverStore = (deps: StoreDeps): DriverStore => {
   const entries = new Map<string, Entry>();
 
@@ -91,8 +86,7 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => {
     return expired.length;
   };
 
-  /* why: 上限に達したら拒否せず、最後に使ったのが最も古いものを閉じる。拒否すると、
-     使われていない接続が居座るだけで新しい利用者が繋げなくなる */
+  /* 拒否せず追い出す理由は docs/03_api.md#正直に言っておくこと */
   const evictOverflow = async () => {
     while (entries.size > 0 && entries.size >= deps.maxSessions) {
       const [oldest] = [...entries].reduce((a, b) => (a[1].lastUsedAt <= b[1].lastUsedAt ? a : b));
@@ -116,8 +110,8 @@ export const createDriverStore = (deps: StoreDeps): DriverStore => {
       }
 
       const driver = deps.createDriver({ uri: target.value, user, password });
-      /* why: 作っただけでは繋がらない。ここで確かめないと、最初のクエリまで
-         失敗が分からない（verifyConnectivity は非推奨） */
+      /* why: 作っただけでは繋がらない。確かめないと最初のクエリまで失敗が分からない
+         （verifyConnectivity は非推奨） */
       const reached = await attemptAsync(
         () => driver.getServerInfo(),
         (cause) => cause,

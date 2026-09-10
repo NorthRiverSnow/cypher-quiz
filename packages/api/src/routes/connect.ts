@@ -55,10 +55,9 @@ const remove = createRoute({
 });
 
 /**
- * 接続の 3 本。**やることは、クッキーの読み書きと Result をステータスに写すことだけ。**
+ * 接続の 3 本。やるのはクッキーの読み書きと、Result をステータスに写すことだけ。
  *
- * why: 応答の本文に識別子を入れない。入れるとフロントが持てるようになり、
- * localStorage に置く道が開く
+ * why: 応答の本文に識別子を入れない。入れるとフロントが持てるようになる
  */
 export const connectRoutes = ({ controller, secure }: ConnectDeps) =>
   createRouter()
@@ -70,8 +69,7 @@ export const connectRoutes = ({ controller, secure }: ConnectDeps) =>
       const opened = await controller.open(readSessionId(c), c.req.valid("json"));
 
       if (!isOk(opened)) {
-        /* why: statusOf は kind 7 通りの status を返す。このルートが返しうるのは
-           宣言した 3 つだけだが、どれになるかは controller が決めるので型では絞れない */
+        /* why: 返るのは宣言した 3 つだけだが、どれかは controller が決めるので型では絞れない */
         return c.json(opened.error, statusOf(opened.error) as 422 | 500 | 502);
       }
 

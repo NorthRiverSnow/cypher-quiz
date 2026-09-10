@@ -20,16 +20,9 @@ export type ConnectController = Readonly<{
 
 const DISCONNECTED: ConnectionStatus = { connected: false };
 
-/* why: password も database も返さない。フロントが要るのは「繋がっているか」と
-   表示用の接続先だけ（docs/03_api.md#セッション識別子はフロントに渡さない） */
+/* 返す項目は docs/03_api.md#セッション識別子はフロントに渡さない */
 const connectedTo = ({ uri, mode }: Session): ConnectionStatus => ({ connected: true, uri, mode });
 
-/**
- * 接続の開始・確認・終了。**HTTP もクッキーも知らない。**
- *
- * why: ルートに書くと、同じ手順を別のルートから呼べなくなる。何より、繋ぐ順番の
- * ような判断が HTTP の組み立てに埋もれる
- */
 export const createConnectController = ({
   store,
 }: Readonly<{ store: DriverStore }>): ConnectController => ({
@@ -46,12 +39,11 @@ export const createConnectController = ({
       return opened;
     }
 
-    /* why: 繋がったあとに前の接続を閉じる。先に閉じると、資格情報を間違えたときに
-       今まで使えていた接続まで失う */
+    /* 順番の理由は docs/03_api.md#6-エンドポイント一覧 */
     await store.close(id);
 
-    /* why: 返す uri は store が実際に繋いだもの。繋ぎ変えたときに、入力ではなく
-       繋いだ先を画面に出す（docs/03_api.md#経路の暗号化はスキームが決める） */
+    /* why: 返す uri は入力ではなく store が実際に繋いだもの
+       （docs/03_api.md#ローカル以外は暗号化スキームに繋ぎ変える） */
     return ok({ id: opened.value.id, status: connectedTo(opened.value.session) });
   },
 

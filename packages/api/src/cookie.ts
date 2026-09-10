@@ -3,8 +3,9 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 
 const NAME = "cq_session";
 
-/* why: maxAge も expires も付けない。付けるとタブを閉じても残る
-   （属性の一覧は docs/03_api.md#セッション識別子はフロントに渡さない） */
+/* 属性は docs/03_api.md#セッション識別子はフロントに渡さない
+
+   why: maxAge も expires も付けない。付けるとタブを閉じても残る */
 const OPTIONS = { httpOnly: true, sameSite: "Strict", path: "/api" } as const;
 
 /** 本番では Secure を付ける。dev は http なので付けると送られない */

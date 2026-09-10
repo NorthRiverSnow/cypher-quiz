@@ -21,6 +21,23 @@
 | テスト | **Vitest**（`vp test`） | Vite+ 同梱 |
 | 構成 | pnpm workspaces のモノレポ | `shared` の Zod を web と api の両方から参照するため。Vite+ が pnpm を検出してそのまま使う |
 
+### api が使うもの
+
+**全てのルートが同じものを通る。** ルートを足すときに選び直さない。
+
+| 何に | 何を | どこで |
+|---|---|---|
+| ルーティング・OpenAPI | `@hono/zod-openapi` | 器は [`createRouter()`](./03_api.md#器は-createrouter-から作る)。`new OpenAPIHono()` を直に書かない |
+| ドキュメント UI | `@scalar/hono-api-reference` | `api.ts` の `/docs`。ルートは触らない |
+| HTTP サーバ | `@hono/node-server` | `server.ts` だけ。**終了の合図もここで受ける** |
+| スキーマ・検証 | `zod`（素の。Hono に依存しない） | `shared/src/schema/`。OpenAPI の付加情報は `.meta()` で載せる |
+| DB | `neo4j-driver` v5 | `neo4j/` だけ。**`driver.session()` は [`tx.ts`](./03_api.md#9-トランザクション) が唯一の呼び出し元** |
+| 実行 | `tsx`（watch と スクリプト） | `vp run api` と `openapi:write` |
+
+**web は Hono も neo4j-driver も知らない。** `shared` の Zod から `z.infer` で型を取るだけ。
+
+書き方は Skill の `api-new`。
+
 ---
 
 ## 2. 関数型で MVC をやる

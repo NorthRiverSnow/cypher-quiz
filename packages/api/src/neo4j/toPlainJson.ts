@@ -28,8 +28,7 @@ const isPlainMap = (value: object): value is Record<string, unknown> => {
 
 type HasText = { toString: () => string };
 
-/* why: 一時型・空間型は読める表記を toString() で返す。既定の toString しか持たない
-   クラスは "[object Object]" にしかならないので、表記を持つものだけを通す */
+/* why: 既定の toString しか持たないクラスは "[object Object]" にしかならない */
 const hasText = (value: object): value is HasText => value.toString !== Object.prototype.toString;
 
 /* why: value.toString() を直に呼ぶと no-base-to-string の警告が出る。toString を宣言した
@@ -51,8 +50,7 @@ const fromRelationship = (relationship: Relationship): RelationshipValue => ({
   props: propsOf(relationship.properties),
 });
 
-/* why: start は segments に現れない。先頭に置いてから各セグメントの end を並べる。
-   長さ 0 のパスは segments が空で、ノード 1 つだけになる */
+/* why: start は segments に現れない。長さ 0 のパスは segments が空でノード 1 つになる */
 const fromPath = (path: Path): PathValue => ({
   kind: "path",
   nodes: [fromNode(path.start), ...path.segments.map((segment) => fromNode(segment.end))],
@@ -60,10 +58,7 @@ const fromPath = (path: Path): PathValue => ({
 });
 
 /**
- * ドライバの値 1 つを素の JSON に変える。
- *
- * why: 一時型・空間型を型ごとに分岐しない。素のオブジェクトを先に分ければ、残るのは
- * toString() が読める表記を返すクラスだけになる。型が増えても分岐を足さずに済む
+ * ドライバの値 1 つを素の JSON に変える。対応は docs/03_api.md#セル-1-つの対応
  *
  * why: 表記を持たないものは null にする。"[object Object]" を返すと、値が無いのか
  * 変換に失敗したのかを受け取った側が区別できない
@@ -104,15 +99,12 @@ export const toCell = (value: unknown): Cell => {
 /**
  * ドライバの結果を、クライアントに返す形にする。DB にも I/O にも触らない。
  *
- * why: 列名を結果から取らない。0 行のときレコードが 1 つも無く、列が消える。
- * 呼ぶ側が `Result.keys()` から渡す（docs/03_api.md#5-結果の正規化）
- *
- * @param keys 列名。RETURN に書かれた順
+ * @param keys 列名。RETURN に書かれた順（docs/03_api.md#列名は結果から取れない）
  */
 export const toPlainJson = (keys: readonly string[], result: DriverResult): QueryResult => ({
   columns: [...keys],
   rows: result.records.map((record) => [...record.values()].map((value) => toCell(value))),
-  /* why: 2 つの合計がサーバ側の所要時間。届くまでと、読み終わるまで */
+  /* why: 届くまでと読み終わるまでの合計がサーバ側の所要時間 */
   elapsedMs:
     result.summary.resultAvailableAfter.toNumber() + result.summary.resultConsumedAfter.toNumber(),
 });

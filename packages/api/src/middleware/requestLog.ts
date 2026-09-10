@@ -14,12 +14,7 @@ export type RequestLogDeps = Readonly<{
   now: () => Date;
 }>;
 
-/**
- * 1 リクエストの入口と出口を出す。**この中の処理は全て同じ `reqId` を引く。**
- *
- * why: ここで出せば、ルートを足すたびに書く必要がない。差し込み忘れがそのまま
- * 「出ないログ」になるのを防ぐ（docs/03_api.md#8-ログ）
- */
+/** 1 リクエストの入口と出口を出す。**この中の処理は全て同じ `reqId` を引く** */
 export const requestLog = ({ log, newReqId, now }: RequestLogDeps) =>
   createMiddleware<{ Variables: LogVariables }>((c, next) => {
     const startedAt = now().getTime();

@@ -24,8 +24,8 @@ export type QueryOutput = Readonly<{
   result: QueryResult;
 }>;
 
-/* why: 列名は await した結果に含まれない。0 行のとき列見出しが消えるので、
-   Result を await する前に keys() から取る（docs/03_api.md#列名は結果から取れない） */
+/* why: 列名は await した結果に含まれない。Result を await する前に keys() から取る
+   （docs/03_api.md#列名は結果から取れない） */
 const runQuery = async (tx: ManagedTransaction, cypher: string): Promise<QueryOutput> => {
   const running = tx.run(cypher);
 
@@ -34,10 +34,7 @@ const runQuery = async (tx: ManagedTransaction, cypher: string): Promise<QueryOu
 
 /**
  * 読み取り専用の 1 トランザクションでクエリを実行する。
- *
- * **`driver.session()` を呼ぶのはここだけ。** 読み取りモード・タイムアウト・
- * `query.run` のログ・失敗の変換が、これを通る全てのクエリに掛かる
- * （docs/03_api.md#9-トランザクション）。
+ * **`driver.session()` を呼ぶのはここだけ**（docs/03_api.md#9-トランザクション）。
  *
  * why: EXPLAIN と本体を同じトランザクションで走らせる。分けると、判定した後に
  * 別のスナップショットで実行することになる
@@ -64,8 +61,7 @@ export const runReadOnly = async (
         },
         { timeout: timeoutMs },
       ),
-    /* why: ここでは変換しない。閉じたあとに reportDriverError へ渡す——変換と
-       ログを 1 箇所にまとめるため（ドライバを呼ぶ全ての場所で同じ扱いになる） */
+    /* why: ここでは変換しない。閉じたあとに reportDriverError へ渡す */
     (cause) => cause,
   );
 

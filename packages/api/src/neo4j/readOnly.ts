@@ -1,11 +1,9 @@
 import { type ApiError, type Result, err, ok } from "@cypher-quiz/shared";
 
-/* EXPLAIN が返す分類。読み取りだけが "r" で、書き込みは "w"、読み書きの混在は "rw"、
-   スキーマ変更と管理コマンドは "s"（docs/03_api.md#実測した分類） */
+/* 分類は docs/03_api.md#実測した分類 */
 const READ_ONLY = "r";
 
-/* "r" に分類されるが、グラフの読み取りではないもの。実測で見つけた抜け道で、
-   見つけたらここに足す（docs/03_api.md#r-に分類される抜け道） */
+/* docs/03_api.md#r-に分類される抜け道。見つけたらここに足す */
 const DENIED_OPERATORS: ReadonlySet<string> = new Set([
   "LoadCSV",
   "TerminateTransactions",
@@ -20,8 +18,7 @@ export type Plan = Readonly<{ operatorType: string; children?: readonly Plan[] }
    呼ぶ側それぞれで絞らせず、ここで受ける */
 type MaybePlan = Plan | false | undefined;
 
-/* why: operatorType は "LoadCSV@neo4j" の形で、@ の後ろは繋いだデータベース名。
-   名前で照合するので切り落とす */
+/* why: operatorType は "LoadCSV@neo4j" の形。@ の後ろは繋いだデータベース名 */
 const nameOf = (operatorType: string): string => operatorType.split("@")[0] ?? operatorType;
 
 const operatorsIn = (plan: MaybePlan): readonly string[] =>
@@ -32,9 +29,8 @@ const operatorsIn = (plan: MaybePlan): readonly string[] =>
 /**
  * サーバが分類したクエリを、実行してよいかに変える。
  *
- * why: 通す分類を 1 つに絞る。拒否する側を並べると、Neo4j が分類を増やしたときに
- * 新しい分類が素通りする。演算子だけは逆に拒否側を並べる——読み取りの演算子は
- * 100 を超え、Neo4j を上げるたびに増えるので、並べきれない
+ * why: 通す分類を 1 つに絞る。拒否側を並べると、Neo4j が分類を増やしたときに素通りする。
+ * 演算子だけは逆に拒否側を並べる——読み取りの演算子は 100 を超え、並べきれない
  *
  * @param queryType `ResultSummary.queryType`
  * @param plan `ResultSummary.plan`。渡さなければ演算子を見ない

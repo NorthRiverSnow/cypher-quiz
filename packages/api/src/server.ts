@@ -9,8 +9,8 @@ import { createApi } from "./api";
 import { type LogLevel, createLogger } from "./log";
 import { createDriverStore } from "./neo4j/driverStore";
 
-/* why: .env は docker compose と共有する 1 つだけ（docs/02_architecture.md#env-は-1-つ資格情報の出どころを分けない）。
-   tsx は読まないのでここで読む。無くても既定で起動する */
+/* why: tsx は .env を読まない。無くても既定で起動する
+   （docs/02_architecture.md#env-は-1-つ資格情報の出どころを分けない） */
 recover(
   () => process.loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url))),
   undefined,
@@ -36,8 +36,6 @@ const log = createLogger({
 const store = createDriverStore({
   log,
   now: () => Date.now(),
-  /* why: 推測できない値にする。クッキーに載る唯一の識別子で、これが漏れると
-     他人の接続でクエリを実行できる */
   newId: () => randomBytes(24).toString("base64url"),
   createDriver: ({ uri, user, password }) => neo4j.driver(uri, neo4j.auth.basic(user, password)),
   idleMs: 30 * MINUTE,
@@ -50,8 +48,6 @@ const app = createApi({
   timeoutMs: QUERY_TIMEOUT_MS,
   now: () => new Date(),
   newReqId: () => randomBytes(9).toString("base64url"),
-  /* why: dev は http。Secure を付けるとブラウザがクッキーを送らず、
-     繋がったまま切れたように見える */
   secure: process.env.NODE_ENV === "production",
 });
 

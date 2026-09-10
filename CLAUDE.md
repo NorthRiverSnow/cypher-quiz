@@ -111,6 +111,7 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 ## 部品を触る前に Skill を読む
 
 `view/` のコンポーネントを作る・直すときは `component-new`。
+**`packages/api` を触るときは `api-new`。**
 **副作用のある処理・API 呼び出し・例外を扱うときは `failure-handling`。**
 
 ## 見た目は自分で確認する
