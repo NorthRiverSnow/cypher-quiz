@@ -135,20 +135,23 @@ const missedCards = (deck: readonly Card[], answers: readonly Answer[]): MissedC
 /**
  * サマリに出す成績。
  *
+ * why: 引くのは回答だけ。結果画面はクイズを組み直さずに、保存された回答から出せる
+ *
  * @param deck 章とカード名を引くために要る
  */
-export const score = (state: QuizState, deck: readonly Card[]): Score => ({
-  ...tally(state.answers),
-  bySection: scoreBySection(deck, state.answers),
-  missed: missedCards(deck, state.answers),
+export const score = (answers: readonly Answer[], deck: readonly Card[]): Score => ({
+  ...tally(answers),
+  bySection: scoreBySection(deck, answers),
+  missed: missedCards(deck, answers),
 });
 
 /**
- * 間違えた問題だけで組み直す。**box はそのまま**——完了しているので、
- * 正解すれば消え、間違えれば 0 に戻ってまた出る。
+ * 間違えた問題の box を 0 に戻す。**次に `createQuiz` が積むのはこれだけ**になる。
+ *
+ * why: キューは保存していないので、「この問題だけ出す」を伝える手段が box しかない。
+ * 0 に戻る以上、解き直しにも 2 回連続の正解が要る（docs/01_spec.md#7-画面と導線）
  */
-export const retryMissed = (state: QuizState, rng: Rng): QuizState => ({
-  queue: shuffle(missedKeys(state.answers), rng),
-  boxes: state.boxes,
-  answers: [],
+export const resetMissed = (boxes: Boxes, answers: readonly Answer[]): Boxes => ({
+  ...boxes,
+  ...Object.fromEntries(missedKeys(answers).map((key): [QuestionKey, Box] => [key, 0])),
 });

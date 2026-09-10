@@ -14,7 +14,7 @@ import {
   isComplete,
   keyOf,
   type QuizState,
-  retryMissed,
+  resetMissed,
   score,
 } from "./quiz";
 import { createRng } from "./rng";
@@ -235,7 +235,7 @@ describe("成績", () => {
   const first = createQuiz(small, createRng(7));
 
   it("答える前は全て 0", () => {
-    const { asked, correct, missed } = score(first, small);
+    const { asked, correct, missed } = score(first.answers, small);
 
     expect([asked, correct, missed]).toEqual([0, 0, []]);
   });
@@ -247,7 +247,7 @@ describe("成績", () => {
 
     expect(currentKey(back)).toBe(wrong);
     expect(back.answers).toHaveLength(4);
-    expect(score(answerCurrent(back, true), small)).toMatchObject({ asked: 4 });
+    expect(score(answerCurrent(back, true).answers, small)).toMatchObject({ asked: 4 });
   });
 
   it("一度も間違えていない問題だけを正解に数える", () => {
@@ -256,13 +256,13 @@ describe("成績", () => {
     const after = answerAll(answerCurrent(first, false), true, 3);
 
     expect(currentKey(after)).toBe(wrong);
-    expect(score(after, small)).toMatchObject({ asked: 4, correct: 3 });
+    expect(score(after.answers, small)).toMatchObject({ asked: 4, correct: 3 });
   });
 
   it("間違えたあと正解しても、正解には数えない", () => {
     const after = answerCurrent(answerAll(answerCurrent(first, false), true, 3), true);
 
-    expect(score(after, small)).toMatchObject({ asked: 4, correct: 3 });
+    expect(score(after.answers, small)).toMatchObject({ asked: 4, correct: 3 });
   });
 
   /* why: box は「2 回連続で正解したか」しか持たない。間違えたあと正解すると
@@ -278,7 +278,7 @@ describe("成績", () => {
     const fixed = answerCurrent(back, true);
 
     expect(fixed.boxes[wrong]).toBe(1);
-    expect(score(fixed, small).missed).toEqual([
+    expect(score(fixed.answers, small).missed).toEqual([
       { section: card?.section, name: card?.name, direction: directionOf(wrong) },
     ]);
   });
@@ -288,12 +288,12 @@ describe("成績", () => {
     const back = answerAll(answerCurrent(first, false), true, 3);
 
     expect(currentKey(back)).toBe(wrong);
-    expect(score(answerCurrent(back, false), small).missed).toHaveLength(1);
+    expect(score(answerCurrent(back, false).answers, small).missed).toHaveLength(1);
   });
 
   it("章別は出題されなかった章も 0 / 0 で並べる", () => {
     const after = answerAll(first, true, 1);
-    const { bySection } = score(after, small);
+    const { bySection } = score(after.answers, small);
 
     expect(bySection).toHaveLength(2);
     expect(bySection.filter(({ asked }) => asked === 0)).toHaveLength(1);
@@ -301,7 +301,7 @@ describe("成績", () => {
 
   it("章別の合計が全体と一致する", () => {
     const after = answerCurrent(answerAll(answerCurrent(first, false), true, 3), false);
-    const { asked, correct, bySection } = score(after, small);
+    const { asked, correct, bySection } = score(after.answers, small);
 
     expect(bySection.reduce((sum, entry) => sum + entry.asked, 0)).toBe(asked);
     expect(bySection.reduce((sum, entry) => sum + entry.correct, 0)).toBe(correct);
@@ -311,37 +311,54 @@ describe("成績", () => {
     const done = answerAll(first, true, TO_COMPLETE);
 
     expect(isComplete(done)).toBe(true);
-    expect(score(done, small)).toMatchObject({ asked: QUESTIONS, correct: QUESTIONS, missed: [] });
+    expect(score(done.answers, small)).toMatchObject({
+      asked: QUESTIONS,
+      correct: QUESTIONS,
+      missed: [],
+    });
   });
 });
 
-describe("retryMissed", () => {
+describe("resetMissed", () => {
   const first = createQuiz(small, createRng(7));
 
-  it("間違えた問題だけをキューに入れる", () => {
-    const wrong = currentKey(first);
-    const after = answerAll(first, false, 1);
-    const retried = retryMissed(after, createRng(1));
+  it("間違えた問題だけ box を 0 に戻す", () => {
+    const wrong = currentKey(first) ?? keyOf("a", "forward");
+    const done = answerAll(first, true, TO_COMPLETE);
+    const after = { ...done, answers: [{ key: wrong, correct: false }] };
 
-    expect(retried.queue).toEqual([wrong]);
+    const boxes = resetMissed(after.boxes, after.answers);
+
+    expect(boxes[wrong]).toBe(0);
+    expect(Object.values(boxes).filter((box) => box === 2)).toHaveLength(QUESTIONS - 1);
   });
 
-  it("box はそのまま持ち越す", () => {
-    const after = answerAll(first, false, 1);
+  /* why: キューは保存していないので、box を戻す以外に「この問題だけ出す」を伝える手段が無い */
+  it("戻した box から組み直すと、その問題だけが出る", () => {
+    const wrong = currentKey(first) ?? keyOf("a", "forward");
+    const done = answerAll(first, true, TO_COMPLETE);
+    const boxes = resetMissed(done.boxes, [{ key: wrong, correct: false }]);
 
-    expect(retryMissed(after, createRng(1)).boxes).toEqual(after.boxes);
+    expect(createQuiz(small, createRng(1), boxes).queue).toEqual([wrong]);
   });
 
-  it("成績は数え直しになる", () => {
-    const after = answerAll(first, false, 3);
+  it("同じ問題を 2 回間違えても 1 度だけ戻す", () => {
+    const wrong = currentKey(first) ?? keyOf("a", "forward");
+    const done = answerAll(first, true, TO_COMPLETE);
+    const answers = [
+      { key: wrong, correct: false },
+      { key: wrong, correct: false },
+    ];
 
-    expect(score(retryMissed(after, createRng(1)), small).asked).toBe(0);
+    expect(createQuiz(small, createRng(1), resetMissed(done.boxes, answers)).queue).toEqual([
+      wrong,
+    ]);
   });
 
-  it("間違えていなければ空になる", () => {
+  it("間違えていなければ何も変わらない", () => {
     const done = answerAll(first, true, TO_COMPLETE);
 
-    expect(retryMissed(done, createRng(1)).queue).toEqual([]);
+    expect(resetMissed(done.boxes, done.answers)).toEqual(done.boxes);
   });
 });
 
@@ -350,11 +367,14 @@ describe("保存された成績から続ける", () => {
     const answers = [{ key: keyOf("a", "forward"), correct: false }] as const;
     const resumed = createQuiz(small, createRng(7), {}, answers);
 
-    expect(score(resumed, small)).toMatchObject({ asked: 1, correct: 0 });
-    expect(score(resumed, small).missed).toHaveLength(1);
+    expect(score(resumed.answers, small)).toMatchObject({ asked: 1, correct: 0 });
+    expect(score(resumed.answers, small).missed).toHaveLength(1);
   });
 
   it("渡さなければ空から始まる", () => {
-    expect(score(createQuiz(small, createRng(7)), small)).toMatchObject({ asked: 0, correct: 0 });
+    expect(score(createQuiz(small, createRng(7)).answers, small)).toMatchObject({
+      asked: 0,
+      correct: 0,
+    });
   });
 });

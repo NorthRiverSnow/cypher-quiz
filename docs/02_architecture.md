@@ -247,7 +247,11 @@ lint: {
     },
     {
       // 結線の層。controller は呼ぶが、model にも api にも触らない
-      files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
+      files: [
+        "packages/web/src/routes.tsx",
+        "packages/web/src/main.tsx",
+        "packages/web/src/screens/**",
+      ],
       rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**", "**/api/**"] }] },
     },
     // アトミックデザインの層。下の層しか import できない
@@ -666,6 +670,11 @@ cypher-quiz/
          │  ├─ swr.ts               # Result を SWR の成功／失敗に振り分ける
          │  └─ useConnection.ts
          │
+         ├─ screens/               # ★ 結線。useXXX を呼び、pages に props で渡す
+         │  ├─ StartScreen.tsx
+         │  ├─ ConnectScreen.tsx
+         │  ├─ QuizScreen.tsx
+         │  └─ ResultScreen.tsx
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
          ├─ styles/
          │  ├─ index.ts             # CSS の入口。アプリと Storybook が同じものを読む
@@ -684,17 +693,48 @@ cypher-quiz/
 
 これがフェーズ A（見た目を先に決める）を成立させる要。
 
+### 画面は保存から組み直す
+
+**結線は `src/screens/` に置く。** `routes.tsx` は URL と画面の対応だけを持ち、
+hook を呼ばない。画面が `useXXX` を呼び、結果を props でページに渡す。
+
+```
+routes.tsx      <Route path="/quiz" element={<QuizScreen … />} /> の表だけ
+screens/        useXXX を呼び、view/pages/* に props で渡す
+controller/     hook。データを返すだけで、View を描かない
+view/pages/     全状態を props で受ける純関数
+```
+
+**画面ごとに mount される。** `/quiz` から `/result` へ移ると `QuizScreen` は消え、
+`useQuiz` の状態も消える。**引き継ぎは localStorage だけ**で、React の state を跨がせない。
+
+そのため **`{ boxes, answers }` から出題を完全に組み直せる**ことが要る。
+キューは保存していないので、「次に何を出すか」を伝える手段は box しかない。
+
+### やり直しは保存を書き換えて遷移する
+
+サマリの「もう一度」と「不正解だけもう一度」は、**`useQuiz` の口ではない。**
+保存を書き換えてから `/quiz` へ送れば、次の `QuizScreen` がそれを読んで組み直す。
+
+| ボタン | 書き換えるもの |
+|---|---|
+| もう一度 | 保存を消す（`progress.clear()`） |
+| 不正解だけもう一度 | 間違えた問題の box を 0 に戻し、成績を空にして保存（`resetMissed`） |
+
+**成績はクイズを組まずに出せる。** `score(answers, deck)` は回答だけを引くので、
+`ResultScreen` は `progress.load()` の `answers` を渡すだけでよい。
+
 ### URL とページの対応
 
 `src/routes.tsx` が持つ。**ページは URL も遷移も知らない。**
 
-| URL | ページ | 進む先 |
-|---|---|---|
-| `/` | `StartPage` | `/connect` |
-| `/connect` | `ConnectPage` | 接続 / 接続せずに始める → `/quiz` |
-| `/quiz` | `QuizPage` | 最後の 1 枚の次 → `/result` |
-| `/result` | `ResultPage` | もう一度 / 不正解だけ → `/quiz` |
-| 上記以外 | — | `/` へ送る |
+| URL | 画面 | ページ | 進む先 |
+|---|---|---|---|
+| `/` | `StartScreen` | `StartPage` | `/connect` |
+| `/connect` | `ConnectScreen` | `ConnectPage` | 接続 / 接続せずに始める → `/quiz` |
+| `/quiz` | `QuizScreen` | `QuizPage` | 最後の 1 枚の次 → `/result` |
+| `/result` | `ResultScreen` | `ResultPage` | もう一度 / 不正解だけ → `/quiz` |
+| 上記以外 | — | — | `/` へ送る |
 
 **ページに `useNavigate` を持たせない。** 持たせると story とテストに Router が必要になり、
 View が遷移を知ることになる。`routes.tsx` が薄い包みを作り、そこで `navigate` に繋ぐ。

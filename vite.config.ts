@@ -55,7 +55,11 @@ export default defineConfig({
       },
       {
         // 結線の層。controller は呼ぶが、model にも api にも触らない
-        files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
+        files: [
+          "packages/web/src/routes.tsx",
+          "packages/web/src/main.tsx",
+          "packages/web/src/screens/**",
+        ],
         rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**", "**/api/**"] }] },
       },
       {

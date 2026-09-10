@@ -5,13 +5,12 @@ import { useGlobalErrors } from "./controller/useGlobalErrors";
 import { useNotices } from "./controller/useNotices";
 import { useTheme } from "./controller/useTheme";
 import { OPTIONAL_MATCH, SET_REMOVE, WITH } from "./fixtures/cards";
+import { ConnectScreen } from "./screens/ConnectScreen";
+import { StartScreen } from "./screens/StartScreen";
 import { ThemeToggle } from "./view/atoms/ThemeToggle/ThemeToggle";
-import type { ConnectInput } from "./view/organisms/ConnectForm/ConnectForm";
 import { NoticeList } from "./view/organisms/NoticeList/NoticeList";
-import { ConnectPage } from "./view/pages/ConnectPage/ConnectPage";
 import { QuizPage, type QuizFace } from "./view/pages/QuizPage/QuizPage";
 import { ResultPage } from "./view/pages/ResultPage/ResultPage";
-import { StartPage } from "./view/pages/StartPage/StartPage";
 import { Corner } from "./view/templates/Corner/Corner";
 
 /* URL とページの対応。ページは全状態を props で受ける純関数なので、遷移はここで
@@ -22,31 +21,7 @@ import { Corner } from "./view/templates/Corner/Corner";
  */
 const DECK = [OPTIONAL_MATCH, WITH, SET_REMOVE] as const;
 
-const EMPTY: ConnectInput = { uri: "", user: "", password: "", database: "" };
-
 type Slot = { notices: ReactNode };
-
-const Start = ({ notices }: Slot) => {
-  const navigate = useNavigate();
-
-  return <StartPage notices={notices} onStart={() => void navigate("/connect")} />;
-};
-
-const Connect = ({ notices }: Slot) => {
-  const navigate = useNavigate();
-  const [values, setValues] = useState<ConnectInput>(EMPTY);
-
-  return (
-    <ConnectPage
-      notices={notices}
-      values={values}
-      onChange={(field, value) => setValues((prev) => ({ ...prev, [field]: value }))}
-      onConnect={() => void navigate("/quiz")}
-      onStart={() => void navigate("/quiz")}
-      onDisconnect={() => setValues(EMPTY)}
-    />
-  );
-};
 
 const Quiz = ({ notices }: Slot) => {
   const navigate = useNavigate();
@@ -147,8 +122,8 @@ export const AppRoutes = () => {
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </Corner>
       <Routes>
-        <Route path="/" element={<Start notices={band} />} />
-        <Route path="/connect" element={<Connect notices={band} />} />
+        <Route path="/" element={<StartScreen notices={notices} band={band} />} />
+        <Route path="/connect" element={<ConnectScreen notices={notices} band={band} />} />
         <Route path="/quiz" element={<Quiz notices={band} />} />
         <Route path="/result" element={<Result notices={band} />} />
         {/* why: 知らない URL はスタートへ送る。空白の画面を出さない */}

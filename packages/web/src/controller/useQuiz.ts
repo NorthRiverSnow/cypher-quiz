@@ -37,8 +37,6 @@ export type Quiz = Readonly<{
   /** 選んでいなければ何もしない */
   answer: () => void;
   next: () => void;
-  /** 保存された習熟度を消して組み直す */
-  restart: () => void;
 }>;
 
 export type QuizOptions = Readonly<{
@@ -50,7 +48,10 @@ export type QuizOptions = Readonly<{
 type Answered = Readonly<{ card: Card; question: Question; choice: number; correct: boolean }>;
 
 /**
- * 出題の状態と、答え合わせ。**習熟度の保存もここが呼ぶ。**
+ * 出題の状態と、答え合わせ。**習熟度と成績の保存もここが呼ぶ。**
+ *
+ * why: 画面ごとに mount される。やり直しは保存を書き換えてから遷移すればよく、
+ * ここに口を作らない（docs/02_architecture.md#やり直しは保存を書き換えて遷移する）
  *
  * why: 肢の並びは useMemo で今の 1 問に固定する。毎レンダリング組み直すと、
  * 選んでいる途中で並びが変わる
@@ -93,13 +94,6 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
     setSelected(undefined);
   }, []);
 
-  const restart = useCallback(() => {
-    progress.clear();
-    setState(createQuiz(deck, rng, {}));
-    setAnswered(undefined);
-    setSelected(undefined);
-  }, [deck, progress, rng]);
-
   const face = useMemo((): Face | undefined => {
     if (answered !== undefined) {
       return { side: "back", ...answered };
@@ -117,6 +111,5 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
     select: setSelected,
     answer,
     next,
-    restart,
   };
 };

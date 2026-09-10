@@ -288,33 +288,3 @@ describe("最後まで解く", () => {
     expect(result.current.complete).toBe(false);
   });
 });
-
-describe("restart", () => {
-  it("保存された習熟度を消して組み直す", () => {
-    const done: Boxes = Object.fromEntries(
-      DECK.flatMap(({ id }) => [
-        [`${id}:forward`, 2],
-        [`${id}:reverse`, 2],
-      ]),
-    );
-    const { result, cleared } = setup(done);
-
-    expect(result.current.face).toBeUndefined();
-
-    act(() => result.current.restart());
-
-    expect(cleared()).toBe(1);
-    expect(result.current.face?.side).toBe("question");
-    expect(result.current.counts).toEqual([QUESTIONS, 0, 0]);
-  });
-
-  it("裏を出していても表に戻る", () => {
-    const { result } = setup();
-
-    act(() => result.current.select(0));
-    act(() => result.current.answer());
-    act(() => result.current.restart());
-
-    expect(result.current.face?.side).toBe("question");
-  });
-});
