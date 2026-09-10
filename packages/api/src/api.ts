@@ -4,6 +4,7 @@ import { type AppDeps, createApp } from "./app";
 import { createConnectController } from "./controller/connect";
 import { createRunController } from "./controller/run";
 import type { CookieDeps } from "./cookie";
+import type { DevAuto } from "./devAuto";
 import type { DriverStore } from "./neo4j/driverStore";
 import { connectRoutes } from "./routes/connect";
 import { runRoutes } from "./routes/run";
@@ -13,6 +14,8 @@ export type ApiDeps = AppDeps &
   Readonly<{
     store: DriverStore;
     timeoutMs: number;
+    /** 無ければ dev 自動接続をしない（docs/03_api.md#4-開発時の自動接続dev-限定） */
+    devAuto?: DevAuto;
   }>;
 
 const INFO = {

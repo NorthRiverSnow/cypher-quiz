@@ -7,13 +7,19 @@ import {
   ok,
 } from "@cypher-quiz/shared";
 
+import type { DevAuto } from "../devAuto";
+import type { Logger } from "../log";
 import type { DriverStore, Session } from "../neo4j/driverStore";
 
 /** ルートはこの `id` をクッキーに載せる。本文には出さない */
 export type Opened = Readonly<{ id: string; status: ConnectionStatus }>;
 
+/** `id` があるのは新しく繋いだときだけ。ルートはそのときにクッキーを張る */
+export type Reported = Readonly<{ id?: string; status: ConnectionStatus }>;
+
 export type ConnectController = Readonly<{
-  status: (id: string | undefined) => Promise<ConnectionStatus>;
+  /** 繋がっていなくて自動接続が有効なら、その場で繋ぐ（docs/03_api.md#専用ルートは作らない） */
+  status: (id: string | undefined) => Promise<Reported>;
   open: (id: string | undefined, request: ConnectRequest) => Promise<Result<Opened, ApiError>>;
   close: (id: string | undefined) => Promise<ConnectionStatus>;
 }>;
@@ -25,11 +31,32 @@ const connectedTo = ({ uri, mode }: Session): ConnectionStatus => ({ connected: 
 
 export const createConnectController = ({
   store,
-}: Readonly<{ store: DriverStore }>): ConnectController => ({
+  log,
+  devAuto,
+}: Readonly<{ store: DriverStore; log: Logger; devAuto?: DevAuto }>): ConnectController => ({
   status: async (id) => {
     const session = await store.get(id);
 
-    return session === undefined ? DISCONNECTED : connectedTo(session);
+    if (session !== undefined) {
+      return { status: connectedTo(session) };
+    }
+
+    if (devAuto === undefined) {
+      return { status: DISCONNECTED };
+    }
+
+    const opened = await store.open({ ...devAuto, mode: "dev-auto" });
+
+    /* why: 繋がらなくても未接続を返し、手入力の接続画面へ進ませる。
+       ただし黙って返さない——資格情報の間違いは store の分類では error にならず、
+       ここで残さないと理由がどこにも出ない */
+    if (!isOk(opened)) {
+      log({ event: "error", name: "DevAutoConnectFailed", message: opened.error.message }, "warn");
+
+      return { status: DISCONNECTED };
+    }
+
+    return { id: opened.value.id, status: connectedTo(opened.value.session) };
   },
 
   open: async (id, request) => {

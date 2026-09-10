@@ -6,6 +6,7 @@ import { serve } from "@hono/node-server";
 import neo4j from "neo4j-driver";
 
 import { createApi } from "./api";
+import { readDevAuto } from "./devAuto";
 import { type LogLevel, createLogger } from "./log";
 import { createDriverStore } from "./neo4j/driverStore";
 
@@ -15,6 +16,15 @@ recover(
   () => process.loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url))),
   undefined,
 );
+
+const devAuto = readDevAuto(process.env);
+
+/* why: 黙って無効化しない。設定を間違えたまま本番相当が立ち上がるほうが危ない
+   （docs/03_api.md#歯止め の 1） */
+if (!devAuto.ok) {
+  process.stderr.write(`${devAuto.error}\n`);
+  process.exit(1);
+}
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MINUTE = 60 * 1000;
@@ -49,11 +59,17 @@ const app = createApi({
   now: () => new Date(),
   newReqId: () => randomBytes(9).toString("base64url"),
   secure: process.env.NODE_ENV === "production",
+  ...(devAuto.value === undefined ? {} : { devAuto: devAuto.value }),
 });
 
 const server = serve({ fetch: app.fetch, port: PORT }, ({ port }) => {
   process.stdout.write(`api: http://localhost:${port}\n`);
   process.stdout.write(`API リファレンス: http://localhost:${port}/docs\n`);
+
+  /* why: どこへ自動で繋ぐかを出す。パスワードは出さない（docs/03_api.md#歯止め の 3） */
+  if (devAuto.value !== undefined) {
+    process.stdout.write(`dev 自動接続: ${devAuto.value.uri}\n`);
+  }
 });
 
 const FORCE_EXIT_MS = 3000;

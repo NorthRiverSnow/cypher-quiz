@@ -4,6 +4,7 @@ import neo4j, { type Driver } from "neo4j-driver";
 import { afterEach } from "vite-plus/test";
 
 import { createApi } from "../src/api";
+import type { DevAuto } from "../src/devAuto";
 import { createLogger } from "../src/log";
 import { type DriverStore, createDriverStore } from "../src/neo4j/driverStore";
 
@@ -42,7 +43,10 @@ export const jar = (res: Response): string => res.headers.get("set-cookie")?.spl
  * why: 組み立ては createApi に任せる。ここで組み直すと、載せ忘れたルートが
  * テストの中だけ存在しない状態になる（docs/02_architecture.md#テストは-2-段に置く）
  */
-export const createTestApi = ({ timeoutMs = 5000 } = {}): TestApi => {
+export const createTestApi = ({
+  timeoutMs = 5000,
+  devAuto,
+}: { timeoutMs?: number; devAuto?: DevAuto } = {}): TestApi => {
   const written: string[] = [];
   let issued = 0;
 
@@ -69,6 +73,7 @@ export const createTestApi = ({ timeoutMs = 5000 } = {}): TestApi => {
     newReqId: () => `req-${++issued}`,
     now: () => new Date(0),
     secure: false,
+    ...(devAuto === undefined ? {} : { devAuto }),
   });
 
   return {

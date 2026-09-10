@@ -2,15 +2,20 @@ import { type ApiError, type Result, err, ok } from "@cypher-quiz/shared";
 import type { Driver } from "neo4j-driver";
 import { describe, expect, it } from "vite-plus/test";
 
+import type { DevAuto } from "../devAuto";
+import type { LogEvent } from "../log";
 import type { DriverStore, Opened, OpenRequest, Session } from "../neo4j/driverStore";
 import { createConnectController } from "./connect";
 
 const URI = "bolt://localhost:7687";
 const CREDENTIALS = { uri: URI, user: "neo4j", password: "hunter2" };
 
-const setup = ({ fails = false }: { fails?: boolean } = {}) => {
+const DEV_AUTO: DevAuto = { uri: "bolt://neo4j:7687", user: "neo4j", password: "nordwind-dev" };
+
+const setup = ({ fails = false, devAuto }: { fails?: boolean; devAuto?: DevAuto } = {}) => {
   const sessions = new Map<string, Session>();
   const seen = { opened: [] as OpenRequest[], closed: [] as (string | undefined)[] };
+  const logged: LogEvent[] = [];
   let issued = 0;
 
   const store: DriverStore = {
@@ -47,7 +52,12 @@ const setup = ({ fails = false }: { fails?: boolean } = {}) => {
   };
 
   return {
-    controller: createConnectController({ store }),
+    controller: createConnectController({
+      store,
+      log: (event) => logged.push(event),
+      ...(devAuto === undefined ? {} : { devAuto }),
+    }),
+    logged: () => logged,
     opened: () => seen.opened,
     /* why: クッキーが無い要求でも close は呼ばれる（何もしない）。数えると読めなくなる */
     closed: () => seen.closed.filter((id) => id !== undefined),
@@ -59,14 +69,14 @@ describe("status", () => {
   it("識別子が無ければ未接続", async () => {
     const { controller } = setup();
 
-    expect(await controller.status(undefined)).toEqual({ connected: false });
+    expect(await controller.status(undefined)).toEqual({ status: { connected: false } });
   });
 
   /* why: 失効の判定は store が持つ。controller は undefined を未接続に写すだけ */
   it("知らない識別子も未接続", async () => {
     const { controller } = setup();
 
-    expect(await controller.status("expired")).toEqual({ connected: false });
+    expect(await controller.status("expired")).toEqual({ status: { connected: false } });
   });
 
   it("生きていれば接続先と経路を返す", async () => {
@@ -74,10 +84,79 @@ describe("status", () => {
     const opened = await controller.open(undefined, CREDENTIALS);
 
     expect(await controller.status(opened.ok ? opened.value.id : "")).toEqual({
-      connected: true,
-      uri: `secured:${URI}`,
-      mode: "manual",
+      status: { connected: true, uri: `secured:${URI}`, mode: "manual" },
     });
+  });
+
+  /* why: 識別子を返すのは新しく繋いだときだけ。毎回返すと、ルートが同じ値の
+     クッキーを張り直し続ける */
+  it("繋がっているときは識別子を返さない", async () => {
+    const { controller } = setup();
+    const opened = await controller.open(undefined, CREDENTIALS);
+
+    expect(await controller.status(opened.ok ? opened.value.id : "")).not.toHaveProperty("id");
+  });
+});
+
+describe("status — dev 自動接続", () => {
+  it("設定が無ければ繋ぎに行かない", async () => {
+    const { controller, opened } = setup();
+
+    await controller.status(undefined);
+
+    expect(opened()).toEqual([]);
+  });
+
+  it("繋がっていなければ .env の資格情報で繋ぐ", async () => {
+    const { controller, opened } = setup({ devAuto: DEV_AUTO });
+
+    await controller.status(undefined);
+
+    expect(opened()[0]).toEqual({ ...DEV_AUTO, mode: "dev-auto" });
+  });
+
+  it("識別子と dev-auto の接続状態を返す", async () => {
+    const { controller } = setup({ devAuto: DEV_AUTO });
+
+    expect(await controller.status(undefined)).toEqual({
+      id: "s1",
+      status: { connected: true, uri: `secured:${DEV_AUTO.uri}`, mode: "dev-auto" },
+    });
+  });
+
+  /* why: 手で繋いだ接続を自動接続で置き換えない。切断して手入力に戻す道を塞ぐ
+     （docs/03_api.md#歯止め の 5） */
+  it("既に繋がっていれば繋ぎ直さない", async () => {
+    const { controller, opened } = setup({ devAuto: DEV_AUTO });
+    const manual = await controller.open(undefined, CREDENTIALS);
+
+    const reported = await controller.status(manual.ok ? manual.value.id : "");
+
+    expect(opened()).toHaveLength(1);
+    expect(reported.status).toMatchObject({ mode: "manual" });
+  });
+
+  /* why: 繋がらない相手を設定していても、手入力の接続画面までは進める */
+  it("繋がらなければ未接続を返す", async () => {
+    const { controller } = setup({ fails: true, devAuto: DEV_AUTO });
+
+    expect(await controller.status(undefined)).toEqual({ status: { connected: false } });
+  });
+
+  it("繋がらなかった理由を残す", async () => {
+    const { controller, logged } = setup({ fails: true, devAuto: DEV_AUTO });
+
+    await controller.status(undefined);
+
+    expect(logged()).toEqual([
+      { event: "error", name: "DevAutoConnectFailed", message: "繋がりません" },
+    ]);
+  });
+
+  it("失効した識別子でも繋ぎ直す", async () => {
+    const { controller } = setup({ devAuto: DEV_AUTO });
+
+    expect(await controller.status("expired")).toMatchObject({ id: "s1" });
   });
 });
 

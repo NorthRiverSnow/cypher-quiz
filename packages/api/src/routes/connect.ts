@@ -28,7 +28,7 @@ const get = createRoute({
   method: "get",
   path: "/",
   tags: TAGS,
-  summary: "接続状態を返す",
+  summary: "接続状態を返す。繋がっておらず dev 自動接続が有効ならその場で繋ぐ",
   responses: { 200: status },
 });
 
@@ -62,8 +62,13 @@ const remove = createRoute({
 export const connectRoutes = ({ controller, secure }: ConnectDeps) =>
   createRouter()
     .openapi(get, async (c) => {
-      // TODO: C-6 で dev 自動接続をここに足す（クッキーが無く、有効なら繋いで返す）
-      return c.json(await controller.status(readSessionId(c)), 200);
+      const { id, status } = await controller.status(readSessionId(c));
+
+      if (id !== undefined) {
+        setSessionId(c, id, { secure });
+      }
+
+      return c.json(status, 200);
     })
     .openapi(post, async (c) => {
       const opened = await controller.open(readSessionId(c), c.req.valid("json"));

@@ -778,6 +778,10 @@ DB を求めて失敗する。api を走らせるのはコンテナの中の vit
 
 `neo4j` コンテナの `NEO4J_AUTH` と、api の自動接続が**同じ `NEO4J_PASSWORD` を読む**。ズレて繋がらなくなる余地を作らない。`.env` は `.gitignore` に入れ、`.env.example` だけをコミットする。詳細は [`03_api.md`](./03_api.md#4-開発時の自動接続dev-限定)。
 
+**繋ぎ先だけは `.env` に置かない。** ホストからは `localhost:7687`、コンテナからは
+`neo4j:7687` で名前が違う。compose が api へ渡す
+（[理由](./03_api.md#compose-が渡すのはホストと値が違うものだけ)）。
+
 ### データセットは投入用の Cypher に焼き込む
 
 `seed/nordwind.cypher` の 1 ファイル。`nordwind-workshop` は**兄弟の別リポジトリ**で、

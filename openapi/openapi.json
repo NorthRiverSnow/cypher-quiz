@@ -183,7 +183,7 @@
         "tags": [
           "connect"
         ],
-        "summary": "接続状態を返す",
+        "summary": "接続状態を返す。繋がっておらず dev 自動接続が有効ならその場で繋ぐ",
         "responses": {
           "200": {
             "description": "接続状態。未接続でも 200 を返す",

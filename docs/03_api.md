@@ -373,10 +373,20 @@ services:
       NEO4J_URI:      bolt://neo4j:7687        # compose 内はサービス名
       NEO4J_USER:     neo4j
       NEO4J_PASSWORD: ${NEO4J_PASSWORD}        # ← 同じ変数
-      DEV_AUTO_CONNECT: ${DEV_AUTO_CONNECT:-false}
 ```
 
 > ホストのブラウザから手入力で繋ぐときは `bolt://localhost:7687`、compose 内の api からは `bolt://neo4j:7687`。**ポートは同じでもホスト名が違う。**
+
+### compose が渡すのは、ホストと値が違うものだけ
+
+`NEO4J_URI` と `NEO4J_USER` は **`.env` に置かない。** 置くと、ホストから見た名前と
+コンテナから見た名前のどちらを書いても片方が壊れる。
+
+残り（`DEV_AUTO_CONNECT` / `DEV_AUTO_CONNECT_ALLOW_REMOTE` / `LOG_LEVEL`）は
+**api が `.env` を自分で読む。** リポジトリはコンテナにマウントしてあるので同じファイルを見る。
+
+**`process.loadEnvFile` は既に有る環境変数を上書きしない**（実測）。
+compose が渡した値が常に勝つので、両方に書いても食い違わない。
 
 ### 歯止め
 

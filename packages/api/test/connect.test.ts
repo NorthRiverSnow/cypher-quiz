@@ -56,6 +56,81 @@ describe("/api/connect — 繋いで、確かめて、切る", () => {
   });
 });
 
+describe("/api/connect — dev 自動接続", () => {
+  it("有効でなければ繋ぎに行かない", async () => {
+    const { send } = createTestApi();
+    const res = await send("GET", CONNECT);
+
+    expect(await res.json()).toEqual({ connected: false });
+    expect(res.headers.get("set-cookie")).toBe(null);
+  });
+
+  it("クッキーが無ければ .env の資格情報で繋ぐ", async () => {
+    const { send } = createTestApi({ devAuto: CREDENTIALS });
+    const res = await send("GET", CONNECT);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ connected: true, uri: URI, mode: "dev-auto" });
+  });
+
+  /* why: 手入力の経路と同じクッキーを張る。ここだけ緩めるとフロントが識別子を持てる */
+  it("識別子は httpOnly のクッキーで返す", async () => {
+    const { send } = createTestApi({ devAuto: CREDENTIALS });
+    const res = await send("GET", CONNECT);
+
+    expect(res.headers.get("set-cookie")).toContain("HttpOnly");
+    expect(JSON.stringify(await res.json())).not.toContain(jar(res).split("=")[1]);
+  });
+
+  it("そのクッキーで引くと同じ接続が返り、張り直さない", async () => {
+    const { send } = createTestApi({ devAuto: CREDENTIALS });
+    const cookie = jar(await send("GET", CONNECT));
+    const again = await send("GET", CONNECT, { cookie });
+
+    expect(cookie).not.toBe("");
+    expect(await again.json()).toMatchObject({ mode: "dev-auto" });
+    expect(again.headers.get("set-cookie")).toBe(null);
+  });
+
+  /* why: 手で繋ぎ直したものを自動接続で上書きしない（docs/03_api.md#歯止め の 5） */
+  it("手入力で繋いだ後は manual のまま", async () => {
+    const { send } = createTestApi({ devAuto: CREDENTIALS });
+    const cookie = jar(await send("POST", CONNECT, { body: CREDENTIALS }));
+
+    expect(await (await send("GET", CONNECT, { cookie })).json()).toMatchObject({
+      mode: "manual",
+    });
+  });
+
+  /* why: 切った直後は未接続。クッキーが消えているので、次に引いたときは繋ぎ直す */
+  it("切って引き直すと、また自動接続する", async () => {
+    const { send } = createTestApi({ devAuto: CREDENTIALS });
+    const cookie = jar(await send("GET", CONNECT));
+
+    await send("DELETE", CONNECT, { cookie });
+
+    expect(await (await send("GET", CONNECT)).json()).toMatchObject({ mode: "dev-auto" });
+  });
+
+  /* why: 繋がらない相手を設定していても 200 のまま返す。フロントは接続画面を出せる */
+  it("繋がらなければ未接続を返す", async () => {
+    const { send } = createTestApi({ devAuto: { ...CREDENTIALS, password: "まちがい" } });
+    const res = await send("GET", CONNECT);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ connected: false });
+    expect(res.headers.get("set-cookie")).toBe(null);
+  });
+
+  it("繋がらなかった理由をログに残す", async () => {
+    const { send, events } = createTestApi({ devAuto: { ...CREDENTIALS, password: "まちがい" } });
+
+    await send("GET", CONNECT);
+
+    expect(events().some(({ level }) => level === "warn" || level === "error")).toBe(true);
+  });
+});
+
 describe("/api/connect — 外に出さないもの", () => {
   it("識別子はクッキーにだけ載る", async () => {
     const { send } = createTestApi();
