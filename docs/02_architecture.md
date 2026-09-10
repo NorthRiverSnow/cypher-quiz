@@ -632,9 +632,9 @@ cypher-quiz/
          ├─ controller/             # model の副作用を呼べる唯一の層
          │  ├─ useNotices.ts        # 通知の一覧。report が失敗の唯一の入口
          │  ├─ useGlobalErrors.ts   # 境界が拾えない例外を通知に積む
-         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所
+         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所。load / save / clear
          │  ├─ useTheme.ts          # data-theme と localStorage。View の外
-         │  ├─ useQuiz.ts
+         │  ├─ useQuiz.ts           # 出題・答え合わせ・習熟度の保存。表と裏を Face で返す
          │  └─ useConnection.ts
          │
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ

@@ -1,0 +1,118 @@
+import { useCallback, useMemo, useState } from "react";
+
+import type { Card } from "../model/deck";
+import { DECK } from "../model/deck.data";
+import { type Question, buildQuestion } from "../model/question";
+import {
+  type QuizState,
+  answerCurrent,
+  cardIdOf,
+  counts as countsOf,
+  createQuiz,
+  currentKey,
+  directionOf,
+  isComplete,
+} from "../model/quiz";
+import { createRng } from "../model/rng";
+import type { Progress } from "./useProgress";
+
+/** 表か裏のどちらか。出題が尽きたら `undefined` になる */
+export type Face =
+  | Readonly<{ side: "question"; card: Card; question: Question; selected?: number }>
+  | Readonly<{
+      side: "back";
+      card: Card;
+      question: Question;
+      /** 選んだ肢の位置 */
+      choice: number;
+      correct: boolean;
+    }>;
+
+export type Quiz = Readonly<{
+  counts: [number, number, number];
+  face: Face | undefined;
+  /** 全ての向きが box 2 に届いた */
+  complete: boolean;
+  select: (choice: number) => void;
+  /** 選んでいなければ何もしない */
+  answer: () => void;
+  next: () => void;
+  /** 保存された習熟度を消して組み直す */
+  restart: () => void;
+}>;
+
+export type QuizOptions = Readonly<{
+  deck?: readonly Card[];
+  /** 出題順と肢の並びを決める。固定するのはテストだけ */
+  seed?: number;
+}>;
+
+type Answered = Readonly<{ card: Card; question: Question; choice: number; correct: boolean }>;
+
+/**
+ * 出題の状態と、答え合わせ。**習熟度の保存もここが呼ぶ。**
+ *
+ * why: 肢の並びは useMemo で今の 1 問に固定する。毎レンダリング組み直すと、
+ * 選んでいる途中で並びが変わる
+ */
+export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions = {}): Quiz => {
+  const [rng] = useState(() => createRng(seed ?? Date.now()));
+  const [state, setState] = useState<QuizState>(() => createQuiz(deck, rng, progress.load()));
+  const [selected, setSelected] = useState<number>();
+  const [answered, setAnswered] = useState<Answered>();
+
+  const key = currentKey(state);
+
+  const asked = useMemo(() => {
+    const card = key === undefined ? undefined : deck.find(({ id }) => id === cardIdOf(key));
+
+    return card === undefined || key === undefined
+      ? undefined
+      : { card, question: buildQuestion(card, deck, directionOf(key), rng) };
+  }, [deck, key, rng]);
+
+  const answer = useCallback(() => {
+    if (asked === undefined || selected === undefined) {
+      return;
+    }
+
+    const correct = selected === asked.question.answer;
+    const advanced = answerCurrent(state, correct);
+
+    setAnswered({ ...asked, choice: selected, correct });
+    setState(advanced);
+    progress.save(advanced.boxes);
+  }, [asked, progress, selected, state]);
+
+  const next = useCallback(() => {
+    setAnswered(undefined);
+    setSelected(undefined);
+  }, []);
+
+  const restart = useCallback(() => {
+    progress.clear();
+    setState(createQuiz(deck, rng, {}));
+    setAnswered(undefined);
+    setSelected(undefined);
+  }, [deck, progress, rng]);
+
+  const face = useMemo((): Face | undefined => {
+    if (answered !== undefined) {
+      return { side: "back", ...answered };
+    }
+
+    return asked === undefined
+      ? undefined
+      : { side: "question", ...asked, ...(selected === undefined ? {} : { selected }) };
+  }, [answered, asked, selected]);
+
+  return {
+    counts: countsOf(state),
+    face,
+    complete: isComplete(state),
+    select: setSelected,
+    answer,
+    next,
+    restart,
+  };
+};

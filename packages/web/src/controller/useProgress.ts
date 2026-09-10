@@ -1,12 +1,14 @@
 import type { Result } from "@cypher-quiz/shared";
 
-import { loadBoxes, saveBoxes, type Store } from "../model/progress";
+import { clearBoxes, loadBoxes, saveBoxes, type Store } from "../model/progress";
 import type { Boxes } from "../model/quiz";
 import type { Notices } from "./useNotices";
 
 export type Progress = Readonly<{
   load: () => Boxes;
   save: (boxes: Boxes) => Result<void, "store-unavailable">;
+  /** 最初から解き直すときに消す */
+  clear: () => void;
 }>;
 
 /**
@@ -22,4 +24,7 @@ export const useProgress = (notices: Notices, store: Store = window.localStorage
       title: "進捗を保存できません",
       detail: "この端末では保存が使えません。解き進められますが、次回は最初からになります",
     })),
+  clear: () => {
+    clearBoxes(store);
+  },
 });
