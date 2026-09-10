@@ -23,6 +23,9 @@ export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
 /** kind が無ければ素の字 */
 export type CodeSegment = { text: string; kind?: CodeKind };
 
+/** クエリ実行の見え方。offline は未接続、rejected は読み取り専用で拒否された */
+export type QueryStatus = "idle" | "running" | "offline" | "rejected" | "error";
+
 /* 正順・逆順の意味は docs/01_spec.md#2-出題形式 */
 export type Direction = "forward" | "reverse";
 

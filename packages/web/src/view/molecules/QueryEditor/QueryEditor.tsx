@@ -1,13 +1,11 @@
 import type { ChangeEvent, CSSProperties } from "react";
 
-import type { CodeSegment } from "../../../types";
+import type { CodeSegment, QueryStatus } from "../../../types";
 import { CodeBlock } from "../../atoms/CodeBlock/CodeBlock";
 import { IconButton } from "../../atoms/IconButton/IconButton";
 import { Toolbar } from "../../atoms/Toolbar/Toolbar";
 import { TEXT } from "../../atoms/Text/Text";
 import { Note, type NoteTone } from "../Note/Note";
-
-export type QueryStatus = "idle" | "running" | "offline" | "rejected" | "error";
 
 export type QueryEditorProps = {
   code: readonly CodeSegment[];

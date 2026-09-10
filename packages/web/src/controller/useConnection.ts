@@ -1,9 +1,10 @@
-import type { ApiError, ConnectRequest, ConnectionStatus, Result } from "@cypher-quiz/shared";
-import { ApiErrorSchema, err, isOk, ok } from "@cypher-quiz/shared";
+import type { ApiError, ConnectRequest, ConnectionStatus } from "@cypher-quiz/shared";
+import { err, isOk, ok } from "@cypher-quiz/shared";
 import { useCallback } from "react";
 import useSWR from "swr";
 
 import { type ApiClient, createApiClient } from "../api/client";
+import { apiErrorOf, unwrap } from "./swr";
 import type { NoticeBody, Notices } from "./useNotices";
 
 /** SWR のキー。`mutate` を外から呼ぶときも同じ値を使う */
@@ -28,31 +29,6 @@ const describe = ({ message }: ApiError): NoticeBody => ({
   detail: message,
 });
 
-/**
- * `Result` を SWR の成功／失敗に振り分ける。**err は throw する。**
- *
- * why: SWR は fetcher が reject したかどうかで失敗を決める。err を成功として返すと
- * onError も error も一生使われない（docs/02_architecture.md#web-の取得は-swr-に載せる）
- *
- * why: async にする。同期 throw では SWR の状態が確定せず、isLoading が true のまま残る（実測）
- */
-const unwrap = async <T>(call: Promise<Result<T, ApiError>>): Promise<T> => {
-  const result = await call;
-
-  if (!isOk(result)) {
-    throw result.error;
-  }
-
-  return result.value;
-};
-
-/* why: throw されたものが ApiError とは限らない。client のバグは message を持たない */
-const apiErrorOf = (cause: unknown): ApiError => {
-  const parsed = ApiErrorSchema.safeParse(cause);
-
-  return parsed.success ? parsed.data : BROKEN;
-};
-
 /* why: hook の呼び出しごとに作ると、useCallback の依存が毎回変わって作り直される */
 const shared = createApiClient();
 
@@ -66,7 +42,7 @@ export const useConnection = (notices: Notices, client: ApiClient = shared): Con
 
   const { data, isLoading, mutate } = useSWR(CONNECTION_KEY, () => unwrap(client.status()), {
     onSuccess: () => void report("connect", ok(undefined), describe),
-    onError: (cause: unknown) => void report("connect", err(apiErrorOf(cause)), describe),
+    onError: (cause: unknown) => void report("connect", err(apiErrorOf(cause, BROKEN)), describe),
 
     /* why: 失敗が error に載るようになったので、既定の無限再試行を切る。
        not-connected も client のバグも、投げ直して直るものではない */

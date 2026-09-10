@@ -50,6 +50,7 @@ SWR で包むのは controller で、`useSWR` を呼ぶのもそこだけ。
 | fetcher | `Result` を開き、**`err` は throw する**（`unwrap`） |
 | `data` | 成功した値そのもの。`Result` は残らない |
 | `onError` | 通知に積む。**投げたものが `ApiError` とは限らない**ので `ApiErrorSchema` で受け直す |
+| 実行（`/api/run`） | `useSWRMutation`。**`throwOnError: false`** を渡す——既定では `trigger` が reject する |
 | `onSuccess` | 同じ種類の通知を取り下げる |
 
 **SWR は「fetcher が reject したか」で失敗を決める**（実測）。`Result` の `err` を
@@ -635,6 +636,8 @@ cypher-quiz/
          │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所。load / save / clear
          │  ├─ useTheme.ts          # data-theme と localStorage。View の外
          │  ├─ useQuiz.ts           # 出題・答え合わせ・習熟度の保存。表と裏を Face で返す
+         │  ├─ useRun.ts            # /api/run。失敗は編集欄の中に出す
+         │  ├─ swr.ts               # Result を SWR の成功／失敗に振り分ける
          │  └─ useConnection.ts
          │
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
