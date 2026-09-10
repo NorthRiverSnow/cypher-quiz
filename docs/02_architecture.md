@@ -32,7 +32,8 @@
 | HTTP サーバ | `@hono/node-server` | `server.ts` だけ。**終了の合図もここで受ける** |
 | スキーマ・検証 | `zod`（素の。Hono に依存しない） | `shared/src/schema/`。OpenAPI の付加情報は `.meta()` で載せる |
 | DB | `neo4j-driver` v5 | `neo4j/` だけ。**`driver.session()` は [`tx.ts`](./03_api.md#9-トランザクション) が唯一の呼び出し元** |
-| 実行 | `tsx`（watch と スクリプト） | `vp run api` と `openapi:write` |
+| 実行 | `tsx` | `vp run api` と `openapi:write` |
+| 変更の検出 | `nodemon`（ポーリング） | コンテナの中だけ。[理由](#watch-はポーリングでしか届かない) |
 
 **web は Hono も neo4j-driver も知らない。** `shared` の Zod から `z.infer` で型を取るだけ。
 
@@ -503,6 +504,8 @@ cypher-quiz/
 ├─ vite.config.ts                   # ★ Vite+ の fmt / lint 設定。境界ルールもここ
 ├─ tsconfig.base.json
 ├─ openapi/openapi.json             # 生成物。乖離を CI で検出
+├─ scripts/test-api.sh              # test サービスを呼び、結果に関わらず片付ける
+├─ scripts/test-entrypoint.sh       # test サービスの入口。依存を整えてから実行する
 ├─ seed/dataset/                    # nordwind-workshop/dataset/ のスナップショット
 └─ packages/
    │
@@ -646,13 +649,14 @@ services:
   neo4j:       # neo4j:5。7474 / 7687。NEO4J_AUTH は .env の変数から
   neo4j-test:  # テスト専用。7475 / 7688。同じグラフを投入する
   seed:        # 一度だけ走り、両方に投入して終了する
-  api:         # Hono を watch 起動。8787。C-8 で入れる
+  api:         # Hono。8787。nodemon が変更を見て tsx を起動し直す
   test:        # vitest をコンテナの中で走らせる。neo4j-test に繋ぐ
 ```
 
-**`api` は今ホストで動いている。** コンテナへ移すのは
-[C-8](./04_roadmap.md#c-8--api-をコンテナで動かす)。コマンド名（`vp run api` / `vp run dev`）は
-そのままで、中身だけ差し替える。
+**Docker に入れるのは DB と API。** `web` と Storybook はホストのまま。
+Vite の dev proxy が `/api` を 8787 へ送るので、クッキーは同一オリジンのまま通る（実測）。
+宛先がコンテナになっても 8787 は変わらないので、`packages/web/vite.config.ts` は触らない。
+[Storybook は今まで通り Docker 抜きで動く](#storybook-は-docker-を要らない)。
 
 ### 起動と終了は `vp run` から
 
@@ -662,12 +666,12 @@ services:
 | コマンド | 何が起きるか |
 |---|---|
 | `vp run db` | dev の DB を起動して投入する。**既に動いていても同じ結果**になる |
-| `vp run api` | `db` のあと api を前面で起動する（8787。watch 付き）。**今はホスト、C-8 でコンテナへ** |
+| `vp run api` | `db` のあと api を前面で起動する（8787。watch 付き）。**コンテナの中** |
 | `vp run web` | web だけ（5173）。`/api` は 8787 へ proxy される |
 | `vp run dev` | `db` のあと **api と web を並行**で前面に起動する |
 | `vp run db:stop` | dev の DB を止める。**データは残る**ので次の `db` で続きから |
 | `vp run db:clean` | コンテナと volume を消す。次は空から投入し直す |
-| `vp run test:api` | テスト用 DB を立てて api のテストを実行し、**結果に関わらず消す** |
+| `vp run test:api` | テスト用 DB と実行用のコンテナを立てて api のテストを実行し、**結果に関わらず消す** |
 
 **web や api を終了しても DB は残る。** `vp run dev` は DB を `--detach` で起動してから
 前面のプロセスを動かすので、`Ctrl-C` で止まるのは前面だけ。止めたいときは `db:stop`。
@@ -679,26 +683,74 @@ volume を持たないので、コンテナが消えればデータも残らな�
 **片付けに `down -v` を使わない。** project の named volume を全て消すので、
 dev の `neo4j-data` まで消える。テスト用のサービスだけを名指しで消す。
 
+### テストはコンテナの中で走る
+
+`vp run test:api` は **`test` サービスの中で vitest を実行する。**
+宛先はコンテナ間の `neo4j-test:7687` で、ホストに Node も Neo4j も要らない。
+
+**リポジトリは読み取り専用で渡し、`node_modules` は 4 つとも volume で覆う。**
+ホストのものは darwin の native binary を持つので、そのまま使うと動かない。
+覆っておけば、コンテナの中の `pnpm install` がホスト側を書き換えることもない。
+**volume はホストのファイルではない**——中身は Linux VM の中にあり、
+コンテナの `pnpm install` が作る。ホストの OS が何であっても同じものができる。
+
+| | |
+|---|---|
+| 依存 | `scripts/test-entrypoint.sh` が `pnpm install --frozen-lockfile`。volume が残るので 2 回目以降は一瞬 |
+| `vp` | **シェル関数なので実体を叩く**（`./node_modules/.bin/vp`） |
+| 引数 | `bash scripts/test-api.sh <コマンド>` で差し替えられる。既定は api の全テスト |
+
+**CPU が変わったら `node_modules` を空にしてから入れ直す。** volume を使い回すのは
+同じマシンの中だけだが、`DOCKER_DEFAULT_PLATFORM` や Rosetta の設定で
+同じマシンでも arch は変わる。`node_modules/.arch` に入れたときの arch を残し、
+入口で照合する（[実測](#pnpm-は-arch-の食い違いを見ない)）。
+
+**`db:clean` で volume ごと消える。** 次は依存の取り直しから始まる。
+
+#### pnpm は arch の食い違いを見ない
+
+arm64 で作った `node_modules` を amd64 のコンテナから使うと、`pnpm install` は
+`--frozen-lockfile` でも `--force` でも **`Already up to date` と答えて何もしない。**
+そのまま実行すると `Cannot find native binding` で止まる。
+**空にしてから入れ直すしかない。**
+
+arch を名乗るのは `pnpm install` が成功した後だけにする。途中で失敗すれば
+`.arch` が残らず、次の実行がまた作り直しから始まる。
+
 ### コンテナの外側
 
 **必要なのは `docker` と `docker compose` だけ。** VM の提供元は問わない
 （Docker Desktop / colima / OrbStack のどれでもよい）。**`vp` は linux/arm64 でも動く**ので、
-コンテナの中でもホストと同じコマンドが使える。
+コンテナの中でもホストと同じ道具が使える（[テスト](#テストはコンテナの中で走る)で実測済み）。
 
-### api をコンテナへ移すときに要るもの
+### api も同じ形で動く
 
-**先に片付ける 3 つ**（[C-8](./04_roadmap.md#c-8--api-をコンテナで動かす)）。
+`api` サービスは **`test` と同じ入口**（`scripts/container-entrypoint.sh`）を使い、
+`node_modules` の volume も共有する。違うのは実行するコマンドだけ。
 
 | | |
 |---|---|
-| `node_modules` | linux/arm64 のものを**イメージの中で作る**。ホストのものは native binary が合わない |
-| watch | ソースはバインドマウント。**`node_modules` はマウントで隠さない**（named volume で退避する） |
-| ツールチェーン | `vp` がコンテナの中で動くかを実測する（[C-0](./04_roadmap.md#フェーズ-c--バックエンド)） |
+| ポート | `${PORT}`（`.env`）。ホストからもコンテナの中からも同じ番号 |
+| DB の宛先 | コンテナからは `neo4j:7687`。**ホストからは引けない名前** |
+| 終了 | `Ctrl-C` が `docker compose up` に届き、コンテナごと止まる |
 
-**`web` と Storybook はホストのまま。** Vite の dev proxy が `/api` を 8787 へ送るので、
-クッキーは同一オリジンのまま通る（実測）。宛先はコンテナへ移しても 8787 のままなので、
-`packages/web/vite.config.ts` は触らない。
-[Storybook は今まで通り Docker 抜きで動く](#storybook-は-docker-を要らない)。
+**`vp run api` と `vp run dev` の名前は変えていない。** 中身だけがコンテナになった。
+
+#### watch はポーリングでしか届かない
+
+**Docker Desktop の共有は、ホストのファイルイベントをコンテナへ伝えない。**
+コンテナの中で `inotify` を張ってホスト側から書き換えても、1 件も観測できない（実測）。
+`tsx watch` も `node --watch` も `inotify` に載っているので、**コンテナの中では反応しない。**
+
+compose 自身の watch（`develop.watch`）はホスト側で見るので原理的には使えるが、
+**パスに NFD で保存された文字が含まれると一致に失敗して黙って何も起きない。**
+macOS の File Provider（OneDrive など）配下ではこれが起きる。
+
+残るのは**ポーリング**だけ。`nodemon --legacy-watch` が `stat` を繰り返すので、
+イベントが要らない。見るのは `packages/api/src` と `packages/shared/src` の 2 つ。
+
+**再起動の合図は `SIGTERM` にする**（`--signal SIGTERM`）。nodemon の既定は `SIGUSR2` で、
+`server.ts` の後始末が動かないままドライバの接続が残る。
 
 ### テスト用の DB はコンテナを分ける
 
@@ -708,16 +760,19 @@ dev と分けるにはインスタンスを分けるしかない。
 分ける理由は、**dev の DB がどんな状態でもテストが同じ結果を出すこと。**
 `73 / 153` のような実数を検証に使う以上、手で触れる DB を相手にはできない。
 
-**web と api のテストは分ける。** 混ぜると、フロントを 1 行直しただけで DB が立ち上がる。
+**`vp run test` は全部を通す。** ホスト側（`shared` + `web`）を先に実行し、
+通ったら api をコンテナで実行する。**先に失敗したらそこで止まる**ので、
+フロントを壊しているときに DB は立たない。
 
 | コマンド | 対象 | DB |
 |---|---|---|
-| `vp run test` | `shared` + `web` | 要らない。ホストで数秒 |
+| `vp run test` | 全部 | api の分だけ `neo4j-test` を立て、終わったら消す |
+| `vp test run` | `shared` + `web` | 要らない。ホストで数秒 |
 | `vp run test:web` | `web` だけ | 要らない |
 | `vp run test:api` | `api` だけ | `neo4j-test` を立て、終わったら消す |
 
-**`api` を root の `test.projects` に並べない。** 並べると `vp run test` が DB を求めて失敗する。
-走らせる口は `test:api` の 1 つだけにする。
+**`api` を root の `test.projects` に並べない。** 並べるとホスト側の vitest が
+DB を求めて失敗する。api を走らせるのはコンテナの中の vitest で、`test:api` から呼ぶ。
 
 ### `.env` は 1 つ。資格情報の出どころを分けない
 

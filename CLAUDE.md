@@ -127,11 +127,12 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 export PATH="$HOME/.local/share/vite-plus/bin:$PATH"   # vp はシェル関数。実体に PATH が要る
 
 vp check                     fmt + lint + typecheck
-vp run test                  Vitest（shared + web。DB を要らないものだけ）
+vp run test                  全部。ホスト（shared + web）→ コンテナ（api）の順
+vp test run                  ホストの分だけ（shared + web）。DB を立てない
 vp run test:web              Vitest（web だけ）
-vp run test:api              Vitest（api だけ）。テスト用 DB を立て、終わったら必ず消す
+vp run test:api              Vitest（api だけ）。コンテナの中で実行し、終わったら必ず消す
 vp run web                   web だけ（5173）。/api は 8787 へ proxy
-vp run api                   db のあと api だけ（8787。watch 付き）
+vp run api                   db のあと api だけ（8787。コンテナ。watch 付き）
 vp run db                    dev の DB を起動して投入する。何度実行してもよい
 vp run dev                   db のあと api と web を並行で。抜けても DB は残る
 vp run db:stop               dev の DB を止める。データは残る

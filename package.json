@@ -12,8 +12,8 @@
     "openapi:check": "vp -C packages/api run openapi:check",
     "openapi:write": "vp -C packages/api run openapi:write",
     "storybook": "vp -C packages/web run storybook",
-    "test": "vp test run",
-    "test:api": "bash scripts/with-test-db.sh vp -C packages/api run test",
+    "test": "vp test run && vp run test:api",
+    "test:api": "bash scripts/test-api.sh",
     "test:web": "vp -C packages/web run test",
     "typecheck": "vp run -F './packages/*' typecheck",
     "web": "vp -C packages/web dev"

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "docker compose -f ../../docker-compose.yml up api",
     "openapi:check": "tsx scripts/openapi.ts --check",
     "openapi:write": "tsx scripts/openapi.ts",
     "test": "vp test run",
@@ -19,6 +19,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "tsx": "^4.23.13",
     "vite": "catalog:",
     "vite-plus": "catalog:"
