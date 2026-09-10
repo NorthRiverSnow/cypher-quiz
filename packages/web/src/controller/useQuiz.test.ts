@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "../model/deck";
 import type { Boxes } from "../model/quiz";
+import type { Saved } from "../model/progress";
 import type { Progress } from "./useProgress";
 import { useQuiz } from "./useQuiz";
 
@@ -28,12 +29,12 @@ const DECK: readonly Card[] = [
 /** 1 枚 × 2 方向。4 枚なので 8 問 */
 const QUESTIONS = DECK.length * 2;
 
-const setup = (boxes: Boxes = {}) => {
-  const saved: Boxes[] = [];
+const setup = (boxes: Boxes = {}, answers: Saved["answers"] = []) => {
+  const saved: Saved[] = [];
   let cleared = 0;
 
   const progress: Progress = {
-    load: () => boxes,
+    load: () => ({ boxes, answers }),
     save: (next) => {
       saved.push(next);
 
@@ -215,7 +216,7 @@ describe("習熟度", () => {
 
     answerWith(result, true);
 
-    expect(saved()[0]?.[key]).toBe(1);
+    expect(saved()[0]?.boxes[key]).toBe(1);
   });
 
   it("不正解で box 0 に戻る", () => {
@@ -225,7 +226,26 @@ describe("習熟度", () => {
 
     answerWith(result, false);
 
-    expect(saved()[0]?.[key]).toBe(0);
+    expect(saved()[0]?.boxes[key]).toBe(0);
+  });
+
+  /* why: 成績も一緒に残す。box は「2 回連続で正解したか」しか持たないので、
+     結果画面をリロードすると正解率と不正解一覧が消える */
+  it("答えた記録も一緒に保存する", () => {
+    const { result, saved } = setup();
+
+    answerWith(result, false);
+
+    expect(saved()[0]?.answers).toEqual([{ key: expect.any(String), correct: false }]);
+  });
+
+  it("保存された記録に続けて足す", () => {
+    const { result, saved } = setup({}, [{ key: "match:forward", correct: false }]);
+
+    answerWith(result, true);
+
+    expect(saved()[0]?.answers).toHaveLength(2);
+    expect(saved()[0]?.answers[0]).toEqual({ key: "match:forward", correct: false });
   });
 
   it("counts が進む", () => {

@@ -621,10 +621,10 @@ cypher-quiz/
          │  ├─ deck.data.ts          # 30 枚の固定データ
          │  ├─ deck.ts               # Card の型。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
-         │  ├─ quiz.ts              # QuizState / reduceQuiz / セレクタ
+         │  ├─ quiz.ts              # QuizState（queue / boxes / answers）と セレクタ（counts / score）
          │  ├─ leitner.ts           # box 遷移
          │  ├─ rng.ts               # シード付き擬似乱数
-         │  ├─ progress.ts          # localStorage はここだけ
+         │  ├─ progress.ts          # localStorage はここだけ。box と成績を 1 つのキーに
          │  └─ result.ts            # Cell → ResultCell。色が付くのはノードだけ
          │
          ├─ view/                   # ★ 純関数。props in / callback out

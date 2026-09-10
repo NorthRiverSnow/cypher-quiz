@@ -8,7 +8,10 @@ import { useProgress } from "./useProgress";
 
 afterEach(cleanup);
 
-const BOXES = { "match:forward": 1 as Box, "match:reverse": 2 as Box };
+const SAVED = {
+  boxes: { "match:forward": 1 as Box, "match:reverse": 2 as Box },
+  answers: [{ key: "match:forward", correct: false }],
+} as const;
 
 /** setItem が例外を throw するかどうかを、テストの途中で切り替えられる偽ストア */
 const switchableStore = (initial: Record<string, string> = {}) => {
@@ -39,16 +42,16 @@ describe("useProgress", () => {
     const { store } = switchableStore();
     const { result } = setup(store);
 
-    act(() => void result.current.progress.save(BOXES));
+    act(() => void result.current.progress.save(SAVED));
 
-    expect(result.current.progress.load()).toEqual(BOXES);
+    expect(result.current.progress.load()).toEqual(SAVED);
   });
 
   it("保存できたら通知は出ない", () => {
     const { store } = switchableStore();
     const { result } = setup(store);
 
-    act(() => void result.current.progress.save(BOXES));
+    act(() => void result.current.progress.save(SAVED));
 
     expect(result.current.notices.items).toEqual([]);
   });
@@ -58,7 +61,7 @@ describe("useProgress", () => {
     state.broken = true;
     const { result } = setup(store);
 
-    act(() => void result.current.progress.save(BOXES));
+    act(() => void result.current.progress.save(SAVED));
 
     expect(result.current.notices.items).toEqual([
       {
@@ -76,11 +79,11 @@ describe("useProgress", () => {
     state.broken = true;
     const { result } = setup(store);
 
-    act(() => void result.current.progress.save(BOXES));
+    act(() => void result.current.progress.save(SAVED));
     expect(result.current.notices.items).toHaveLength(1);
 
     state.broken = false;
-    act(() => void result.current.progress.save(BOXES));
+    act(() => void result.current.progress.save(SAVED));
 
     expect(result.current.notices.items).toEqual([]);
   });
@@ -92,7 +95,7 @@ describe("useProgress", () => {
 
     let saved: unknown;
     act(() => {
-      saved = result.current.progress.save(BOXES);
+      saved = result.current.progress.save(SAVED);
     });
 
     expect(saved).toEqual({ ok: false, error: "store-unavailable" });
@@ -103,7 +106,7 @@ describe("useProgress", () => {
     const { store } = switchableStore();
     const { result } = setup(store);
 
-    expect(result.current.progress.load()).toEqual({});
+    expect(result.current.progress.load()).toEqual({ boxes: {}, answers: [] });
     expect(result.current.notices.items).toEqual([]);
   });
 
@@ -112,7 +115,7 @@ describe("useProgress", () => {
     const { store } = switchableStore({ "cypher-quiz:progress": "{壊れている" });
     const { result } = setup(store);
 
-    expect(result.current.progress.load()).toEqual({});
+    expect(result.current.progress.load()).toEqual({ boxes: {}, answers: [] });
     expect(result.current.notices.items).toEqual([]);
   });
 });

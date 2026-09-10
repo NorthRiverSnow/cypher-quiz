@@ -23,6 +23,12 @@ export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
 /** kind が無ければ素の字 */
 export type CodeSegment = { text: string; kind?: CodeKind };
 
+/** 章ごとの成績（docs/01_spec.md#7-画面と導線） */
+export type SectionScore = Readonly<{ section: SectionId; asked: number; correct: number }>;
+
+/** 一度でも間違えた問題。行を押すとその裏を開く */
+export type MissedCard = Readonly<{ section: SectionId; name: string; direction: Direction }>;
+
 /* 色は docs/07_design.md#エンティティ色。結果表の字にしか出ない */
 export type EntityKind = "team" | "engineer" | "service" | "incident";
 

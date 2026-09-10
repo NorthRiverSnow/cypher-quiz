@@ -57,7 +57,11 @@ type Answered = Readonly<{ card: Card; question: Question; choice: number; corre
  */
 export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions = {}): Quiz => {
   const [rng] = useState(() => createRng(seed ?? Date.now()));
-  const [state, setState] = useState<QuizState>(() => createQuiz(deck, rng, progress.load()));
+  const [state, setState] = useState<QuizState>(() => {
+    const { boxes, answers } = progress.load();
+
+    return createQuiz(deck, rng, boxes, answers);
+  });
   const [selected, setSelected] = useState<number>();
   const [answered, setAnswered] = useState<Answered>();
 
@@ -81,7 +85,7 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
 
     setAnswered({ ...asked, choice: selected, correct });
     setState(advanced);
-    progress.save(advanced.boxes);
+    progress.save({ boxes: advanced.boxes, answers: advanced.answers });
   }, [asked, progress, selected, state]);
 
   const next = useCallback(() => {

@@ -1,23 +1,16 @@
 import type { CSSProperties } from "react";
 
-import { type Direction, DIRECTION_LABELS, SECTION_LABELS, type SectionId } from "../../../types";
+import {
+  DIRECTION_LABELS,
+  type MissedCard,
+  SECTION_LABELS,
+  type SectionScore,
+} from "../../../types";
 import { Button } from "../../atoms/Button/Button";
 import { Card } from "../../atoms/Card/Card";
 import { Text } from "../../atoms/Text/Text";
 import { Note } from "../../molecules/Note/Note";
 import styles from "./Summary.module.css";
-
-export type SectionScore = {
-  section: SectionId;
-  asked: number;
-  correct: number;
-};
-
-export type MissedCard = {
-  section: SectionId;
-  name: string;
-  direction: Direction;
-};
 
 export type SummaryProps = {
   asked: number;

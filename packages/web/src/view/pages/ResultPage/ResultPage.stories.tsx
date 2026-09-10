@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import type { MissedCard, SectionScore } from "../../organisms/Summary/Summary";
+import type { MissedCard, SectionScore } from "../../../types";
 import { ResultPage } from "./ResultPage";
 
 const BY_SECTION: readonly SectionScore[] = [

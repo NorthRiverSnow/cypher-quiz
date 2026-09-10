@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import { type MissedCard, type SectionScore, Summary } from "./Summary";
+import type { MissedCard, SectionScore } from "../../../types";
+import { Summary } from "./Summary";
 
 /* 30 枚 × 2 方向 = 60 問（docs/01_spec.md#2-出題形式） */
 const BY_SECTION: readonly SectionScore[] = [

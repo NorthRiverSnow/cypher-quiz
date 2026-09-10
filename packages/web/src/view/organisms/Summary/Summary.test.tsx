@@ -2,7 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "storybook/test";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { type MissedCard, type SectionScore, Summary, type SummaryProps } from "./Summary";
+import type { MissedCard, SectionScore } from "../../../types";
+import { Summary, type SummaryProps } from "./Summary";
 
 afterEach(cleanup);
 
