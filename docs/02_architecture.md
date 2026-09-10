@@ -12,6 +12,7 @@
 | 設計様式 | **関数型。クラスを使わない** | 指定 |
 | ツールチェーン | **Vite+ 0.3.0**（`vp`） | 指定。vite 8 / vitest 4 / oxlint 1 / oxfmt / rolldown / tsdown が 1 依存に収まる |
 | フロント | Vite + React | 指定 |
+| データ取得 | **SWR** | 取得・キャッシュ・再検証を controller に閉じる。`fetch` は [`api/client.ts`](#web-の取得は-swr-に載せる) だけ |
 | コンポーネント開発 | **Storybook**（`@storybook/react-vite`） | 指定。ここから着手する |
 | バックエンド | **Hono** + `@hono/zod-openapi` | 指定。OpenAPI がルート定義から導出される |
 | スキーマ / 検証 | Zod（`@hono/zod-openapi` 経由） | 型・実行時検証・OpenAPI の唯一の真実にできる |
@@ -38,6 +39,32 @@
 **web は Hono も neo4j-driver も知らない。** `shared` の Zod から `z.infer` で型を取るだけ。
 
 書き方は Skill の `api-new`。
+
+### web の取得は SWR に載せる
+
+`fetch` を書いてよいのは **`api/client.ts` だけ**で、そこは `Result<T, ApiError>` を返す。
+SWR で包むのは controller で、`useSWR` を呼ぶのもそこだけ。
+
+| | |
+|---|---|
+| fetcher | `Result` を開き、**`err` は throw する**（`unwrap`） |
+| `data` | 成功した値そのもの。`Result` は残らない |
+| `onError` | 通知に積む。**投げたものが `ApiError` とは限らない**ので `ApiErrorSchema` で受け直す |
+| `onSuccess` | 同じ種類の通知を取り下げる |
+
+**SWR は「fetcher が reject したか」で失敗を決める**（実測）。`Result` の `err` を
+そのまま返すと `onSuccess` に流れ、`onError` も `error` も一生使われない。
+**境界の内側（`api/client.ts`）は `Result` のまま**で、SWR に載せる継ぎ目だけが throw する。
+
+**`unwrap` は `async` にする。** 同期 `throw` では SWR の状態が確定せず、
+`isLoading` が `true` のまま残る（実測）。
+
+**`shouldRetryOnError` は切る。** 既定は無限に再試行するが、`not-connected` も
+client のバグも投げ直して直るものではない。
+
+**`revalidateOnFocus` も切る。** dev 自動接続は「クッキーが無ければ繋ぐ」なので、
+タブを戻っただけで再取得すると切断が取り消され、手入力に戻す道
+（[歯止め](./03_api.md#歯止め) の 5）が塞がる。切った後も取り直さない。
 
 ---
 
@@ -189,7 +216,7 @@ export type Result<T, E> =
 
 ```ts
 // vite.config.ts（抜粋）
-const NO_LOGIC = ["**/model/**", "**/controller/**"];
+const NO_LOGIC = ["**/model/**", "**/controller/**", "**/api/**"];
 
 lint: {
   options: { typeAware: true, typeCheck: true },
@@ -199,7 +226,16 @@ lint: {
       files: ["packages/web/src/model/**"],
       rules: {
         "no-restricted-imports": ["error", {
-          patterns: ["react", "react-dom", "**/view/**", "**/controller/**"],
+          patterns: ["react", "react-dom", "**/view/**", "**/controller/**", "**/api/**"],
+        }],
+      },
+    },
+    {
+      // api/client.ts は fetch だけ。呼ぶのは controller で、自分からは誰も呼ばない
+      files: ["packages/web/src/api/**"],
+      rules: {
+        "no-restricted-imports": ["error", {
+          patterns: ["react", "react-dom", "**/view/**", "**/controller/**", "**/model/**"],
         }],
       },
     },
@@ -209,9 +245,9 @@ lint: {
       rules: { "no-restricted-imports": ["error", { patterns: NO_LOGIC }] },
     },
     {
-      // 結線の層。controller は呼ぶが、model には触らない
+      // 結線の層。controller は呼ぶが、model にも api にも触らない
       files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
-      rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**"] }] },
+      rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**", "**/api/**"] }] },
     },
     // アトミックデザインの層。下の層しか import できない
     {
