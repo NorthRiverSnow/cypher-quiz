@@ -39,9 +39,18 @@ const LEVEL: Record<LogEvent["event"], LogLevel> = {
    何が来たかは判別できる（docs/03_api.md#実行クエリだけは出す） */
 const MAX_CYPHER = 1000;
 
+/* why: 先に取り除いてから切る。順番が逆だと、切れ目をまたいだ資格情報が残る */
+const shortenCypher = (cypher: string): Readonly<{ cypher: string; truncated?: true }> => {
+  const clean = redact(cypher);
+
+  return clean.length > MAX_CYPHER
+    ? { cypher: clean.slice(0, MAX_CYPHER), truncated: true }
+    : { cypher: clean };
+};
+
 const shorten = (event: LogEvent): LogEvent =>
-  event.event === "query.run" && event.cypher.length > MAX_CYPHER
-    ? { ...event, cypher: event.cypher.slice(0, MAX_CYPHER), truncated: true }
+  event.event === "query.run"
+    ? { ...event, ...shortenCypher(event.cypher) }
     : event.event === "error"
       ? {
           ...event,

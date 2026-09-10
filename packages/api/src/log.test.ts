@@ -97,6 +97,31 @@ describe("createLogger", () => {
     );
   });
 
+  /* why: 利用者はクエリを編集して実行できる。URI もパスワードも書ける */
+  it("実行クエリからも資格情報を取り除く", () => {
+    const logged = objectOf({
+      event: "query.run",
+      cypher: "LOAD CSV FROM 'https://neo4j:hunter2@x/f.csv' AS r RETURN r",
+      readOnly: false,
+    });
+
+    expect(logged.cypher).toBe("LOAD CSV FROM 'https://x/f.csv' AS r RETURN r");
+  });
+
+  /* why: 切ってから取り除くと、切れ目をまたいだ URI は @ を失って一致しなくなり、
+     パスワードだけが残る */
+  it("長すぎるクエリでも切る前に取り除く", () => {
+    const secret = `${"x".repeat(6)}SECRET${"y".repeat(40)}`;
+    const logged = objectOf({
+      event: "query.run",
+      cypher: `${"A".repeat(970)} bolt://neo4j:${secret}@db`,
+      readOnly: true,
+    });
+
+    expect(logged.truncated).toBeUndefined();
+    expect(logged.cypher).not.toContain("SECRET");
+  });
+
   it("エラーの文から資格情報を取り除く", () => {
     const logged = objectOf({
       event: "error",
