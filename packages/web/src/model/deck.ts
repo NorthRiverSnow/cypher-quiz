@@ -14,3 +14,7 @@ export type Card = Readonly<{
   /** 書き込みクエリを含む。実行ボタンを出さない */
   mutates: boolean;
 }>;
+
+/** 編集欄に出す本文。ハイライトの区切りを繋いで 1 本の文字列にする */
+export const cypherOf = (code: readonly CodeSegment[]): string =>
+  code.map(({ text }) => text).join("");

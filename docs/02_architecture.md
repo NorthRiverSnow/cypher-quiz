@@ -674,10 +674,12 @@ cypher-quiz/
          │  └─ useConnection.ts
          │
          ├─ screens/               # ★ 結線。useXXX を呼び、pages に props で渡す
+         │  ├─ screen.ts            # ScreenProps。notices は積む口、band は描くもの
          │  ├─ StartScreen.tsx
          │  ├─ ConnectScreen.tsx
          │  ├─ QuizScreen.tsx
-         │  └─ ResultScreen.tsx
+         │  ├─ ResultScreen.tsx
+         │  └─ ReviewScreen.tsx
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
          ├─ styles/
          │  ├─ index.ts             # CSS の入口。アプリと Storybook が同じものを読む
@@ -737,6 +739,7 @@ view/pages/     全状態を props で受ける純関数
 | `/connect` | `ConnectScreen` | `ConnectPage` | 接続 / 接続せずに始める → `/quiz` |
 | `/quiz` | `QuizScreen` | `QuizPage` | 最後の 1 枚の次 → `/result` |
 | `/result` | `ResultScreen` | `ResultPage` | もう一度 / 不正解だけ → `/quiz` |
+| `/review/:cardId/:direction` | `ReviewScreen` | `ReviewPage` | 結果に戻る → `/result` |
 | 上記以外 | — | — | `/` へ送る |
 
 **ページに `useNavigate` を持たせない。** 持たせると story とテストに Router が必要になり、

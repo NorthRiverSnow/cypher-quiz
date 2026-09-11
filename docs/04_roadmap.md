@@ -119,7 +119,8 @@ C-7 を先に済ませた。
 
 | # | やること |
 |---:|---|
-| D-1 | `controller/` で model と view を繋ぐ。**View は一切変えない**（変える必要が出たらフェーズ A の設計ミス） |
+| D-1 | `controller/` で model と view を繋ぐ。結線は `screens/` に置き、`routes.tsx` は経路表だけにする |
+| | **View に足したもの** — `ReviewPage`（復習）、`CardBack` の `header` と `nextLabel`。いずれもフェーズ A に無かった導線（不正解カードを開き直す）のため |
 | D-2 | 通し確認 |
 
 ---

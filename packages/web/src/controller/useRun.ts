@@ -1,9 +1,10 @@
-import type { ApiError, ErrorKind, QueryResult } from "@cypher-quiz/shared";
+import type { ApiError, ErrorKind } from "@cypher-quiz/shared";
 import { err } from "@cypher-quiz/shared";
 import { useCallback } from "react";
 import useSWRMutation from "swr/mutation";
 
 import { type ApiClient, createApiClient } from "../api/client";
+import { type ResultTableData, toResultTable } from "../model/result";
 import type { QueryStatus } from "../types";
 import { apiErrorOf, unwrap } from "./swr";
 import type { NoticeBody, Notices } from "./useNotices";
@@ -34,7 +35,8 @@ export type Run = Readonly<{
   status: QueryStatus;
   /** status が "error" のときだけ入る。DB からの文言をそのまま出す */
   errorMessage?: string;
-  result: QueryResult | undefined;
+  /** 結果表に渡せる形。行が 0 でも列名は残る */
+  result: ResultTableData | undefined;
   run: (cypher: string) => Promise<void>;
   /** 次のカードへ進むときに消す */
   reset: () => void;
@@ -92,7 +94,7 @@ export const useRun = (notices: Notices, connected: boolean, client: ApiClient =
   return {
     status,
     ...(status === "error" && failed !== undefined ? { errorMessage: failed.message } : {}),
-    result: data,
+    result: data === undefined ? undefined : toResultTable(data),
     run,
     reset,
   };

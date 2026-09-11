@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 
-import type { Card } from "../model/deck";
+import { type Card, cypherOf } from "../model/deck";
 import { DECK } from "../model/deck.data";
 import { type Question, buildQuestion } from "../model/question";
 import {
@@ -26,6 +26,8 @@ export type Face =
       /** 選んだ肢の位置 */
       choice: number;
       correct: boolean;
+      /** 編集欄に出す本文。code を持たないカードでは undefined */
+      cypher?: string;
     }>;
 
 export type Quiz = Readonly<{
@@ -96,7 +98,13 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
 
   const face = useMemo((): Face | undefined => {
     if (answered !== undefined) {
-      return { side: "back", ...answered };
+      const { code } = answered.card;
+
+      return {
+        side: "back",
+        ...answered,
+        ...(code === undefined ? {} : { cypher: cypherOf(code) }),
+      };
     }
 
     return asked === undefined

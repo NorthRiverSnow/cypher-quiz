@@ -11,6 +11,9 @@ import { useRun } from "./useRun";
 afterEach(cleanup);
 
 const RESULT: QueryResult = { columns: ["n"], rows: [["a"]], elapsedMs: 3 };
+
+/* why: controller が結果表の形に直して渡す。elapsedMs は表に出さない */
+const TABLE = { columns: ["n"], rows: [["a"]] };
 const BROKEN: ApiError = { kind: "unexpected", message: "想定外" };
 const CYPHER = "MATCH (n) RETURN n";
 
@@ -73,7 +76,7 @@ describe("成功したとき", () => {
 
     await act(async () => await result.current.run.run(CYPHER));
 
-    expect(result.current.run.result).toEqual(RESULT);
+    expect(result.current.run.result).toEqual(TABLE);
     expect(result.current.run.status).toBe("idle");
   });
 
@@ -262,5 +265,5 @@ it("応答を待っている間は running", async () => {
   });
 
   await waitFor(() => expect(result.current.run.status).toBe("idle"));
-  expect(result.current.run.result).toEqual(RESULT);
+  expect(result.current.run.result).toEqual(TABLE);
 });

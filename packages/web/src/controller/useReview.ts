@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { Card } from "../model/deck";
+import { type Card, cypherOf } from "../model/deck";
 import { DECK } from "../model/deck.data";
 import { answerOf, promptOf } from "../model/question";
 import { chosenFor, keyOf } from "../model/quiz";
@@ -19,6 +19,8 @@ export type Review = Readonly<{
   /** そのとき選んだ肢 */
   chosen: string;
   code?: readonly CodeSegment[];
+  /** 編集欄に出す本文 */
+  cypher?: string;
   expected?: string;
   note?: string;
   warn?: string;
@@ -58,7 +60,7 @@ export const useReview = (
     correct: answerOf(card, direction),
     chosen,
     runnable: card.runnable,
-    ...(card.code === undefined ? {} : { code: card.code }),
+    ...(card.code === undefined ? {} : { code: card.code, cypher: cypherOf(card.code) }),
     ...(card.expected === undefined ? {} : { expected: card.expected }),
     ...(card.note === undefined ? {} : { note: card.note }),
     ...(card.warn === undefined ? {} : { warn: card.warn }),
