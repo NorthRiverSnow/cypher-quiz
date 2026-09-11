@@ -7,7 +7,7 @@ import {
   type QuizState,
   answerCurrent,
   cardIdOf,
-  answered as answeredCounts,
+  answerCounts,
   createQuiz,
   currentKey,
   directionOf,
@@ -32,7 +32,7 @@ export type Face =
     }>;
 
 export type Quiz = Readonly<{
-  /** 進捗バーに渡す 正解 / 不正解 / 未回答 */
+  /** 進捗バーに渡す 正解 / 不正解 / 完了までに残る回答 */
   counts: [number, number, number];
   /** 完了していない問題の数。まだ何も答えていなければ undefined */
   remaining: number | undefined;
@@ -117,7 +117,7 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
   }, [answered, asked, selected]);
 
   return {
-    counts: answeredCounts(state.answers, deck),
+    counts: answerCounts(state.answers, state.boxes, deck),
     remaining: Object.values(state.boxes).some((box) => box > 0)
       ? remainingOf(state.boxes, deck)
       : undefined,

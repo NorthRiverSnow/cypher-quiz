@@ -99,14 +99,46 @@ describe("構文の一覧", () => {
     expect(screen.queryByText(/1 文に書き換えて/)).toBeNull();
   });
 
-  /* why: 実行の結果を優先する。直すべきものが 2 つ並ばない。
-     本文は status で決まるので、注意と間違えていないかは見出しで見る */
-  it("実行して失敗したらそちらを出す", () => {
+  /* why: 失敗しても消さない。エラーだけでは「1 文に割ればよい」が読めない */
+  it("実行して失敗しても残す", () => {
     render(<QueryEditor {...BASE} listing status="error" errorMessage="構文が違います" />);
 
     expect(screen.getByText("構文が違います")).toBeDefined();
-    expect(screen.getByRole("img", { name: "エラー" })).toBeDefined();
-    expect(screen.queryByRole("img", { name: "注意" })).toBeNull();
+    expect(screen.getByText(/1 文に書き換えて/)).toBeDefined();
+  });
+
+  /* why: 何が起きたかを先に出す。直し方はその次 */
+  it("エラーを先に、書き換えの案内を後に出す", () => {
+    render(<QueryEditor {...BASE} listing status="error" errorMessage="構文が違います" />);
+
+    const shown = screen.getAllByRole("img").map((icon) => icon.getAttribute("aria-label"));
+
+    expect(shown.filter((label) => label === "エラー" || label === "注意")).toEqual([
+      "エラー",
+      "注意",
+    ]);
+  });
+
+  /* why: 書き換えたのに失敗したなら、まだ 1 文になっていない見込みが高い */
+  it("書き換えたあと失敗しても残す", () => {
+    render(
+      <QueryEditor
+        {...BASE}
+        listing
+        value="CALL db.labels() SHOW INDEXES"
+        status="error"
+        errorMessage="構文が違います"
+      />,
+    );
+
+    expect(screen.getByText(/1 文に書き換えて/)).toBeDefined();
+  });
+
+  /* why: 書き換えて通ったら用済み。出し続けると直すものが残っているように読める */
+  it("書き換えて通ったら消える", () => {
+    render(<QueryEditor {...BASE} listing value="MATCH (n) RETURN n" />);
+
+    expect(screen.queryByText(/1 文に書き換えて/)).toBeNull();
   });
 
   it("押す前は注意として出す", () => {

@@ -23,7 +23,7 @@ const meta = {
   component: ResultPage,
   parameters: { layout: "fullscreen" },
   args: {
-    counts: [48, 12, 0],
+    counts: [104, 16, 0],
     summary: {
       asked: 60,
       correct: 48,

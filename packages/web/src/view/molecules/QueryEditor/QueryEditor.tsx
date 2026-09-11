@@ -89,9 +89,18 @@ export const QueryEditor = ({
   listing = false,
 }: QueryEditorProps) => {
   const edited = value !== undefined;
-  const running = status === "idle" || status === "running";
-  /* why: 実行の結果を優先する。一覧の注意は、まだ何も起きていないときだけ */
-  const note = running ? (listing && !edited ? LISTING : undefined) : MESSAGE[status];
+  const ran = status !== "idle" && status !== "running";
+  /* why: 失敗しても一覧の注意は消さない。「何が起きたか」と「どう直すか」は別の話で、
+     エラーだけ出しても 1 文に割ればよいことが読めない */
+  const notes = [
+    ran
+      ? {
+          ...MESSAGE[status],
+          text: status === "error" ? (errorMessage ?? "") : MESSAGE[status].text,
+        }
+      : undefined,
+    listing && (!edited || status === "error") ? LISTING : undefined,
+  ].filter((note) => note !== undefined);
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange(event.currentTarget.value);
@@ -126,11 +135,11 @@ export const QueryEditor = ({
           <CodeBlock code={code} bare />
         )}
       </div>
-      {note !== undefined && (
-        <Note tone={note.tone} icon="warning" iconLabel={note.label}>
-          {status === "error" ? errorMessage : note.text}
+      {notes.map((note) => (
+        <Note key={note.label + note.text} tone={note.tone} icon="warning" iconLabel={note.label}>
+          {note.text}
         </Note>
-      )}
+      ))}
     </div>
   );
 };

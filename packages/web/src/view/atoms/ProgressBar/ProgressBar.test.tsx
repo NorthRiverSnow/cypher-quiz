@@ -18,7 +18,7 @@ describe("ProgressBar", () => {
     expect(screen.queryByText(/[0-9]/)).toBeNull();
   });
 
-  it("答えた枚数を進捗の値にする", () => {
+  it("答えた回数を進捗の値にする", () => {
     render(<ProgressBar counts={[38, 14, 8]} />);
     const bar = screen.getByRole("progressbar", { name: "進捗" });
 
@@ -31,17 +31,17 @@ describe("ProgressBar", () => {
     render(<ProgressBar counts={[38, 14, 8]} />);
 
     expect(screen.getByRole("progressbar", { name: "進捗" }).getAttribute("aria-valuetext")).toBe(
-      "60 問中 38 問 正解、14 問 不正解",
+      "38 回 正解、14 回 不正解、あと 8 回",
     );
   });
 
-  it("正解・不正解・まだ の順に並べ、枚数の比を区画の幅にする", () => {
+  it("正解・不正解・残り の順に並べ、回数の比を区画の幅にする", () => {
     render(<ProgressBar counts={[38, 14, 8]} />);
 
     expect(grows()).toEqual(["38", "14", "8"]);
   });
 
-  it("0 枚の区画は幅を持たない", () => {
+  it("0 回の区画は幅を持たない", () => {
     render(<ProgressBar counts={[0, 0, 60]} />);
 
     expect(grows()).toEqual(["0", "0", "60"]);

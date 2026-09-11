@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 export type ProgressBarProps = {
-  /** 問題の数。左から 正解 / 不正解 / まだ答えていない */
+  /** 回答の数。左から 正解 / 不正解 / 完了までに残る回答 */
   counts: readonly [number, number, number];
 };
 
@@ -18,7 +18,7 @@ const TRACK: CSSProperties = {
 };
 
 export const ProgressBar = ({ counts }: ProgressBarProps) => {
-  const [correct, wrong] = counts;
+  const [correct, wrong, left] = counts;
   const total = counts.reduce((sum, count) => sum + count, 0);
 
   return (
@@ -29,12 +29,12 @@ export const ProgressBar = ({ counts }: ProgressBarProps) => {
       aria-valuemax={total}
       aria-valuenow={correct + wrong}
       /* why: 数字を画面に出さないので、読み上げにはここで内訳を渡す */
-      aria-valuetext={`${total} 問中 ${correct} 問 正解、${wrong} 問 不正解`}
+      aria-valuetext={`${correct} 回 正解、${wrong} 回 不正解、あと ${left} 回`}
       style={TRACK}
     >
-      {counts.map((count, box) => (
-        /* why: flex-grow を枚数そのものにする。0 枚の区画は幅を持たない */
-        <span key={box} style={{ flexGrow: count, background: FILL[box] }} />
+      {counts.map((count, part) => (
+        /* why: flex-grow を回数そのものにする。0 回の区画は幅を持たない */
+        <span key={part} style={{ flexGrow: count, background: FILL[part] }} />
       ))}
     </div>
   );

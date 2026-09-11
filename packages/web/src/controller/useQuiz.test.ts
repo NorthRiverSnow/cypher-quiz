@@ -28,6 +28,9 @@ const DECK: readonly Card[] = [
 /** 1 枚 × 2 方向。4 枚なので 8 問 */
 const QUESTIONS = DECK.length * 2;
 
+/** 1 問につき 2 回続けて正解が要る */
+const TO_COMPLETE = QUESTIONS * 2;
+
 const setup = (boxes: Boxes = {}, answers: Saved["answers"] = []) => {
   const saved: Saved[] = [];
   let cleared = 0;
@@ -267,15 +270,30 @@ describe("習熟度", () => {
     expect(saved()[0]?.answers[0]).toEqual({ key: "match:forward", correct: false, chosen: "肢" });
   });
 
-  /* why: 進捗バーは問題の数で数える。1 問目から動く */
-  it("正解した問題を青に数える", () => {
+  /* why: 進捗バーは回答で数える。1 問目から動く */
+  it("正解すると青が増え、残りが減る", () => {
     const { result } = setup();
 
-    expect(result.current.counts).toEqual([0, 0, QUESTIONS]);
+    expect(result.current.counts).toEqual([0, 0, TO_COMPLETE]);
 
     answerWith(result, true);
 
-    expect(result.current.counts).toEqual([1, 0, QUESTIONS - 1]);
+    expect(result.current.counts).toEqual([1, 0, TO_COMPLETE - 1]);
+  });
+
+  /* why: 全問に 1 度答えてもバーは満杯にならない。間違えた分だけ残りが伸びる */
+  it("一周したあと間違えると残りが増える", () => {
+    const { result } = setup();
+
+    for (let i = 0; i < QUESTIONS; i += 1) {
+      answerWith(result, true);
+    }
+
+    expect(result.current.counts).toEqual([QUESTIONS, 0, QUESTIONS]);
+
+    answerWith(result, false);
+
+    expect(result.current.counts).toEqual([QUESTIONS, 1, QUESTIONS + 1]);
   });
 });
 
@@ -293,7 +311,7 @@ describe("最後まで解く", () => {
 
     expect(result.current.complete).toBe(true);
     expect(result.current.face).toBeUndefined();
-    expect(result.current.counts).toEqual([QUESTIONS, 0, 0]);
+    expect(result.current.counts).toEqual([TO_COMPLETE, 0, 0]);
   });
 
   /* why: 不正解は 3 問後ろに戻る。出題が尽きずに回り続ける */

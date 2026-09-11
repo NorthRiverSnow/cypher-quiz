@@ -7,7 +7,7 @@ import {
   allKeys,
   answerCurrent,
   cardIdOf,
-  answered,
+  answerCounts,
   remaining,
   createQuiz,
   currentKey,
@@ -432,60 +432,46 @@ describe("remaining はデッキから数える", () => {
   });
 });
 
-/* why: 進捗バーは問題の数で数える。box では 1 周目のあいだ動かない */
-describe("answered は問題の数で数える", () => {
+/* why: 進捗バーは回答で数える。問題で数えると、一周した時点で満杯になる */
+describe("answerCounts は回答で数える", () => {
   const key = keyOf("a", "forward");
   const other = keyOf("b", "reverse");
+  const answer = (correct: boolean) => ({ key, correct, chosen: CHOSEN });
 
-  it("答える前は全て未回答", () => {
-    expect(answered([], small)).toEqual([0, 0, QUESTIONS]);
+  it("答える前は全て残り", () => {
+    expect(answerCounts([], {}, small)).toEqual([0, 0, TO_COMPLETE]);
   });
 
-  it("正解した問題を青に数える", () => {
-    expect(answered([{ key, correct: true, chosen: CHOSEN }], small)).toEqual([
-      1,
-      0,
-      QUESTIONS - 1,
-    ]);
+  it("正解すると青が増え、残りが減る", () => {
+    expect(answerCounts([answer(true)], { [key]: 1 }, small)).toEqual([1, 0, TO_COMPLETE - 1]);
   });
 
-  it("間違えた問題を赤に数える", () => {
-    expect(answered([{ key, correct: false, chosen: CHOSEN }], small)).toEqual([
-      0,
-      1,
-      QUESTIONS - 1,
-    ]);
+  it("不正解では残りが減らない", () => {
+    expect(answerCounts([answer(false)], { [key]: 0 }, small)).toEqual([0, 1, TO_COMPLETE]);
   });
 
-  /* why: 1 度でも間違えたら赤のまま。成績と同じ数え方 */
-  it("間違えたあと正解しても赤のまま", () => {
-    const answers = [
-      { key, correct: false, chosen: CHOSEN },
-      { key, correct: true, chosen: CHOSEN },
-    ];
+  /* why: 1 度正解した分が失われる。問題の数で数えると、赤が増えた分だけ満杯に近づく */
+  it("1 回正解したあと間違えると残りが増える", () => {
+    const answers = [answer(true), answer(false)];
 
-    expect(answered(answers, small)).toEqual([0, 1, QUESTIONS - 1]);
+    expect(answerCounts(answers, { [key]: 0 }, small)).toEqual([1, 1, TO_COMPLETE]);
   });
 
-  it("同じ問題に何度答えても 1 つ", () => {
-    const answers = [
-      { key, correct: true, chosen: CHOSEN },
-      { key, correct: true, chosen: CHOSEN },
-      { key: other, correct: true, chosen: CHOSEN },
-    ];
+  it("同じ問題への回答をまとめない", () => {
+    const answers = [answer(true), answer(true), { key: other, correct: true, chosen: CHOSEN }];
 
-    expect(answered(answers, small)).toEqual([2, 0, QUESTIONS - 2]);
+    expect(answerCounts(answers, { [key]: 2, [other]: 1 }, small)).toEqual([3, 0, TO_COMPLETE - 3]);
   });
 
-  /* why: デッキから消えたカードの回答が保存に残っていても、未回答を負にしない */
-  it("デッキに無い問題の回答があっても 0 で止まる", () => {
-    const answers = Array.from({ length: QUESTIONS + 3 }, (_, i) => ({
-      key: keyOf(`z${i}`, "forward"),
-      correct: true,
-      chosen: CHOSEN,
-    }));
+  it("全て完了すると残りが 0", () => {
+    const boxes = Object.fromEntries(allKeys(small).map((done): [string, Box] => [done, 2]));
 
-    expect(answered(answers, small)[2]).toBe(0);
+    expect(answerCounts([], boxes, small)[2]).toBe(0);
+  });
+
+  /* why: 残りは今のデッキから数える。消えたカードの box が保存に残っていても足さない */
+  it("デッキに無い box を残りに数えない", () => {
+    expect(answerCounts([], { "z:forward": 0 }, small)[2]).toBe(TO_COMPLETE);
   });
 });
 

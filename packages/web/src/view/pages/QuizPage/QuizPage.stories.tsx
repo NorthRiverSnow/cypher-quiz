@@ -30,7 +30,7 @@ const meta = {
   component: QuizPage,
   parameters: { layout: "fullscreen" },
   args: {
-    counts: [38, 14, 8],
+    counts: [48, 12, 72],
     face: { side: "question", question: { ...QUESTION, selected: 1 } },
   },
 } satisfies Meta<typeof QuizPage>;

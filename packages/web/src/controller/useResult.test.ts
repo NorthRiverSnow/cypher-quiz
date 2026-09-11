@@ -22,6 +22,9 @@ const DECK: readonly Card[] = [card("match", "skeleton"), card("with", "shaping"
 /** 2 枚 × 2 方向 */
 const QUESTIONS = DECK.length * 2;
 
+/** 1 問につき 2 回続けて正解が要る */
+const TO_COMPLETE = QUESTIONS * 2;
+
 const setup = (saved: Saved = { boxes: {}, answers: [] }) => {
   const written: Saved[] = [];
   let cleared = 0;
@@ -75,16 +78,16 @@ describe("成績", () => {
 });
 
 describe("進捗バー", () => {
-  it("保存が無ければ全問が未回答", () => {
+  it("保存が無ければ全てが残り", () => {
     const { result } = setup();
 
-    expect(result.current.counts).toEqual([0, 0, QUESTIONS]);
+    expect(result.current.counts).toEqual([0, 0, TO_COMPLETE]);
   });
 
-  /* why: box ではなく回答で数える。1 度でも間違えた問題は赤に入る */
+  /* why: 問題ではなく回答で数える。同じ問題への 2 回目も 1 つに数える */
   it("正解と不正解を分けて数える", () => {
     const { result } = setup({
-      boxes: {},
+      boxes: { "match:forward": 1, "with:reverse": 1 },
       answers: [
         { key: "match:forward", correct: true, chosen: "あ" },
         { key: "with:reverse", correct: false, chosen: "い" },
@@ -92,7 +95,7 @@ describe("進捗バー", () => {
       ],
     });
 
-    expect(result.current.counts).toEqual([1, 1, QUESTIONS - 2]);
+    expect(result.current.counts).toEqual([2, 1, TO_COMPLETE - 2]);
   });
 });
 

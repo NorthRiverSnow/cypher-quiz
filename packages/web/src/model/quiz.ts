@@ -1,6 +1,6 @@
 import type { Direction, MissedCard, SectionId, SectionScore } from "../types";
 import type { Card } from "./deck";
-import { type Box, allDone, isDone, nextBox, remaining as notDone } from "./leitner";
+import { type Box, DONE, allDone, isDone, nextBox, remaining as notDone } from "./leitner";
 import { type Rng, shuffle } from "./rng";
 
 /** カード × 方向で 1 問。習熟度は向きごとに数える（docs/01_spec.md#2-出題形式） */
@@ -141,16 +141,21 @@ const missedCards = (deck: readonly Card[], answers: readonly Answer[]): MissedC
   });
 
 /**
- * 進捗バーに出す 3 つ。**問題の数**で、回答の回数ではない。
+ * 進捗バーに出す 3 つ。**単位は回答で、問題ではない。**
+ *
+ * why: 残りを「まだ答えていない問題」で数えると、全問を一周した時点でバーが満杯になる。
+ * 完了には 2 回連続の正解が要るので、満杯になってからも同じだけ出題される
  */
-export const answered = (
+export const answerCounts = (
   answers: readonly Answer[],
+  boxes: Boxes,
   deck: readonly Card[],
 ): [number, number, number] => {
-  const { asked, correct } = tally(answers);
+  const correct = answers.filter((answer) => answer.correct).length;
+  /* why: 残りは「完了まであと何回正解が要るか」。間違えると box が 0 に戻るので、ここが増える */
+  const left = allKeys(deck).reduce((sum, key) => sum + (DONE - (boxes[key] ?? 0)), 0);
 
-  /* why: 下限を 0 で止める。デッキから消えたカードの回答が保存に残っていると負になる */
-  return [correct, asked - correct, Math.max(0, allKeys(deck).length - asked)];
+  return [correct, answers.length - correct, left];
 };
 
 /**

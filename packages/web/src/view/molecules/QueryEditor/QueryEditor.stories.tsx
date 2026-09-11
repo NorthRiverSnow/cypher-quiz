@@ -106,3 +106,13 @@ export const 編集済みで割れる: Story = {
 export const 構文の一覧: Story = {
   args: { listing: true },
 };
+
+/* why: 失敗しても案内は消さない。エラーだけでは「1 文に割ればよい」が読めない */
+export const 構文の一覧を実行して失敗: Story = {
+  args: {
+    listing: true,
+    status: "error",
+    errorMessage:
+      "Invalid input 'SHOW': expected 'FOREACH', 'ORDER BY', 'CALL' … (line 4, column 1)",
+  },
+};
