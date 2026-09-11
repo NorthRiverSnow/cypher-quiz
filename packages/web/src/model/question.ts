@@ -14,10 +14,10 @@ export type Question = Readonly<{
 }>;
 
 /** 正順は構文を見せて目的を選ばせる。逆順はその逆（docs/01_spec.md#2-出題形式） */
-const promptOf = (card: Card, direction: Direction) =>
+export const promptOf = (card: Card, direction: Direction) =>
   direction === "forward" ? card.name : card.role;
 
-const answerOf = (card: Card, direction: Direction) =>
+export const answerOf = (card: Card, direction: Direction) =>
   direction === "forward" ? card.role : card.name;
 
 /**

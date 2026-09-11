@@ -667,6 +667,8 @@ cypher-quiz/
          │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所。load / save / clear
          │  ├─ useTheme.ts          # data-theme と localStorage。View の外
          │  ├─ useQuiz.ts           # 出題・答え合わせ・習熟度の保存。表と裏を Face で返す
+         │  ├─ useResult.ts         # サマリ。クイズを組まず、保存された回答を数える
+         │  ├─ useReview.ts         # 間違えた問題を開き直す。保存を読むだけ
          │  ├─ useRun.ts            # /api/run。失敗は編集欄の中に出す
          │  ├─ swr.ts               # Result を SWR の成功／失敗に振り分ける
          │  └─ useConnection.ts
