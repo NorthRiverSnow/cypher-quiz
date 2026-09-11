@@ -375,7 +375,8 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD}        # ← 同じ変数
 ```
 
-> ホストのブラウザから手入力で繋ぐときは `bolt://localhost:7687`、compose 内の api からは `bolt://neo4j:7687`。**ポートは同じでもホスト名が違う。**
+> **手入力でも `bolt://neo4j:7687`。** ブラウザは Neo4j に繋がない——`/api/connect` に URI を送るだけで、
+> **その URI を名前解決するのは api**（コンテナの中）。`localhost` は api 自身を指すので繋がらない。
 
 ### compose が渡すのは、ホストと値が違うものだけ
 

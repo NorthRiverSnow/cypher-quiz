@@ -59,7 +59,7 @@ export const QuizScreen = ({ notices, band, ...options }: QuizScreenProps) => {
             ...(face.card.expected === undefined ? {} : { expected: face.card.expected }),
             ...(face.card.note === undefined ? {} : { note: face.card.note }),
             ...(face.card.warn === undefined ? {} : { warn: face.card.warn }),
-            ...(face.card.runnable && face.cypher !== undefined
+            ...(!face.card.mutates && face.cypher !== undefined
               ? {
                   editor: {
                     ...(draft === undefined ? {} : { value: draft }),
@@ -68,6 +68,7 @@ export const QuizScreen = ({ notices, band, ...options }: QuizScreenProps) => {
                     onRun: () => void run.run(draft ?? face.cypher ?? ""),
                     onReset: () => setDraft(undefined),
                     status: run.status,
+                    listing: face.card.listing ?? false,
                     ...(run.errorMessage === undefined ? {} : { errorMessage: run.errorMessage }),
                   },
                 }

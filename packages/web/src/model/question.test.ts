@@ -59,10 +59,10 @@ describe("buildQuestion", () => {
 
   it("同じ章が足りなければ他の章から補う", () => {
     const small: Card[] = [
-      { id: "a", section: "shaping", name: "A", role: "あ", runnable: true, mutates: false },
-      { id: "b", section: "shaping", name: "B", role: "い", runnable: true, mutates: false },
-      { id: "c", section: "lists", name: "C", role: "う", runnable: true, mutates: false },
-      { id: "d", section: "writing", name: "D", role: "え", runnable: false, mutates: true },
+      { id: "a", section: "shaping", name: "A", role: "あ", mutates: false },
+      { id: "b", section: "shaping", name: "B", role: "い", mutates: false },
+      { id: "c", section: "lists", name: "C", role: "う", mutates: false },
+      { id: "d", section: "writing", name: "D", role: "え", mutates: true },
     ];
 
     const question = buildQuestion(small[0] as Card, small, "forward", createRng(5));
@@ -72,11 +72,11 @@ describe("buildQuestion", () => {
 
   it("同じ文言のカードがあっても肢は重複しない", () => {
     const dup: Card[] = [
-      { id: "a", section: "shaping", name: "A", role: "あ", runnable: true, mutates: false },
-      { id: "b", section: "shaping", name: "B", role: "あ", runnable: true, mutates: false },
-      { id: "c", section: "shaping", name: "C", role: "い", runnable: true, mutates: false },
-      { id: "d", section: "shaping", name: "D", role: "い", runnable: true, mutates: false },
-      { id: "e", section: "shaping", name: "E", role: "う", runnable: true, mutates: false },
+      { id: "a", section: "shaping", name: "A", role: "あ", mutates: false },
+      { id: "b", section: "shaping", name: "B", role: "あ", mutates: false },
+      { id: "c", section: "shaping", name: "C", role: "い", mutates: false },
+      { id: "d", section: "shaping", name: "D", role: "い", mutates: false },
+      { id: "e", section: "shaping", name: "E", role: "う", mutates: false },
     ];
 
     const question = buildQuestion(dup[0] as Card, dup, "forward", createRng(5));
@@ -88,8 +88,8 @@ describe("buildQuestion", () => {
 
   it("肢が足りなければある分だけ出す", () => {
     const two: Card[] = [
-      { id: "a", section: "shaping", name: "A", role: "あ", runnable: true, mutates: false },
-      { id: "b", section: "shaping", name: "B", role: "い", runnable: true, mutates: false },
+      { id: "a", section: "shaping", name: "A", role: "あ", mutates: false },
+      { id: "b", section: "shaping", name: "B", role: "い", mutates: false },
     ];
 
     const question = buildQuestion(two[0] as Card, two, "forward", createRng(5));

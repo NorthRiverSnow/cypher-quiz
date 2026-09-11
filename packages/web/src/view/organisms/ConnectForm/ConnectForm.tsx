@@ -83,7 +83,7 @@ export const ConnectForm = ({
                 label="URI"
                 value={values.uri}
                 onChange={(value) => onChange("uri", value)}
-                placeholder="bolt://localhost:7687"
+                placeholder="neo4j+s://xxxxxxxx.databases.neo4j.io"
                 disabled={connecting}
               />
               <TextField

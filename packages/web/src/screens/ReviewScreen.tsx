@@ -35,7 +35,7 @@ export const ReviewScreen = ({ notices, band }: ScreenProps) => {
         ...(review.expected === undefined ? {} : { expected: review.expected }),
         ...(review.note === undefined ? {} : { note: review.note }),
         ...(review.warn === undefined ? {} : { warn: review.warn }),
-        ...(review.runnable && review.cypher !== undefined
+        ...(review.editable && review.cypher !== undefined
           ? {
               editor: {
                 ...(draft === undefined ? {} : { value: draft }),
@@ -44,6 +44,7 @@ export const ReviewScreen = ({ notices, band }: ScreenProps) => {
                 onRun: () => void run.run(draft ?? review.cypher ?? ""),
                 onReset: () => setDraft(undefined),
                 status: run.status,
+                listing: review.listing,
                 ...(run.errorMessage === undefined ? {} : { errorMessage: run.errorMessage }),
               },
             }

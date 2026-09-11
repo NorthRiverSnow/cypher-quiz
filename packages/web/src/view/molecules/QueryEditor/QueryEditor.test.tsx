@@ -79,6 +79,43 @@ describe("QueryEditor", () => {
   });
 });
 
+/* why: 一覧をそのまま送ると Neo4j の構文エラーが返るだけで、何を直せばよいか読めない */
+describe("構文の一覧", () => {
+  it("押す前に書き換えを促す", () => {
+    render(<QueryEditor {...BASE} listing />);
+
+    expect(screen.getByText(/1 文に書き換えて/)).toBeDefined();
+  });
+
+  it("一覧でなければ出さない", () => {
+    render(<QueryEditor {...BASE} />);
+
+    expect(screen.queryByText(/1 文に書き換えて/)).toBeNull();
+  });
+
+  it("編集を始めたら引っ込む", () => {
+    render(<QueryEditor {...BASE} listing value="MATCH (n) RETURN n" />);
+
+    expect(screen.queryByText(/1 文に書き換えて/)).toBeNull();
+  });
+
+  /* why: 実行の結果を優先する。直すべきものが 2 つ並ばない。
+     本文は status で決まるので、注意と間違えていないかは見出しで見る */
+  it("実行して失敗したらそちらを出す", () => {
+    render(<QueryEditor {...BASE} listing status="error" errorMessage="構文が違います" />);
+
+    expect(screen.getByText("構文が違います")).toBeDefined();
+    expect(screen.getByRole("img", { name: "エラー" })).toBeDefined();
+    expect(screen.queryByRole("img", { name: "注意" })).toBeNull();
+  });
+
+  it("押す前は注意として出す", () => {
+    render(<QueryEditor {...BASE} listing />);
+
+    expect(screen.getByRole("img", { name: "注意" })).toBeDefined();
+  });
+});
+
 describe("編集に入る", () => {
   /* why: value が undefined のあいだ textarea が出ない。ここが唯一の入口 */
   it("編集ボタンで onEdit を呼ぶ", async () => {

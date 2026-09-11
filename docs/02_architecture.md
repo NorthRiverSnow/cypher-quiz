@@ -628,7 +628,7 @@ cypher-quiz/
          │  ├─ quiz.ts              # QuizState（queue / boxes / answers）と セレクタ（counts / score）
          │  ├─ leitner.ts           # box 遷移
          │  ├─ rng.ts               # シード付き擬似乱数
-         │  ├─ progress.ts          # localStorage はここだけ。box と成績を 1 つのキーに
+         │  ├─ progress.ts          # model で localStorage を触るのはここだけ。box と成績を 1 キーに
          │  └─ result.ts            # Cell → ResultCell。色が付くのはノードだけ
          │
          ├─ view/                   # ★ 純関数。props in / callback out

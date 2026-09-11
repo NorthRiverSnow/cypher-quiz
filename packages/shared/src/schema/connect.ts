@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-/* why: 例は OpenAPI に載り、/docs の「試す」に初期値として入る。ホストから叩くので
-   localhost——compose のサービス名（neo4j）はコンテナの中からしか引けない。
+/* why: 例は OpenAPI に載り、/docs の「試す」に初期値として入る。この URI を名前解決するのは
+   api で、api はコンテナの中にいる。localhost では api 自身を指して繋がらない。
    password には例を置かない。コミットする openapi.json にパスワードの形を残さない */
 export const ConnectRequestSchema = z.object({
-  uri: z.string().min(1).meta({ example: "bolt://localhost:7687" }),
+  uri: z.string().min(1).meta({ example: "bolt://neo4j:7687" }),
   user: z.string().min(1).meta({ example: "neo4j" }),
   password: z.string().min(1),
   /* why: 省略すると既定のデータベースに繋ぐ。空文字を送っても同じ */

@@ -24,8 +24,10 @@ export type Review = Readonly<{
   expected?: string;
   note?: string;
   warn?: string;
-  /** 実行ボタンを出してよいか（docs/01_spec.md#書き込み系-5-枚は実行ボタンを出さない） */
-  runnable: boolean;
+  /** 編集欄を出してよいか。書き込みのカードだけ false（docs/01_spec.md#4-クエリの実行と編集） */
+  editable: boolean;
+  /** 例が構文の一覧で、1 本のクエリになっていない */
+  listing: boolean;
 }>;
 
 /**
@@ -59,7 +61,8 @@ export const useReview = (
     prompt: promptOf(card, direction),
     correct: answerOf(card, direction),
     chosen,
-    runnable: card.runnable,
+    editable: !card.mutates,
+    listing: card.listing ?? false,
     ...(card.code === undefined ? {} : { code: card.code, cypher: cypherOf(card.code) }),
     ...(card.expected === undefined ? {} : { expected: card.expected }),
     ...(card.note === undefined ? {} : { note: card.note }),

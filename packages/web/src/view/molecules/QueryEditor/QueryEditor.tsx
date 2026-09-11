@@ -19,6 +19,8 @@ export type QueryEditorProps = {
   status?: QueryStatus;
   /** status が "error" のときの DB からの文言 */
   errorMessage?: string;
+  /** 例が構文の一覧で、1 本のクエリになっていない */
+  listing?: boolean;
 };
 
 /* why: 道具と本文を 1 つの枠に収める。離すと道具がどの本文のものか読めない */
@@ -67,6 +69,14 @@ const MESSAGE: Record<"offline" | "rejected" | "error", Message> = {
   error: { tone: "alarm", label: "エラー", text: "" },
 };
 
+/* why: 押す前に出す。一覧をそのまま送ると Neo4j の構文エラーが返るだけで、
+   何を直せばよいかが読めない */
+const LISTING: Message = {
+  tone: "warn",
+  label: "注意",
+  text: "この例は構文の一覧です。1 文に書き換えて試してください。",
+};
+
 export const QueryEditor = ({
   code,
   value,
@@ -76,9 +86,12 @@ export const QueryEditor = ({
   onReset,
   status = "idle",
   errorMessage,
+  listing = false,
 }: QueryEditorProps) => {
   const edited = value !== undefined;
-  const note = status === "idle" || status === "running" ? undefined : MESSAGE[status];
+  const running = status === "idle" || status === "running";
+  /* why: 実行の結果を優先する。一覧の注意は、まだ何も起きていないときだけ */
+  const note = running ? (listing && !edited ? LISTING : undefined) : MESSAGE[status];
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange(event.currentTarget.value);

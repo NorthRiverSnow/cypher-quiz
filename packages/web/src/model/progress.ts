@@ -3,7 +3,7 @@ import { attempt, recover, type Result } from "@cypher-quiz/shared";
 import type { Box } from "./leitner";
 import type { Answer, Boxes, QuestionKey } from "./quiz";
 
-/** localStorage を触るのはこのファイルだけ（docs/02_architecture.md#5-ディレクトリ） */
+/** model で localStorage を触るのはこのファイルだけ（docs/02_architecture.md#5-ディレクトリ） */
 export type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 /**

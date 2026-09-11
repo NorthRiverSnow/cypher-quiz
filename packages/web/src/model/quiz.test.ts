@@ -22,9 +22,9 @@ import {
 import { createRng } from "./rng";
 
 const small: Card[] = [
-  { id: "a", section: "shaping", name: "A", role: "あ", runnable: true, mutates: false },
-  { id: "b", section: "shaping", name: "B", role: "い", runnable: true, mutates: false },
-  { id: "c", section: "lists", name: "C", role: "う", runnable: true, mutates: false },
+  { id: "a", section: "shaping", name: "A", role: "あ", mutates: false },
+  { id: "b", section: "shaping", name: "B", role: "い", mutates: false },
+  { id: "c", section: "lists", name: "C", role: "う", mutates: false },
 ];
 
 /** 3 枚 × 2 方向 */

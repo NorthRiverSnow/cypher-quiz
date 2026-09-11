@@ -20,7 +20,6 @@ const ONE = [
     section: "skeleton",
     name: "MATCH",
     role: "形に当てはまる組み合わせを探す",
-    runnable: false,
     mutates: false,
   },
 ] as const;

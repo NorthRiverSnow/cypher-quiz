@@ -101,3 +101,8 @@ export const 編集済みで割れる: Story = {
       "MATCH (i:Incident)\nWHERE i.title =~ '(?i).*(disconnect|throttling|saturation|misconfiguration|escalation|degradation|oom_kill|timeout).*'\nRETURN i.id",
   },
 };
+
+/* 1 本のクエリになっていない例。押す前に書き換えを促す */
+export const 構文の一覧: Story = {
+  args: { listing: true },
+};

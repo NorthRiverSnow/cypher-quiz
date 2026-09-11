@@ -15,7 +15,6 @@ const card = (id: string, section: Card["section"]): Card => ({
   section,
   name: `${id} の構文`,
   role: `${id} の役目`,
-  runnable: true,
   mutates: false,
 });
 

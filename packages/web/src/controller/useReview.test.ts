@@ -17,7 +17,6 @@ const MATCH: Card = {
   code: [{ text: "MATCH (n) RETURN n" }],
   expected: "73 行",
   note: "SQL の FROM + JOIN",
-  runnable: true,
   mutates: false,
 };
 
@@ -27,7 +26,6 @@ const CREATE: Card = {
   name: "CREATE",
   role: "ノードを作る",
   warn: "共有の DB を壊さない",
-  runnable: false,
   mutates: true,
 };
 
@@ -99,16 +97,50 @@ describe("設問と答え", () => {
   });
 });
 
-describe("実行ボタンを出してよいか", () => {
+describe("編集欄を出してよいか", () => {
   it("読み取りのカードは出す", () => {
-    expect(setup("match", "forward").result.current?.runnable).toBe(true);
+    expect(setup("match", "forward").result.current?.editable).toBe(true);
   });
 
-  /* why: 書き込み系 5 枚は実行させない（docs/01_spec.md#書き込み系-5-枚は実行ボタンを出さない） */
+  /* why: 止めるのは書き込みだけ。構文の列挙もそのままでは通らないが、書き換えて試せる
+     （docs/01_spec.md#4-クエリの実行と編集） */
   it("書き込みのカードは出さない", () => {
     const { result } = setup("create", "forward");
 
-    expect(result.current).toMatchObject({ runnable: false, warn: "共有の DB を壊さない" });
+    expect(result.current).toMatchObject({ editable: false, warn: "共有の DB を壊さない" });
+  });
+
+  /* why: 一覧は 1 本のクエリにならない。画面が書き換えを促せるよう伝える */
+  it("一覧のカードは印を渡す", () => {
+    const listing: Card = { ...MATCH, id: "list", mutates: false, listing: true };
+    const progress: Progress = {
+      load: () => ({ boxes: {}, answers: [{ key: "list:forward", correct: false, chosen: "あ" }] }),
+      save: () => ok(undefined),
+      clear: () => undefined,
+    };
+    const { result } = renderHook(() => useReview("list", "forward", progress, [listing]));
+
+    expect(result.current).toMatchObject({ editable: true, listing: true });
+  });
+
+  it("一覧でないカードは false", () => {
+    expect(setup("match", "forward").result.current?.listing).toBe(false);
+  });
+
+  /* why: そのままでは通らないカードでも出す。書き換えて試せることのほうが要る */
+  it("そのまま通らないカードでも出す", () => {
+    const listing: Card = { ...MATCH, id: "listing", mutates: false };
+    const progress: Progress = {
+      load: () => ({
+        boxes: {},
+        answers: [{ key: "listing:forward", correct: false, chosen: "あ" }],
+      }),
+      save: () => ok(undefined),
+      clear: () => undefined,
+    };
+    const { result } = renderHook(() => useReview("listing", "forward", progress, [listing]));
+
+    expect(result.current?.editable).toBe(true);
   });
 });
 

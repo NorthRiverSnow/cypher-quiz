@@ -252,7 +252,7 @@
                   "uri": {
                     "type": "string",
                     "minLength": 1,
-                    "example": "bolt://localhost:7687"
+                    "example": "bolt://neo4j:7687"
                   },
                   "user": {
                     "type": "string",
