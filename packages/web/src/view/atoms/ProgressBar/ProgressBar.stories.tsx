@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { ProgressBar } from "./ProgressBar";
 
-/* 30 枚 × 2 方向 = 60 問（docs/01_spec.md#2-出題形式） */
+/* 30 枚 × 2 方向 = 60 問。左から 正解 / 不正解 / まだ（docs/07_design.md#進捗バー） */
 const meta = {
   title: "atoms/ProgressBar",
   component: ProgressBar,
@@ -23,9 +23,12 @@ type Story = StoryObj<typeof meta>;
 
 export const 既定: Story = {};
 
-export const 始めたばかり: Story = { args: { counts: [60, 0, 0] } };
+export const まだ答えていない: Story = { args: { counts: [0, 0, 60] } };
 
-export const 完了: Story = { args: { counts: [0, 0, 60] } };
+export const 始めたばかり: Story = { args: { counts: [2, 1, 57] } };
 
-/* 不正解で box 0 に戻ったものがある状態 */
-export const 差し戻しあり: Story = { args: { counts: [12, 20, 28] } };
+export const 不正解あり: Story = { args: { counts: [12, 20, 28] } };
+
+export const 全問答えた: Story = { args: { counts: [48, 12, 0] } };
+
+export const 全問正解: Story = { args: { counts: [60, 0, 0] } };

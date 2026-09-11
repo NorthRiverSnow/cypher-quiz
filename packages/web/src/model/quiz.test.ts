@@ -7,7 +7,8 @@ import {
   allKeys,
   answerCurrent,
   cardIdOf,
-  counts,
+  answered,
+  remaining,
   createQuiz,
   currentKey,
   directionOf,
@@ -61,7 +62,7 @@ describe("createQuiz", () => {
     const state = createQuiz(DECK, createRng(1));
 
     expect(state.queue).toHaveLength(60);
-    expect(counts(state.boxes, DECK)).toEqual([60, 0, 0]);
+    expect(remaining(state.boxes, DECK)).toBe(60);
   });
 
   it("同じシードなら同じ出題順になる", () => {
@@ -102,7 +103,7 @@ describe("続きから始める", () => {
 
     const state = createQuiz(small, createRng(1), boxes);
 
-    expect(counts(state.boxes, small)).toEqual([3, 2, 1]);
+    expect(remaining(state.boxes, small)).toBe(QUESTIONS - 1);
     expect(state.boxes[keyOf("a", "reverse")]).toBe(1);
   });
 
@@ -125,7 +126,7 @@ describe("続きから始める", () => {
     const state = createQuiz(small, createRng(1), { [keyOf("a", "forward")]: 1 as Box });
 
     expect(state.boxes[keyOf("c", "reverse")]).toBe(0);
-    expect(counts(state.boxes, small)).toEqual([5, 1, 0]);
+    expect(remaining(state.boxes, small)).toBe(QUESTIONS);
   });
 
   /* why: 教材からカードが消えても、残った box だけで組み直せる */
@@ -140,8 +141,8 @@ describe("続きから始める", () => {
     const first = answerAll(createQuiz(small, createRng(1)), true, 4);
     const resumed = createQuiz(small, createRng(2), first.boxes);
 
-    expect(counts(resumed.boxes, small)).toEqual(counts(first.boxes, small));
-    expect(resumed.queue).toHaveLength(QUESTIONS - counts(first.boxes, small)[2]);
+    expect(remaining(resumed.boxes, small)).toBe(remaining(first.boxes, small));
+    expect(resumed.queue).toHaveLength(remaining(first.boxes, small));
   });
 });
 
@@ -205,7 +206,7 @@ describe("完了と集計", () => {
   it("全問 2 回正解で完了する", () => {
     const state = answerAll(createQuiz(small, createRng(1)), true, TO_COMPLETE);
 
-    expect(counts(state.boxes, small)).toEqual([0, 0, QUESTIONS]);
+    expect(remaining(state.boxes, small)).toBe(0);
     expect(isComplete(state)).toBe(true);
     expect(currentKey(state)).toBeUndefined();
   });
@@ -415,19 +416,76 @@ describe("選んだ肢", () => {
   });
 });
 
-describe("counts はデッキから数える", () => {
+describe("remaining はデッキから数える", () => {
   /* why: 保存された boxes だけを数えない。デッキにカードを足すと、古い保存には
-     そのキーが無く、合計が問題数に届かない */
+     そのキーが無く、未完了の数が足りなくなる */
   it("保存に無いキーは box 0 として数える", () => {
-    expect(counts({ [keyOf("a", "forward")]: 2 }, small)).toEqual([QUESTIONS - 1, 0, 1]);
+    expect(remaining({ [keyOf("a", "forward")]: 2 }, small)).toBe(QUESTIONS - 1);
   });
 
-  it("空の保存でも問題数ぶん並ぶ", () => {
-    expect(counts({}, small)).toEqual([QUESTIONS, 0, 0]);
+  it("空の保存なら全問が未完了", () => {
+    expect(remaining({}, small)).toBe(QUESTIONS);
   });
 
   it("デッキに無いキーは数えない", () => {
-    expect(counts({ [keyOf("z", "forward")]: 2 }, small)).toEqual([QUESTIONS, 0, 0]);
+    expect(remaining({ [keyOf("z", "forward")]: 2 }, small)).toBe(QUESTIONS);
+  });
+});
+
+/* why: 進捗バーは問題の数で数える。box では 1 周目のあいだ動かない */
+describe("answered は問題の数で数える", () => {
+  const key = keyOf("a", "forward");
+  const other = keyOf("b", "reverse");
+
+  it("答える前は全て未回答", () => {
+    expect(answered([], small)).toEqual([0, 0, QUESTIONS]);
+  });
+
+  it("正解した問題を青に数える", () => {
+    expect(answered([{ key, correct: true, chosen: CHOSEN }], small)).toEqual([
+      1,
+      0,
+      QUESTIONS - 1,
+    ]);
+  });
+
+  it("間違えた問題を赤に数える", () => {
+    expect(answered([{ key, correct: false, chosen: CHOSEN }], small)).toEqual([
+      0,
+      1,
+      QUESTIONS - 1,
+    ]);
+  });
+
+  /* why: 1 度でも間違えたら赤のまま。成績と同じ数え方 */
+  it("間違えたあと正解しても赤のまま", () => {
+    const answers = [
+      { key, correct: false, chosen: CHOSEN },
+      { key, correct: true, chosen: CHOSEN },
+    ];
+
+    expect(answered(answers, small)).toEqual([0, 1, QUESTIONS - 1]);
+  });
+
+  it("同じ問題に何度答えても 1 つ", () => {
+    const answers = [
+      { key, correct: true, chosen: CHOSEN },
+      { key, correct: true, chosen: CHOSEN },
+      { key: other, correct: true, chosen: CHOSEN },
+    ];
+
+    expect(answered(answers, small)).toEqual([2, 0, QUESTIONS - 2]);
+  });
+
+  /* why: デッキから消えたカードの回答が保存に残っていても、未回答を負にしない */
+  it("デッキに無い問題の回答があっても 0 で止まる", () => {
+    const answers = Array.from({ length: QUESTIONS + 3 }, (_, i) => ({
+      key: keyOf(`z${i}`, "forward"),
+      correct: true,
+      chosen: CHOSEN,
+    }));
+
+    expect(answered(answers, small)[2]).toBe(0);
   });
 });
 

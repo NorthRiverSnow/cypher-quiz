@@ -7,11 +7,12 @@ import {
   type QuizState,
   answerCurrent,
   cardIdOf,
-  counts as countsOf,
+  answered as answeredCounts,
   createQuiz,
   currentKey,
   directionOf,
   isComplete,
+  remaining as remainingOf,
 } from "../model/quiz";
 import { createRng } from "../model/rng";
 import type { Progress } from "./useProgress";
@@ -31,7 +32,10 @@ export type Face =
     }>;
 
 export type Quiz = Readonly<{
+  /** 進捗バーに渡す 正解 / 不正解 / 未回答 */
   counts: [number, number, number];
+  /** 完了していない問題の数。まだ何も答えていなければ undefined */
+  remaining: number | undefined;
   face: Face | undefined;
   /** 全ての向きが box 2 に届いた */
   complete: boolean;
@@ -113,7 +117,10 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
   }, [answered, asked, selected]);
 
   return {
-    counts: countsOf(state.boxes, deck),
+    counts: answeredCounts(state.answers, deck),
+    remaining: Object.values(state.boxes).some((box) => box > 0)
+      ? remainingOf(state.boxes, deck)
+      : undefined,
     face,
     complete: isComplete(state),
     select: setSelected,

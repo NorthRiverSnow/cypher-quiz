@@ -1,6 +1,6 @@
 import type { Direction, MissedCard, SectionId, SectionScore } from "../types";
 import type { Card } from "./deck";
-import { type Box, allDone, distribution, isDone, nextBox } from "./leitner";
+import { type Box, allDone, isDone, nextBox, remaining as notDone } from "./leitner";
 import { type Rng, shuffle } from "./rng";
 
 /** カード × 方向で 1 問。習熟度は向きごとに数える（docs/01_spec.md#2-出題形式） */
@@ -97,8 +97,8 @@ export const answerCurrent = (state: QuizState, correct: boolean, chosen: string
 
 /* why: 保存された boxes だけを数えない。デッキにカードを足すと、古い保存には
    そのキーが無く、合計が問題数に届かない */
-export const counts = (boxes: Boxes, deck: readonly Card[]): [number, number, number] =>
-  distribution(allKeys(deck).map((key) => boxes[key] ?? 0));
+export const remaining = (boxes: Boxes, deck: readonly Card[]): number =>
+  notDone(allKeys(deck).map((key) => boxes[key] ?? 0));
 
 export const isComplete = (state: QuizState): boolean => allDone(Object.values(state.boxes));
 
@@ -139,6 +139,19 @@ const missedCards = (deck: readonly Card[], answers: readonly Answer[]): MissedC
       ? []
       : [{ id: card.id, section: card.section, name: card.name, direction: directionOf(key) }];
   });
+
+/**
+ * 進捗バーに出す 3 つ。**問題の数**で、回答の回数ではない。
+ */
+export const answered = (
+  answers: readonly Answer[],
+  deck: readonly Card[],
+): [number, number, number] => {
+  const { asked, correct } = tally(answers);
+
+  /* why: 下限を 0 で止める。デッキから消えたカードの回答が保存に残っていると負になる */
+  return [correct, asked - correct, Math.max(0, allKeys(deck).length - asked)];
+};
 
 /**
  * サマリに出す成績。

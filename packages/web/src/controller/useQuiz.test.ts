@@ -268,14 +268,15 @@ describe("習熟度", () => {
     expect(saved()[0]?.answers[0]).toEqual({ key: "match:forward", correct: false, chosen: "肢" });
   });
 
-  it("counts が進む", () => {
+  /* why: 進捗バーは問題の数で数える。1 問目から動く */
+  it("正解した問題を青に数える", () => {
     const { result } = setup();
 
-    expect(result.current.counts).toEqual([QUESTIONS, 0, 0]);
+    expect(result.current.counts).toEqual([0, 0, QUESTIONS]);
 
     answerWith(result, true);
 
-    expect(result.current.counts).toEqual([QUESTIONS - 1, 1, 0]);
+    expect(result.current.counts).toEqual([1, 0, QUESTIONS - 1]);
   });
 });
 
@@ -293,7 +294,7 @@ describe("最後まで解く", () => {
 
     expect(result.current.complete).toBe(true);
     expect(result.current.face).toBeUndefined();
-    expect(result.current.counts).toEqual([0, 0, QUESTIONS]);
+    expect(result.current.counts).toEqual([QUESTIONS, 0, 0]);
   });
 
   /* why: 不正解は 3 問後ろに戻る。出題が尽きずに回り続ける */

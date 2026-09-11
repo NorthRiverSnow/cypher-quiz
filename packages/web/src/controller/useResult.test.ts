@@ -76,17 +76,24 @@ describe("成績", () => {
 });
 
 describe("進捗バー", () => {
-  it("保存が無ければ全問が box 0", () => {
+  it("保存が無ければ全問が未回答", () => {
     const { result } = setup();
 
-    expect(result.current.counts).toEqual([QUESTIONS, 0, 0]);
+    expect(result.current.counts).toEqual([0, 0, QUESTIONS]);
   });
 
-  /* why: 保存に無いキーも box 0 として数える。デッキにカードを足したときに合計が減らない */
-  it("保存に有るぶんだけ進む", () => {
-    const { result } = setup({ boxes: { "match:forward": 2, "with:reverse": 1 }, answers: [] });
+  /* why: box ではなく回答で数える。1 度でも間違えた問題は赤に入る */
+  it("正解と不正解を分けて数える", () => {
+    const { result } = setup({
+      boxes: {},
+      answers: [
+        { key: "match:forward", correct: true, chosen: "あ" },
+        { key: "with:reverse", correct: false, chosen: "い" },
+        { key: "with:reverse", correct: true, chosen: "う" },
+      ],
+    });
 
-    expect(result.current.counts).toEqual([QUESTIONS - 2, 1, 1]);
+    expect(result.current.counts).toEqual([1, 1, QUESTIONS - 2]);
   });
 });
 

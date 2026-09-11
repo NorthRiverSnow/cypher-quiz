@@ -2,10 +2,11 @@ import { useCallback, useState } from "react";
 
 import type { Card } from "../model/deck";
 import { DECK } from "../model/deck.data";
-import { type Score, counts, resetMissed, score } from "../model/quiz";
+import { type Score, answered, resetMissed, score } from "../model/quiz";
 import type { Progress } from "./useProgress";
 
 export type Result = Readonly<{
+  /** 進捗バーに渡す 正解 / 不正解 / まだ */
   counts: [number, number, number];
   score: Score;
   /** 進捗も成績も消す */
@@ -33,5 +34,5 @@ export const useResult = (progress: Progress, deck: readonly Card[] = DECK): Res
     progress.save({ boxes: resetMissed(boxes, answers), answers: [] });
   }, [answers, boxes, progress]);
 
-  return { counts: counts(boxes, deck), score: score(answers, deck), restart, retryMissed };
+  return { counts: answered(answers, deck), score: score(answers, deck), restart, retryMissed };
 };
