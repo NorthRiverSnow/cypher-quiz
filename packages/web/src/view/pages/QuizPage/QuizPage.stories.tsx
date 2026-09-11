@@ -4,7 +4,7 @@ import { fn } from "storybook/test";
 import { OPTIONAL_MATCH, SET_REMOVE } from "../../../fixtures/cards";
 import { QuizPage } from "./QuizPage";
 
-const EDITOR = { onChange: fn(), onRun: fn(), onReset: fn() };
+const EDITOR = { onChange: fn(), onEdit: fn(), onRun: fn(), onReset: fn() };
 
 const QUESTION = {
   section: OPTIONAL_MATCH.section,
@@ -30,7 +30,7 @@ const meta = {
   component: QuizPage,
   parameters: { layout: "fullscreen" },
   args: {
-    counts: [38, 14, 8],
+    counts: [48, 12, 72],
     face: { side: "question", question: { ...QUESTION, selected: 1 } },
   },
 } satisfies Meta<typeof QuizPage>;

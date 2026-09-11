@@ -70,6 +70,18 @@
 | `--service` | `#008076` | `#00d4c5` | Service |
 | `--incident` | `#da1d69` | `#ff8dab` | Incident |
 
+### 進捗バー
+
+| 区画 | トークン | 中身 |
+|---|---|---|
+| 左 | `--accent` | 正解した回答 |
+| 中 | `--alarm` | 間違えた回答 |
+| 右 | `--rule-soft` | 完了までに残る回答 |
+
+**数えるのは回答で、問題ではない**（[§7 の進捗バー](01_spec.md#7-画面と導線)）。
+
+**数字を出さない。** 内訳は `aria-valuetext` で読み上げに渡す。
+
 ### 影・版面・書体
 
 | トークン | 値 |
@@ -148,9 +160,6 @@ OKLCH（知覚均等空間）で測る。
 | 正解 | `--keep` |
 | 不正解 | `--alarm` |
 | 注意・罠 | `--warn` |
-| 進捗バー | box 0 は `--rule`、box 1 は `--accent`、box 2（完了）は `--keep` |
-
-**進捗バーは完了 → 1 回正解 → まだの順に区画を置く。** 完了が左から伸びる。
 | 結果表のノード | `--team` / `--engineer` / `--service` / `--incident` |
 
 **「正解」を名乗る色は `--keep` だけ。** 金（`--warn`）は注意・罠の専任で、正解には使わない。
@@ -256,7 +265,11 @@ font-feature-settings: "palt" 1;
 | `rel` | `--keep` | semibold | リレーション型 |
 | `hl` | `--warn` | semibold | 強調・リテラル |
 | `bad` | `--alarm` | semibold | 誤り |
-| `cm` | `--muted` | regular | コメント |
+| `cm` | `--muted` | regular | コメント（`//`。**Cypher の一部**） |
+| `note` | `--muted` | regular | 読み手への注釈（矢印・言い換え）。**Cypher ではない** |
+
+**`note` は実行するとき落とす。** 見た目は `cm` と同じだが、そのまま送ると構文エラーになる
+（`model/deck.ts` の `cypherOf`）。
 
 `rel` が `--keep` なのは、[緑が 1 本しか置けない](#srgb-で取れない色)ため。
 

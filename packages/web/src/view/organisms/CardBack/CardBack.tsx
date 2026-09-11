@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { type CodeSegment, SECTION_LABELS, type SectionId } from "../../../types";
 import { Button } from "../../atoms/Button/Button";
@@ -25,9 +25,13 @@ export type CardBackProps = {
   editor?: Omit<QueryEditorProps, "code">;
   /** 実行して返ってきた行。期待される実行結果とは別に、下へ積む */
   result?: ResultTableProps;
+  /** カードの先頭に置く。復習画面が設問を入れる */
+  header?: ReactNode;
   onNext: () => void;
   /** 最後の 1 枚なら進む先は結果。残っていれば次のカード */
   isLast?: boolean;
+  /** ボタンの文言。渡さなければ isLast から決まる */
+  nextLabel?: string;
 };
 
 const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
@@ -76,8 +80,10 @@ export const CardBack = ({
   warn,
   editor,
   result,
+  header,
   onNext,
   isLast = false,
+  nextLabel,
 }: CardBackProps) => {
   /* why: 正誤を props で受けない。受けると「正解なのに違う肢を正しいと出す」組み合わせが作れる */
   const isCorrect = chosen === correct;
@@ -87,6 +93,7 @@ export const CardBack = ({
     <Card>
       <div style={STACK}>
         <SectionLabel>{SECTION_LABELS[section]}</SectionLabel>
+        {header}
 
         <div style={GROUP}>
           {/* why: 記号だけなので、読み上げの名前を label で与える */}
@@ -151,7 +158,7 @@ export const CardBack = ({
         )}
 
         <div style={ACTIONS}>
-          <Button onClick={onNext}>{isLast ? "結果を見る" : "次の問題"}</Button>
+          <Button onClick={onNext}>{nextLabel ?? (isLast ? "結果を見る" : "次の問題")}</Button>
         </div>
       </div>
     </Card>

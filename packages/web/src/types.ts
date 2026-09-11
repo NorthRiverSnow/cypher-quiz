@@ -18,10 +18,32 @@ export const SECTION_LABELS: Record<SectionId, string> = {
 };
 
 /* コードの色分け。意味は docs/07_design.md#7-コードのハイライト */
-export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
+/* note は Cypher ではない。読み手への矢印や言い換えで、実行するときは落とす */
+export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm" | "note";
 
 /** kind が無ければ素の字 */
 export type CodeSegment = { text: string; kind?: CodeKind };
+
+/** 章ごとの成績（docs/01_spec.md#7-画面と導線） */
+export type SectionScore = Readonly<{ section: SectionId; asked: number; correct: number }>;
+
+/** 一度でも間違えた問題。行を押すとその裏を開く */
+export type MissedCard = Readonly<{
+  /* why: 押されたときに URL を組む。名前を使うと、文言を直した瞬間にリンクが壊れる */
+  id: string;
+  section: SectionId;
+  name: string;
+  direction: Direction;
+}>;
+
+/* 色は docs/07_design.md#エンティティ色。結果表の字にしか出ない */
+export type EntityKind = "team" | "engineer" | "service" | "incident";
+
+/** ノードとして返った値だけ色を持つ。それ以外は素の字 */
+export type ResultCell = string | Readonly<{ kind: EntityKind; text: string }>;
+
+/** クエリ実行の見え方。offline は未接続、rejected は読み取り専用で拒否された */
+export type QueryStatus = "idle" | "running" | "offline" | "rejected" | "error";
 
 /* 正順・逆順の意味は docs/01_spec.md#2-出題形式 */
 export type Direction = "forward" | "reverse";

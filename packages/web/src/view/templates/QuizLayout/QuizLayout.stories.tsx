@@ -11,7 +11,7 @@ const meta = {
   component: QuizLayout,
   parameters: { layout: "fullscreen" },
   args: {
-    progress: <ProgressBar counts={[38, 14, 8]} />,
+    progress: <ProgressBar counts={[48, 12, 72]} />,
     children: (
       <Card>
         <Text variant="prose">画面の中身が入る場所</Text>

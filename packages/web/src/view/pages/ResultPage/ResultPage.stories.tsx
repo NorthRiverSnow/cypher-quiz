@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import type { MissedCard, SectionScore } from "../../organisms/Summary/Summary";
+import type { MissedCard, SectionScore } from "../../../types";
 import { ResultPage } from "./ResultPage";
 
 const BY_SECTION: readonly SectionScore[] = [
@@ -14,8 +14,8 @@ const BY_SECTION: readonly SectionScore[] = [
 ];
 
 const MISSED: readonly MissedCard[] = [
-  { section: "patterns", name: "varlen", direction: "reverse" },
-  { section: "lists", name: "count(DISTINCT x)", direction: "reverse" },
+  { id: "varlen", section: "patterns", name: "varlen", direction: "reverse" },
+  { id: "distinct", section: "lists", name: "count(DISTINCT x)", direction: "reverse" },
 ];
 
 const meta = {
@@ -23,7 +23,7 @@ const meta = {
   component: ResultPage,
   parameters: { layout: "fullscreen" },
   args: {
-    counts: [0, 0, 60],
+    counts: [104, 16, 0],
     summary: {
       asked: 60,
       correct: 48,

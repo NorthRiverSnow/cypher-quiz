@@ -5,7 +5,7 @@ import { OPTIONAL_MATCH, SET_REMOVE, WITH } from "../../../fixtures/cards";
 import { CardBack } from "./CardBack";
 
 /* 実行できるカードに渡すもの。結線は controller の仕事なので story では記録だけ取る */
-const EDITOR = { onChange: fn(), onRun: fn(), onReset: fn() };
+const EDITOR = { onChange: fn(), onEdit: fn(), onRun: fn(), onReset: fn() };
 
 const meta = {
   title: "organisms/CardBack",

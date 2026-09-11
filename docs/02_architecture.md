@@ -12,6 +12,7 @@
 | 設計様式 | **関数型。クラスを使わない** | 指定 |
 | ツールチェーン | **Vite+ 0.3.0**（`vp`） | 指定。vite 8 / vitest 4 / oxlint 1 / oxfmt / rolldown / tsdown が 1 依存に収まる |
 | フロント | Vite + React | 指定 |
+| データ取得 | **SWR** | 取得・キャッシュ・再検証を controller に閉じる。`fetch` は [`api/client.ts`](#web-の取得は-swr-に載せる) だけ |
 | コンポーネント開発 | **Storybook**（`@storybook/react-vite`） | 指定。ここから着手する |
 | バックエンド | **Hono** + `@hono/zod-openapi` | 指定。OpenAPI がルート定義から導出される |
 | スキーマ / 検証 | Zod（`@hono/zod-openapi` 経由） | 型・実行時検証・OpenAPI の唯一の真実にできる |
@@ -38,6 +39,33 @@
 **web は Hono も neo4j-driver も知らない。** `shared` の Zod から `z.infer` で型を取るだけ。
 
 書き方は Skill の `api-new`。
+
+### web の取得は SWR に載せる
+
+`fetch` を書いてよいのは **`api/client.ts` だけ**で、そこは `Result<T, ApiError>` を返す。
+SWR で包むのは controller で、`useSWR` を呼ぶのもそこだけ。
+
+| | |
+|---|---|
+| fetcher | `Result` を開き、**`err` は throw する**（`unwrap`） |
+| `data` | 成功した値そのもの。`Result` は残らない |
+| `onError` | 通知に積む。**投げたものが `ApiError` とは限らない**ので `ApiErrorSchema` で受け直す |
+| 実行（`/api/run`） | `useSWRMutation`。**`throwOnError: false`** を渡す——既定では `trigger` が reject する |
+| `onSuccess` | 同じ種類の通知を取り下げる |
+
+**SWR は「fetcher が reject したか」で失敗を決める**（実測）。`Result` の `err` を
+そのまま返すと `onSuccess` に流れ、`onError` も `error` も一生使われない。
+**境界の内側（`api/client.ts`）は `Result` のまま**で、SWR に載せる継ぎ目だけが throw する。
+
+**`unwrap` は `async` にする。** 同期 `throw` では SWR の状態が確定せず、
+`isLoading` が `true` のまま残る（実測）。
+
+**`shouldRetryOnError` は切る。** 既定は無限に再試行するが、`not-connected` も
+client のバグも投げ直して直るものではない。
+
+**`revalidateOnFocus` も切る。** dev 自動接続は「クッキーが無ければ繋ぐ」なので、
+タブを戻っただけで再取得すると切断が取り消され、手入力に戻す道
+（[歯止め](./03_api.md#歯止め) の 5）が塞がる。切った後も取り直さない。
 
 ---
 
@@ -189,7 +217,7 @@ export type Result<T, E> =
 
 ```ts
 // vite.config.ts（抜粋）
-const NO_LOGIC = ["**/model/**", "**/controller/**"];
+const NO_LOGIC = ["**/model/**", "**/controller/**", "**/api/**"];
 
 lint: {
   options: { typeAware: true, typeCheck: true },
@@ -199,7 +227,16 @@ lint: {
       files: ["packages/web/src/model/**"],
       rules: {
         "no-restricted-imports": ["error", {
-          patterns: ["react", "react-dom", "**/view/**", "**/controller/**"],
+          patterns: ["react", "react-dom", "**/view/**", "**/controller/**", "**/api/**"],
+        }],
+      },
+    },
+    {
+      // api/client.ts は fetch だけ。呼ぶのは controller で、自分からは誰も呼ばない
+      files: ["packages/web/src/api/**"],
+      rules: {
+        "no-restricted-imports": ["error", {
+          patterns: ["react", "react-dom", "**/view/**", "**/controller/**", "**/model/**"],
         }],
       },
     },
@@ -209,9 +246,13 @@ lint: {
       rules: { "no-restricted-imports": ["error", { patterns: NO_LOGIC }] },
     },
     {
-      // 結線の層。controller は呼ぶが、model には触らない
-      files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
-      rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**"] }] },
+      // 結線の層。controller は呼ぶが、model にも api にも触らない
+      files: [
+        "packages/web/src/routes.tsx",
+        "packages/web/src/main.tsx",
+        "packages/web/src/screens/**",
+      ],
+      rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**", "**/api/**"] }] },
     },
     // アトミックデザインの層。下の層しか import できない
     {
@@ -288,6 +329,31 @@ api 側も **3 方向を確認した**——`routes` → `neo4j`、`controller` 
 | **Model** | `react` / `react-dom` の import、`document` / `window`、クラス、`let`、破壊的変更 | `localStorage` は `progress.ts` の 1 ファイルのみ |
 | **View** | `model/` と `controller/` の import、`fetch`、`useEffect` | ローカルな入力エコー用の `useState` のみ |
 | **Controller** | — | Model と View の両方を知ってよい唯一の層 |
+
+### 実行結果をセルに直す
+
+`/api/run` が返す [`Cell`](./03_api.md#セル-1-つの対応) を、結果表が描ける
+`ResultCell`（`string` か `{ kind, text }`）に直すのは `model/result.ts`。
+
+| `Cell` | 出るもの |
+|---|---|
+| 文字列・数・真偽 | そのまま文字に |
+| `null` | **`null` と出す。** 空文字にすると、値が無いのか空文字なのかが読めない |
+| ノード | **名前**（`name` → `id` → `title`）。無ければ `(ラベル:ラベル)` |
+| リレーション | `[:TYPE]` |
+| パス | 名前を `→` で繋ぐ |
+| マップ | `{ 名: 値, … }` |
+| リスト | `[値, 値]`。入れ子も同じ |
+
+**色が付くのはノードが単独で返ったときだけ。** ラベルから
+[エンティティ色](./07_design.md#エンティティ色)を引く。`ResultCell` は入れ子を持てないので、
+**リストの中のノードは文字に潰れる。**
+
+**ラベルは複数付く**（`SET n:Upstream` のカード）。並びは Neo4j が決めるので、
+先頭ではなく**既知のものを探して**使う。
+
+**パスの `→` が指すのは辿った順で、リレーションの向きではない。**
+`PathValue` は `nodes` と `relationships` を持つだけで、始点と終点を持たない。
 
 ### View の中の層（アトミックデザイン）
 
@@ -559,10 +625,11 @@ cypher-quiz/
          │  ├─ deck.data.ts          # 30 枚の固定データ
          │  ├─ deck.ts               # Card の型。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
-         │  ├─ quiz.ts              # QuizState / reduceQuiz / セレクタ
+         │  ├─ quiz.ts              # QuizState（queue / boxes / answers）と セレクタ（counts / score）
          │  ├─ leitner.ts           # box 遷移
          │  ├─ rng.ts               # シード付き擬似乱数
-         │  └─ progress.ts          # localStorage はここだけ
+         │  ├─ progress.ts          # model で localStorage を触るのはここだけ。box と成績を 1 キーに
+         │  └─ result.ts            # Cell → ResultCell。色が付くのはノードだけ
          │
          ├─ view/                   # ★ 純関数。props in / callback out
          │  │                       #   アトミックデザイン。下の層しか import できない
@@ -591,16 +658,28 @@ cypher-quiz/
          │     ├─ StartPage/
          │     ├─ ConnectPage/
          │     ├─ QuizPage/         # 表か裏のどちらか
-         │     └─ ResultPage/
+         │     ├─ ResultPage/
+         │     └─ ReviewPage/      # 不正解カードを開き直す。進捗バーを出さない
          │
          ├─ controller/             # model の副作用を呼べる唯一の層
          │  ├─ useNotices.ts        # 通知の一覧。report が失敗の唯一の入口
          │  ├─ useGlobalErrors.ts   # 境界が拾えない例外を通知に積む
-         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所
+         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所。load / save / clear
          │  ├─ useTheme.ts          # data-theme と localStorage。View の外
-         │  ├─ useQuiz.ts
+         │  ├─ useQuiz.ts           # 出題・答え合わせ・習熟度の保存。表と裏を Face で返す
+         │  ├─ useResult.ts         # サマリ。クイズを組まず、保存された回答を数える
+         │  ├─ useReview.ts         # 間違えた問題を開き直す。保存を読むだけ
+         │  ├─ useRun.ts            # /api/run。失敗は編集欄の中に出す
+         │  ├─ swr.ts               # Result を SWR の成功／失敗に振り分ける
          │  └─ useConnection.ts
          │
+         ├─ screens/               # ★ 結線。useXXX を呼び、pages に props で渡す
+         │  ├─ screen.ts            # ScreenProps。notices は積む口、band は描くもの
+         │  ├─ StartScreen.tsx
+         │  ├─ ConnectScreen.tsx
+         │  ├─ QuizScreen.tsx
+         │  ├─ ResultScreen.tsx
+         │  └─ ReviewScreen.tsx
          ├─ fixtures/               # Storybook とテストが共有するサンプルデータ
          ├─ styles/
          │  ├─ index.ts             # CSS の入口。アプリと Storybook が同じものを読む
@@ -619,17 +698,49 @@ cypher-quiz/
 
 これがフェーズ A（見た目を先に決める）を成立させる要。
 
+### 画面は保存から組み直す
+
+**結線は `src/screens/` に置く。** `routes.tsx` は URL と画面の対応だけを持ち、
+hook を呼ばない。画面が `useXXX` を呼び、結果を props でページに渡す。
+
+```
+routes.tsx      <Route path="/quiz" element={<QuizScreen … />} /> の表だけ
+screens/        useXXX を呼び、view/pages/* に props で渡す
+controller/     hook。データを返すだけで、View を描かない
+view/pages/     全状態を props で受ける純関数
+```
+
+**画面ごとに mount される。** `/quiz` から `/result` へ移ると `QuizScreen` は消え、
+`useQuiz` の状態も消える。**引き継ぎは localStorage だけ**で、React の state を跨がせない。
+
+そのため **`{ boxes, answers }` から出題を完全に組み直せる**ことが要る。
+キューは保存していないので、「次に何を出すか」を伝える手段は box しかない。
+
+### やり直しは保存を書き換えて遷移する
+
+サマリの「もう一度」と「不正解だけもう一度」は、**`useQuiz` の口ではない。**
+保存を書き換えてから `/quiz` へ送れば、次の `QuizScreen` がそれを読んで組み直す。
+
+| ボタン | 書き換えるもの |
+|---|---|
+| もう一度 | 保存を消す（`progress.clear()`） |
+| 不正解だけもう一度 | 間違えた問題の box を 0 に戻し、成績を空にして保存（`resetMissed`） |
+
+**成績はクイズを組まずに出せる。** `score(answers, deck)` は回答だけを引くので、
+`ResultScreen` は `progress.load()` の `answers` を渡すだけでよい。
+
 ### URL とページの対応
 
 `src/routes.tsx` が持つ。**ページは URL も遷移も知らない。**
 
-| URL | ページ | 進む先 |
-|---|---|---|
-| `/` | `StartPage` | `/connect` |
-| `/connect` | `ConnectPage` | 接続 / 接続せずに始める → `/quiz` |
-| `/quiz` | `QuizPage` | 最後の 1 枚の次 → `/result` |
-| `/result` | `ResultPage` | もう一度 / 不正解だけ → `/quiz` |
-| 上記以外 | — | `/` へ送る |
+| URL | 画面 | ページ | 進む先 |
+|---|---|---|---|
+| `/` | `StartScreen` | `StartPage` | `/connect` |
+| `/connect` | `ConnectScreen` | `ConnectPage` | 接続 / 接続せずに始める → `/quiz` |
+| `/quiz` | `QuizScreen` | `QuizPage` | 最後の 1 枚の次 → `/result` |
+| `/result` | `ResultScreen` | `ResultPage` | もう一度 / 不正解だけ → `/quiz` |
+| `/review/:cardId/:direction` | `ReviewScreen` | `ReviewPage` | 結果に戻る → `/result` |
+| 上記以外 | — | — | `/` へ送る |
 
 **ページに `useNavigate` を持たせない。** 持たせると story とテストに Router が必要になり、
 View が遷移を知ることになる。`routes.tsx` が薄い包みを作り、そこで `navigate` に繋ぐ。

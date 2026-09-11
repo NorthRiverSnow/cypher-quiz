@@ -103,7 +103,7 @@ describe("CardBack", () => {
       <CardBack
         {...BASE}
         code={WITH.code}
-        editor={{ onChange: vi.fn(), onRun: vi.fn(), onReset: vi.fn() }}
+        editor={{ onChange: vi.fn(), onEdit: () => undefined, onRun: vi.fn(), onReset: vi.fn() }}
       />,
     );
 
@@ -111,7 +111,12 @@ describe("CardBack", () => {
   });
 
   it("クエリが無ければ道具も出さない", () => {
-    render(<CardBack {...BASE} editor={{ onChange: vi.fn(), onRun: vi.fn(), onReset: vi.fn() }} />);
+    render(
+      <CardBack
+        {...BASE}
+        editor={{ onChange: vi.fn(), onEdit: () => undefined, onRun: vi.fn(), onReset: vi.fn() }}
+      />,
+    );
 
     expect(screen.queryByRole("button", { name: "実行" })).toBeNull();
   });

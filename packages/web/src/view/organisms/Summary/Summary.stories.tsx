@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import { type MissedCard, type SectionScore, Summary } from "./Summary";
+import type { MissedCard, SectionScore } from "../../../types";
+import { Summary } from "./Summary";
 
 /* 30 枚 × 2 方向 = 60 問（docs/01_spec.md#2-出題形式） */
 const BY_SECTION: readonly SectionScore[] = [
@@ -14,10 +15,10 @@ const BY_SECTION: readonly SectionScore[] = [
 ];
 
 const MISSED: readonly MissedCard[] = [
-  { section: "patterns", name: "varlen", direction: "reverse" },
-  { section: "shaping", name: "ORDER BY", direction: "forward" },
-  { section: "lists", name: "count(DISTINCT x)", direction: "reverse" },
-  { section: "subqueries", name: "CALL { }", direction: "forward" },
+  { id: "varlen", section: "patterns", name: "varlen", direction: "reverse" },
+  { id: "order-by", section: "shaping", name: "ORDER BY", direction: "forward" },
+  { id: "distinct", section: "lists", name: "count(DISTINCT x)", direction: "reverse" },
+  { id: "call-subquery", section: "subqueries", name: "CALL { }", direction: "forward" },
 ];
 
 const meta = {
@@ -62,11 +63,11 @@ export const 不正解が多い: Story = {
     bySection: BY_SECTION.map((score) => ({ ...score, correct: Math.floor(score.asked / 2) })),
     missed: [
       ...MISSED,
-      { section: "skeleton", name: "OPTIONAL MATCH", direction: "forward" },
-      { section: "skeleton", name: "WITH", direction: "reverse" },
-      { section: "patterns", name: "-[:REL]->", direction: "forward" },
-      { section: "writing", name: "MERGE", direction: "reverse" },
-      { section: "writing", name: "FOREACH", direction: "forward" },
+      { id: "optional-match", section: "skeleton", name: "OPTIONAL MATCH", direction: "forward" },
+      { id: "with", section: "skeleton", name: "WITH", direction: "reverse" },
+      { id: "edge", section: "patterns", name: "-[:REL]->", direction: "forward" },
+      { id: "merge", section: "writing", name: "MERGE", direction: "reverse" },
+      { id: "foreach", section: "writing", name: "FOREACH", direction: "forward" },
     ],
   },
 };

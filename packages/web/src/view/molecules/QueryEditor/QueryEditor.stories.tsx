@@ -13,7 +13,7 @@ const meta = {
   title: "molecules/QueryEditor",
   component: QueryEditor,
   parameters: { layout: "padded" },
-  args: { code: WITH.code ?? [], onChange: fn(), onRun: fn(), onReset: fn() },
+  args: { code: WITH.code ?? [], onChange: fn(), onEdit: fn(), onRun: fn(), onReset: fn() },
   decorators: [
     (Story) => (
       <div style={{ maxWidth: "var(--col)" }}>
@@ -99,5 +99,20 @@ export const 編集済みで割れる: Story = {
   args: {
     value:
       "MATCH (i:Incident)\nWHERE i.title =~ '(?i).*(disconnect|throttling|saturation|misconfiguration|escalation|degradation|oom_kill|timeout).*'\nRETURN i.id",
+  },
+};
+
+/* 1 本のクエリになっていない例。押す前に書き換えを促す */
+export const 構文の一覧: Story = {
+  args: { listing: true },
+};
+
+/* why: 失敗しても案内は消さない。エラーだけでは「1 文に割ればよい」が読めない */
+export const 構文の一覧を実行して失敗: Story = {
+  args: {
+    listing: true,
+    status: "error",
+    errorMessage:
+      "Invalid input 'SHOW': expected 'FOREACH', 'ORDER BY', 'CALL' … (line 4, column 1)",
   },
 };

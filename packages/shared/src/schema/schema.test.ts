@@ -29,11 +29,11 @@ describe("ConnectRequestSchema", () => {
     expect(parsed.success).toBe(false);
   });
 
-  /* why: 例は /docs の「試す」に初期値として入る。compose のサービス名だとホストから
-     引けず、名前解決の失敗を毎回踏む */
-  it("接続先の例はホストから引ける形にする", () => {
+  /* why: 例は /docs の「試す」に初期値として入る。この URI を名前解決するのは api で、
+     api はコンテナの中にいる。localhost だと api 自身を指して繋がらない */
+  it("接続先の例は api から引ける形にする", () => {
     expect(ConnectRequestSchema.shape.uri.meta()).toMatchObject({
-      example: "bolt://localhost:7687",
+      example: "bolt://neo4j:7687",
     });
   });
 

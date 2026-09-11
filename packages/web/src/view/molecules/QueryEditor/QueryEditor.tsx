@@ -1,24 +1,26 @@
 import type { ChangeEvent, CSSProperties } from "react";
 
-import type { CodeSegment } from "../../../types";
+import type { CodeSegment, QueryStatus } from "../../../types";
 import { CodeBlock } from "../../atoms/CodeBlock/CodeBlock";
 import { IconButton } from "../../atoms/IconButton/IconButton";
 import { Toolbar } from "../../atoms/Toolbar/Toolbar";
 import { TEXT } from "../../atoms/Text/Text";
 import { Note, type NoteTone } from "../Note/Note";
 
-export type QueryStatus = "idle" | "running" | "offline" | "rejected" | "error";
-
 export type QueryEditorProps = {
   code: readonly CodeSegment[];
   /** 編集後の本文。undefined なら未編集で、色付きのまま出す */
   value?: string;
   onChange: (value: string) => void;
+  /** 編集を始める。**色付きの表示から textarea に切り替わる唯一の入口** */
+  onEdit: () => void;
   onRun: () => void;
   onReset: () => void;
   status?: QueryStatus;
   /** status が "error" のときの DB からの文言 */
   errorMessage?: string;
+  /** 例が構文の一覧で、1 本のクエリになっていない */
+  listing?: boolean;
 };
 
 /* why: 道具と本文を 1 つの枠に収める。離すと道具がどの本文のものか読めない */
@@ -67,17 +69,38 @@ const MESSAGE: Record<"offline" | "rejected" | "error", Message> = {
   error: { tone: "alarm", label: "エラー", text: "" },
 };
 
+/* why: 押す前に出す。一覧をそのまま送ると Neo4j の構文エラーが返るだけで、
+   何を直せばよいかが読めない */
+const LISTING: Message = {
+  tone: "warn",
+  label: "注意",
+  text: "この例は構文の一覧です。1 文に書き換えて試してください。",
+};
+
 export const QueryEditor = ({
   code,
   value,
   onChange,
+  onEdit,
   onRun,
   onReset,
   status = "idle",
   errorMessage,
+  listing = false,
 }: QueryEditorProps) => {
   const edited = value !== undefined;
-  const note = status === "idle" || status === "running" ? undefined : MESSAGE[status];
+  const ran = status !== "idle" && status !== "running";
+  /* why: 失敗しても一覧の注意は消さない。「何が起きたか」と「どう直すか」は別の話で、
+     エラーだけ出しても 1 文に割ればよいことが読めない */
+  const notes = [
+    ran
+      ? {
+          ...MESSAGE[status],
+          text: status === "error" ? (errorMessage ?? "") : MESSAGE[status].text,
+        }
+      : undefined,
+    listing && (!edited || status === "error") ? LISTING : undefined,
+  ].filter((note) => note !== undefined);
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange(event.currentTarget.value);
@@ -87,6 +110,12 @@ export const QueryEditor = ({
     <div style={{ display: "grid", gap: "var(--space-xs)" }}>
       <div style={FRAME}>
         <Toolbar>
+          <IconButton
+            icon="edit"
+            label="編集"
+            onClick={onEdit}
+            disabled={edited || status === "running"}
+          />
           <IconButton
             icon="restart_alt"
             label="リセット"
@@ -106,11 +135,11 @@ export const QueryEditor = ({
           <CodeBlock code={code} bare />
         )}
       </div>
-      {note !== undefined && (
-        <Note tone={note.tone} icon="warning" iconLabel={note.label}>
-          {status === "error" ? errorMessage : note.text}
+      {notes.map((note) => (
+        <Note key={note.label + note.text} tone={note.tone} icon="warning" iconLabel={note.label}>
+          {note.text}
         </Note>
-      )}
+      ))}
     </div>
   );
 };

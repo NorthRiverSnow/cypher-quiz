@@ -2,7 +2,7 @@ import { defineConfig } from "vite-plus";
 
 /* why: View の各層に同じ patterns を書き足す。同じファイルに override が 2 つ当たると
    後の設定が前を置き換えるので、アトミックデザインの規則だけを書くと MVC の禁止が消える */
-const NO_LOGIC = ["**/model/**", "**/controller/**"];
+const NO_LOGIC = ["**/model/**", "**/controller/**", "**/api/**"];
 
 export default defineConfig({
   fmt: {
@@ -34,7 +34,17 @@ export default defineConfig({
         rules: {
           "no-restricted-imports": [
             "error",
-            { patterns: ["react", "react-dom", "**/view/**", "**/controller/**"] },
+            { patterns: ["react", "react-dom", "**/view/**", "**/controller/**", "**/api/**"] },
+          ],
+        },
+      },
+      {
+        // api/client.ts は fetch だけ。呼ぶのは controller で、自分からは誰も呼ばない
+        files: ["packages/web/src/api/**"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            { patterns: ["react", "react-dom", "**/view/**", "**/controller/**", "**/model/**"] },
           ],
         },
       },
@@ -44,9 +54,13 @@ export default defineConfig({
         rules: { "no-restricted-imports": ["error", { patterns: NO_LOGIC }] },
       },
       {
-        // 結線の層。controller は呼ぶが、model には触らない
-        files: ["packages/web/src/routes.tsx", "packages/web/src/main.tsx"],
-        rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**"] }] },
+        // 結線の層。controller は呼ぶが、model にも api にも触らない
+        files: [
+          "packages/web/src/routes.tsx",
+          "packages/web/src/main.tsx",
+          "packages/web/src/screens/**",
+        ],
+        rules: { "no-restricted-imports": ["error", { patterns: ["**/model/**", "**/api/**"] }] },
       },
       {
         // api のルートは HTTP だけ。DB には controller を通してしか触らない

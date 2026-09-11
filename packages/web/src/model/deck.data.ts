@@ -22,7 +22,6 @@ export const DECK: readonly Card[] = [
     expected: "telemetry-ingest   Go\ngrid-monitor       Go\ndispatch-optimizer Python\n3 行",
     note: "カンマで複数のパターンを並べられます。このとき結合しているのはカンマではなく、共有された変数です。",
     warn: "デカルト積に注意。 共有変数のないパターンをカンマで並べると行数が掛け算になります。 (e:Engineer)-[:MEMBER_OF]->(t), (i:Incident)-[:AFFECTED]->(s) は 30 × 35 = 1,050 行。Neo4j も警告を出します。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -50,7 +49,6 @@ export const DECK: readonly Card[] = [
     ],
     expected: "Killua Zoldyck   0",
     note: "ここを普通の MATCH にすると Killua Zoldyck は 行ごと消えて結果は29人になります。「居ないこと」を出したいときに必須。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -75,7 +73,6 @@ export const DECK: readonly Card[] = [
     expected:
       "INC-2118  Meter reader fleet disconnects…\nINC-2120  Billing engine OOM during…\n2 行",
     note: "使える述語：",
-    runnable: true,
     mutates: false,
   },
   {
@@ -100,11 +97,11 @@ export const DECK: readonly Card[] = [
       { text: " t) " },
       { text: "AS", kind: "kw" },
       { text: " teams_involved   " },
-      { text: "← i が暗黙のグループ化キー", kind: "cm" },
+      { text: "← i が暗黙のグループ化キー", kind: "note" },
       { text: "\n" },
       { text: "WHERE", kind: "kw" },
       { text: " teams_involved > 1                    " },
-      { text: "← 集約後の絞り込み = SQL の HAVING", kind: "cm" },
+      { text: "← 集約後の絞り込み = SQL の HAVING", kind: "note" },
       { text: "\n" },
       { text: "RETURN", kind: "kw" },
       { text: " count(i) " },
@@ -114,7 +111,6 @@ export const DECK: readonly Card[] = [
     expected: "52 行 → 20 行 → 13 行 → 1 行（13）",
     note: "3つの働きがあります。",
     warn: "キーは書かれていないので、うっかり増える。 WITH i, e, count(DISTINCT t) と項目を1つ足すとキーが (i, e) になり、 52行が畳まれず teams_involved は全部 1 になります。エラーは出ません。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -134,7 +130,6 @@ export const DECK: readonly Card[] = [
       { text: "// ノードそのものも返せる", kind: "cm" },
     ],
     note: "ノードやリレーション、パスをそのまま返せます。Navigator が3Dで描けるのは、 RETURN n, r, m がノード実体を返しているからです。",
-    runnable: false,
     mutates: false,
   },
   {
@@ -144,19 +139,19 @@ export const DECK: readonly Card[] = [
     role: "丸括弧。中に 変数・ラベル・プロパティ を好きな組み合わせで書く。",
     code: [
       { text: "()                          " },
-      { text: "何でもいい1ノード（匿名）", kind: "cm" },
+      { text: "何でもいい1ノード（匿名）", kind: "note" },
       { text: "\n(s)                         " },
-      { text: "変数 s に束縛", kind: "cm" },
+      { text: "変数 s に束縛", kind: "note" },
       { text: "\n(:Service)                  " },
-      { text: "Service ラベルだけ", kind: "cm" },
+      { text: "Service ラベルだけ", kind: "note" },
       { text: "\n(s:Service)                 " },
-      { text: "両方", kind: "cm" },
+      { text: "両方", kind: "note" },
       { text: "\n(s:Service {language:'Go'}) " },
-      { text: "プロパティで絞る", kind: "cm" },
+      { text: "プロパティで絞る", kind: "note" },
     ],
     note: "変数が要らないところは省くのが読みやすい書き方です。 (:Service {name:'auth-service'}) のように、後で使わない中継ノードは無名にします。",
-    runnable: false,
     mutates: false,
+    listing: true,
   },
   {
     id: "edge",
@@ -165,22 +160,22 @@ export const DECK: readonly Card[] = [
     role: "角括弧と矢印。向きは「探索の通行方向」を決める。",
     code: [
       { text: "-[:DEPENDS_ON]->   " },
-      { text: "左が始点", kind: "cm" },
+      { text: "左が始点", kind: "note" },
       { text: "\n<-[:DEPENDS_ON]-   " },
-      { text: "右が始点", kind: "cm" },
+      { text: "右が始点", kind: "note" },
       { text: "\n-[:DEPENDS_ON]-    " },
-      { text: "向き不問（両方通る）", kind: "cm" },
+      { text: "向き不問（両方通る）", kind: "note" },
       { text: "\n-[r:DEPENDS_ON]->  " },
-      { text: "変数 r に束縛（r.prop が読める）", kind: "cm" },
+      { text: "変数 r に束縛（r.prop が読める）", kind: "note" },
       { text: "\n-[:OWNS|AFFECTED]-> " },
-      { text: "複数の型のどれか", kind: "cm" },
+      { text: "複数の型のどれか", kind: "note" },
       { text: "\n-->                " },
-      { text: "型不問", kind: "cm" },
+      { text: "型不問", kind: "note" },
     ],
     expected:
       "customer-portal を起点に\n-[:DEPENDS_ON]->  →  4 件（依存する先）\n<-[:DEPENDS_ON]-  →  1 件（依存される元）",
-    runnable: true,
     mutates: false,
+    listing: true,
   },
   {
     id: "varlen",
@@ -203,7 +198,6 @@ export const DECK: readonly Card[] = [
     expected:
       "14 パス → DISTINCT 7 件\napi-gateway, auth-service, billing-engine,\nmobile-api, meter-reader, payment-gateway,\ntariff-service",
     note: "返るのはノードではなくパス。同じノードに複数経路で着けばその回数だけ行が出るので DISTINCT がほぼ必須です。同一パス内での同じエッジの再利用は Cypher が禁じているため、矢印を辿ると一周して戻れてしまうグラフでも無限ループにはなりません。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -233,7 +227,6 @@ export const DECK: readonly Card[] = [
     ],
     expected: "[Winry Rockbell, INC-2105,\n billing-engine, payment-gateway]\n1 行",
     note: "条件を満たすパスがちょうど1本しかないので、1行だけ返ります。これが 「Winry は payment-gateway に繋がっている」の証跡そのものです — どのインシデント経由で、どのサービスを挟んで繋がったのかが1行に出ています。 INC-2105 だけ id なのは Incident が name を持たないためで、 そこを coalesce が吸収しています。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -259,7 +252,6 @@ export const DECK: readonly Card[] = [
     ],
     expected: "customer-portal → outage-notifier\n  → grid-monitor → telemetry-ingest\nlength = 3",
     warn: "向きを付けると答えが消えます。 上の例の -[:DEPENDS_ON*]- を -[:DEPENDS_ON*]-> にすると 0 行。有向では customer-portal から telemetry-ingest に到達できないためです （reporting-service からなら有向で2ホップ）。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -292,7 +284,6 @@ export const DECK: readonly Card[] = [
     expected:
       "i.id       qualifies   responders\nINC-2120   true        3\nINC-2104   false       2",
     note: "通常の MATCH で書くと行が増えてしまう判定を、列として取れるのが利点です。 WHERE NOT EXISTS { … } で「〜が無いもの」も書けます。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -313,7 +304,6 @@ export const DECK: readonly Card[] = [
     ],
     expected: "SEV2   9\nSEV1   6\nSEV3   5",
     note: "null は昇順で最後、降順で最初に来ます。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -342,7 +332,6 @@ export const DECK: readonly Card[] = [
     expected: "auth-service     4\nbilling-engine   3",
     note: "WITH … LIMIT を途中に挟むと、後続の処理が扱う行を先に減らせます。 重い探索の前に置くと効きます。",
     warn: "同数のときの順序は保証されません。 このデータは3位が data-lake-sync / grid-monitor / meter-reader / telemetry-ingest の 4件同点（各2）なので、LIMIT 3 は実行のたびに違う1件を返しうる。 タイブレークの第2キー（上例の s.name）を必ず入れます。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -353,19 +342,19 @@ export const DECK: readonly Card[] = [
     code: [
       { text: "RETURN DISTINCT", kind: "kw" },
       { text: " up.name       " },
-      { text: "行の重複を落とす", kind: "cm" },
+      { text: "行の重複を落とす", kind: "note" },
       { text: "\ncount(" },
       { text: "DISTINCT", kind: "kw" },
       { text: " t)           " },
-      { text: "集約する値の重複を落とす", kind: "cm" },
+      { text: "集約する値の重複を落とす", kind: "note" },
       { text: "\ncollect(" },
       { text: "DISTINCT", kind: "kw" },
       { text: " t.name)    " },
-      { text: "同上", kind: "cm" },
+      { text: "同上", kind: "note" },
     ],
     warn: "この2つは別物です。 count(t) は行数、count(DISTINCT t) は種類数。 cross-team の例では前者が 20、後者が 13 になり、答えが変わります。",
-    runnable: false,
     mutates: false,
+    listing: true,
   },
   {
     id: "union",
@@ -400,7 +389,6 @@ export const DECK: readonly Card[] = [
     ],
     expected: "Go のサービス 5 + チーム 8 = 13 行",
     note: "UNION は重複を落とし、UNION ALL は落としません。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -425,7 +413,6 @@ export const DECK: readonly Card[] = [
     expected:
       "Core Infrastructure   4\nCustomer Platform     4\n…\nField Systems         3\nForecasting & AI      3",
     note: "count(*) は行数、count(x) は x が null でない行数。OPTIONAL MATCH と組むとこの差が効きます。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -446,7 +433,6 @@ export const DECK: readonly Card[] = [
     expected:
       "Grid Operations\n  [telemetry-ingest, grid-monitor,\n   dispatch-optimizer]\nPayments & Billing\n  [payment-gateway, billing-engine,\n   tariff-service]",
     note: "null は自動的に除かれます。OPTIONAL MATCH の後に置くと 「該当なしは空リスト []」という扱いやすい形になります。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -468,8 +454,7 @@ export const DECK: readonly Card[] = [
     ],
     expected: "SEV1  6\nSEV2  9",
     note: "Python のリストをパラメータで渡し、1行ずつに開いて処理します。 15件のサービスを1クエリで投入できるのはこれのおかげです。",
-    runnable: true,
-    mutates: false,
+    mutates: true,
   },
   {
     id: "comprehension",
@@ -493,7 +478,6 @@ export const DECK: readonly Card[] = [
     expected:
       "INC-2103  [customer-portal, auth-service]\nINC-2120  [billing-engine, reporting-service]\n6 行（SEV1 は 6 件）",
     note: "[パターン | 取り出す式] という形。 リスト内包表記 [x IN list WHERE 条件 | 式] も同じ書き方です。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -503,9 +487,9 @@ export const DECK: readonly Card[] = [
     role: "リストを検査したり畳んだりする。",
     code: [
       { text: "size(list)          " },
-      { text: "要素数", kind: "cm" },
+      { text: "要素数", kind: "note" },
       { text: "\nhead(list) / last(list)\nrange(1, 5)         " },
-      { text: "[1,2,3,4,5]", kind: "cm" },
+      { text: "[1,2,3,4,5]", kind: "note" },
       { text: "\nreverse(list)\nreduce(a = 0, x " },
       { text: "IN", kind: "kw" },
       { text: " list | a + x)\n\n" },
@@ -536,8 +520,8 @@ export const DECK: readonly Card[] = [
     ],
     expected:
       "[grid-monitor, telemetry-ingest]\n[api-gateway, auth-service]\n2 行（Go は 5 サービスだが連続する所は少ない）",
-    runnable: true,
     mutates: false,
+    listing: true,
   },
   {
     id: "case",
@@ -577,7 +561,6 @@ export const DECK: readonly Card[] = [
       { text: " policy" },
     ],
     note: "CASE WHEN 条件 THEN … END という汎用形もあります （値の一致ではなく任意の条件で分岐したいとき）。",
-    runnable: false,
     mutates: false,
   },
   {
@@ -593,7 +576,6 @@ export const DECK: readonly Card[] = [
       { text: "// 2回実行 = 同名ノードが2つできる", kind: "cm" },
     ],
     note: "ノートブックが CREATE ではなく MERGE を使っているのは、 セルの再実行が安全であるようにするためです。",
-    runnable: false,
     mutates: true,
   },
   {
@@ -617,7 +599,6 @@ export const DECK: readonly Card[] = [
     ],
     note: "リレーションを MERGE するときは、両端が先に存在している必要があります。 だから session3 の投入はノード → リレーションの順です。",
     warn: "MERGE のパターン全体が一致条件です。 MERGE (s:Service {name:'x', language:'Go'}) は 「name も language も一致するノード」を探し、無ければ両方を持つ新ノードを作ります。 キーだけで MERGE し、残りは SET で埋めるのが安全な型です。",
-    runnable: false,
     mutates: true,
   },
   {
@@ -630,30 +611,29 @@ export const DECK: readonly Card[] = [
       { text: " s.language = " },
       { text: "'Go'", kind: "hl" },
       { text: "          " },
-      { text: "1つ設定", kind: "cm" },
+      { text: "1つ設定", kind: "note" },
       { text: "\n" },
       { text: "SET", kind: "kw" },
       { text: " s += {tier: 1, sla: 99.9}  " },
-      { text: "まとめて追加/更新", kind: "cm" },
+      { text: "まとめて追加/更新", kind: "note" },
       { text: "\n" },
       { text: "SET", kind: "kw" },
       { text: " s =  {name: s.name}        " },
-      { text: "全置換（他は消える）", kind: "cm" },
+      { text: "全置換（他は消える）", kind: "note" },
       { text: "\n" },
       { text: "SET", kind: "kw" },
       { text: " s:Critical                 " },
-      { text: "ラベルを足す", kind: "cm" },
+      { text: "ラベルを足す", kind: "note" },
       { text: "\n\n" },
       { text: "REMOVE", kind: "kw" },
       { text: " s.sla                    " },
-      { text: "プロパティを消す", kind: "cm" },
+      { text: "プロパティを消す", kind: "note" },
       { text: "\n" },
       { text: "REMOVE", kind: "kw" },
       { text: " s:Critical              " },
-      { text: "ラベルを外す", kind: "cm" },
+      { text: "ラベルを外す", kind: "note" },
     ],
     warn: "= と += は別物。 = は書かなかったプロパティを消します。",
-    runnable: false,
     mutates: true,
   },
   {
@@ -672,7 +652,6 @@ export const DECK: readonly Card[] = [
     ],
     note: "DELETE n だけだと、n に繋がるリレーションが1本でもあればエラーになります。 DETACH がそれを先に消してくれます。",
     warn: "ワークショップ用インスタンス限定の操作です。 実データベースでは絶対に流さないこと。",
-    runnable: false,
     mutates: true,
   },
   {
@@ -697,7 +676,6 @@ export const DECK: readonly Card[] = [
     expected: "実行前  (billing-engine:Service)\n実行後  (billing-engine:Service:Upstream)",
     note: "n:Upstream は Upstream というラベルを1枚足すという意味です。 n に「Upstream」という文字列が入るのではありません — それをやりたいなら SET n.tag = 'Upstream' と書きます。 ラベルは Service や Incident と同じノードの種類を表す印で、 1つのノードに何枚でも重ねられます。",
     warn: "起点にも印が付きます。 nodes(p) はパスの全ノードなので customer-portal 自身も含まれ、印が付くのは 8 件（依存先の7件 + 起点）。 依存先の7件だけにしたいなら tail(nodes(p)) で先頭を落とします。",
-    runnable: false,
     mutates: true,
   },
   {
@@ -712,7 +690,7 @@ export const DECK: readonly Card[] = [
       { text: " {\n  " },
       { text: "WITH", kind: "kw" },
       { text: " t                      " },
-      { text: "← 外の変数を持ち込む宣言", kind: "cm" },
+      { text: "← 外の変数を持ち込む宣言", kind: "note" },
       { text: "\n  " },
       { text: "MATCH", kind: "kw" },
       { text: " (t)-[:" },
@@ -731,7 +709,6 @@ export const DECK: readonly Card[] = [
     ],
     expected: "チームごとに1件ずつ = 8 行",
     note: "外側の LIMIT では「全体で1件」になってしまうところを、 行ごとの LIMIT にできるのが要点です。",
-    runnable: true,
     mutates: false,
   },
   {
@@ -742,15 +719,15 @@ export const DECK: readonly Card[] = [
     code: [
       { text: "CALL", kind: "kw" },
       { text: " db.labels()                 " },
-      { text: "ラベル一覧", kind: "cm" },
+      { text: "ラベル一覧", kind: "note" },
       { text: "\n" },
       { text: "CALL", kind: "kw" },
       { text: " db.relationshipTypes()      " },
-      { text: "エッジ型一覧", kind: "cm" },
+      { text: "エッジ型一覧", kind: "note" },
       { text: "\n" },
       { text: "CALL", kind: "kw" },
       { text: " db.schema.visualization()   " },
-      { text: "スキーマ図", kind: "cm" },
+      { text: "スキーマ図", kind: "note" },
       { text: "\n" },
       { text: "SHOW", kind: "kw" },
       { text: " INDEXES / " },
@@ -759,8 +736,8 @@ export const DECK: readonly Card[] = [
     ],
     expected: "db.labels() → Team, Engineer,\n             Service, Incident",
     note: "初めて触るデータベースの中身を掴むとき、まずこれを叩きます。",
-    runnable: true,
     mutates: false,
+    listing: true,
   },
   {
     id: "schema",
@@ -789,8 +766,7 @@ export const DECK: readonly Card[] = [
     ],
     note: "一意性制約を張ると、その裏側でインデックスも自動的に作られます。",
     warn: "session3 のノートブックはこれを張っていません。 そのため {name:'customer-portal'} はラベルスキャンです。15件なので体感差はありませんが、 制約の前後で EXPLAIN を比べると NodeByLabelScan → NodeUniqueIndexSeek の変化が見えます。",
-    runnable: false,
-    mutates: false,
+    mutates: true,
   },
   {
     id: "explain",
@@ -812,7 +788,6 @@ export const DECK: readonly Card[] = [
     expected: "NodeByLabelScan(:Service)\n  Filter (name = …)\n    VarLengthExpand(All)",
     note: "EXPLAIN はクエリを流しません。プランナが立てた計画（演算子の並び）と 推定行数だけを返し、実データには触れません。重いクエリを投げる前に 「その形で大丈夫か」を確かめるためのものです。",
     warn: "db hits は PROFILE でしか出ません。 「実際に何レコード触ったか」は走らせてみないと分からないためです。 EXPLAIN で読めるのは演算子の並びと推定行数までなので、 速さを測りたいときは PROFILE、形だけ見たいときは EXPLAIN と使い分けます。",
-    runnable: true,
     mutates: false,
   },
 ];

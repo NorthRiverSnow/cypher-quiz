@@ -9,8 +9,19 @@ export type Card = Readonly<{
   expected?: string;
   note?: string;
   warn?: string;
-  /** 単体で実行できる。書き込み系と構文列挙だけのカードは false */
-  runnable: boolean;
-  /** 書き込みクエリを含む。実行ボタンを出さない */
+  /** 書き込みを含む。**編集欄そのものを出さない**（docs/01_spec.md#4-クエリの実行と編集） */
   mutates: boolean;
+  /** 構文を並べたもので、1 本のクエリになっていない。編集欄が書き換えを促す */
+  listing?: true;
 }>;
+
+/**
+ * 編集欄に出す本文。ハイライトの区切りを繋いで 1 本の文字列にする。
+ *
+ * why: note は落とす。読み手への注釈なので、そのまま送ると構文エラーになる
+ */
+export const cypherOf = (code: readonly CodeSegment[]): string =>
+  code
+    .filter(({ kind }) => kind !== "note")
+    .map(({ text }) => text)
+    .join("");

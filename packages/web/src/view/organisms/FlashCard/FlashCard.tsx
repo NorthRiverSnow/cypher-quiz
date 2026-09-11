@@ -19,8 +19,11 @@ export type FlashCardProps = {
 
 /* why: 設問と肢は必ず逆の書体になる。設問と肢の書体を別々に受けると
    構文の設問に構文の肢が並ぶ組み合わせを作れてしまうので、direction 1 つから引く */
-const PROMPT: Record<Direction, TextVariant> = { forward: "title", reverse: "titleProse" };
-const CHOICE_KIND: Record<Direction, ChoiceKind> = { forward: "prose", reverse: "syntax" };
+export const PROMPT_VARIANT: Record<Direction, TextVariant> = {
+  forward: "title",
+  reverse: "titleProse",
+};
+export const CHOICE_KIND: Record<Direction, ChoiceKind> = { forward: "prose", reverse: "syntax" };
 
 const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
 
@@ -44,7 +47,7 @@ export const FlashCard = ({
         <Text variant="micro" tone="muted">
           問題
         </Text>
-        <Text as="h2" variant={PROMPT[direction]}>
+        <Text as="h2" variant={PROMPT_VARIANT[direction]}>
           {prompt}
         </Text>
       </div>
