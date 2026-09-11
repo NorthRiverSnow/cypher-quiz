@@ -10,7 +10,7 @@ afterEach(cleanup);
 
 const SAVED = {
   boxes: { "match:forward": 1 as Box, "match:reverse": 2 as Box },
-  answers: [{ key: "match:forward", correct: false }],
+  answers: [{ key: "match:forward", correct: false, chosen: "違う肢" }],
 } as const;
 
 /** setItem が例外を throw するかどうかを、テストの途中で切り替えられる偽ストア */

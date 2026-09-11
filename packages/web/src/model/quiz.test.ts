@@ -14,6 +14,7 @@ import {
   isComplete,
   keyOf,
   type QuizState,
+  chosenFor,
   resetMissed,
   score,
 } from "./quiz";
@@ -31,9 +32,12 @@ const QUESTIONS = small.length * 2;
 /** 1 問につき 2 回続けて正解すると完了する（docs/01_spec.md#6-復習間隔反復） */
 const TO_COMPLETE = QUESTIONS * 2;
 
+/** 選んだ肢は「肢」で固定する。並びは出題ごとに変わるので、ここでは中身を問わない */
+const CHOSEN = "肢";
+
 const answerAll = (state: QuizState, correct: boolean, times: number) => {
   let next = state;
-  for (let i = 0; i < times; i++) next = answerCurrent(next, correct);
+  for (let i = 0; i < times; i++) next = answerCurrent(next, correct, CHOSEN);
 
   return next;
 };
@@ -145,7 +149,7 @@ describe("answerCurrent", () => {
   it("正解すると box が 1 つ上がる", () => {
     const state = createQuiz(small, createRng(1));
     const key = currentKey(state) as string;
-    const next = answerCurrent(state, true);
+    const next = answerCurrent(state, true, CHOSEN);
 
     expect(next.boxes[key]).toBe(1);
   });
@@ -154,7 +158,7 @@ describe("answerCurrent", () => {
     let state = createQuiz(small, createRng(1));
     const key = currentKey(state) as string;
 
-    state = answerCurrent(state, true);
+    state = answerCurrent(state, true, CHOSEN);
     expect(state.queue).toContain(key);
 
     state = answerAll(state, true, state.queue.indexOf(key as never) + 1);
@@ -165,7 +169,7 @@ describe("answerCurrent", () => {
   it("正解しても完了前なら後ろへ回る", () => {
     const state = createQuiz(small, createRng(1));
     const key = currentKey(state) as string;
-    const next = answerCurrent(state, true);
+    const next = answerCurrent(state, true, CHOSEN);
 
     expect(next.queue.indexOf(key as never)).toBe(next.queue.length - 1);
   });
@@ -174,7 +178,7 @@ describe("answerCurrent", () => {
   it("不正解は box 0 に戻り、数問後ろに差し戻される", () => {
     const state = createQuiz(small, createRng(1));
     const key = currentKey(state) as string;
-    const next = answerCurrent(state, false);
+    const next = answerCurrent(state, false, CHOSEN);
 
     expect(next.boxes[key]).toBe(0);
     expect(next.queue).toHaveLength(state.queue.length);
@@ -193,7 +197,7 @@ describe("answerCurrent", () => {
   it("キューが空なら何も起きない", () => {
     const empty: QuizState = { queue: [], boxes: {}, answers: [] };
 
-    expect(answerCurrent(empty, true)).toEqual(empty);
+    expect(answerCurrent(empty, true, CHOSEN)).toEqual(empty);
   });
 });
 
@@ -243,24 +247,28 @@ describe("成績", () => {
   /* why: 数えるのは問題で、回答ではない。同じ問題に 2 回答えても 1 つ */
   it("同じ問題に 2 回答えても、問題は 1 つと数える", () => {
     const wrong = currentKey(first) ?? keyOf("a", "forward");
-    const back = answerAll(answerCurrent(first, false), true, 3);
+    const back = answerAll(answerCurrent(first, false, CHOSEN), true, 3);
 
     expect(currentKey(back)).toBe(wrong);
     expect(back.answers).toHaveLength(4);
-    expect(score(answerCurrent(back, true).answers, small)).toMatchObject({ asked: 4 });
+    expect(score(answerCurrent(back, true, CHOSEN).answers, small)).toMatchObject({ asked: 4 });
   });
 
   it("一度も間違えていない問題だけを正解に数える", () => {
     const wrong = currentKey(first) ?? keyOf("a", "forward");
     /* 1 問目を間違え、3 問後ろに戻るまで別の問題に正解する */
-    const after = answerAll(answerCurrent(first, false), true, 3);
+    const after = answerAll(answerCurrent(first, false, CHOSEN), true, 3);
 
     expect(currentKey(after)).toBe(wrong);
     expect(score(after.answers, small)).toMatchObject({ asked: 4, correct: 3 });
   });
 
   it("間違えたあと正解しても、正解には数えない", () => {
-    const after = answerCurrent(answerAll(answerCurrent(first, false), true, 3), true);
+    const after = answerCurrent(
+      answerAll(answerCurrent(first, false, CHOSEN), true, 3),
+      true,
+      CHOSEN,
+    );
 
     expect(score(after.answers, small)).toMatchObject({ asked: 4, correct: 3 });
   });
@@ -271,11 +279,11 @@ describe("成績", () => {
     const wrong = currentKey(first) ?? keyOf("a", "forward");
     const card = small.find(({ id }) => id === cardIdOf(wrong));
     /* 不正解は 3 問後ろに戻る。そこまで正解で進めると、また先頭に来る */
-    const back = answerAll(answerCurrent(first, false), true, 3);
+    const back = answerAll(answerCurrent(first, false, CHOSEN), true, 3);
 
     expect(currentKey(back)).toBe(wrong);
 
-    const fixed = answerCurrent(back, true);
+    const fixed = answerCurrent(back, true, CHOSEN);
 
     expect(fixed.boxes[wrong]).toBe(1);
     expect(score(fixed.answers, small).missed).toEqual([
@@ -285,10 +293,10 @@ describe("成績", () => {
 
   it("同じ問題を 2 回間違えても 1 つ", () => {
     const wrong = currentKey(first) ?? keyOf("a", "forward");
-    const back = answerAll(answerCurrent(first, false), true, 3);
+    const back = answerAll(answerCurrent(first, false, CHOSEN), true, 3);
 
     expect(currentKey(back)).toBe(wrong);
-    expect(score(answerCurrent(back, false).answers, small).missed).toHaveLength(1);
+    expect(score(answerCurrent(back, false, CHOSEN).answers, small).missed).toHaveLength(1);
   });
 
   it("章別は出題されなかった章も 0 / 0 で並べる", () => {
@@ -300,7 +308,11 @@ describe("成績", () => {
   });
 
   it("章別の合計が全体と一致する", () => {
-    const after = answerCurrent(answerAll(answerCurrent(first, false), true, 3), false);
+    const after = answerCurrent(
+      answerAll(answerCurrent(first, false, CHOSEN), true, 3),
+      false,
+      CHOSEN,
+    );
     const { asked, correct, bySection } = score(after.answers, small);
 
     expect(bySection.reduce((sum, entry) => sum + entry.asked, 0)).toBe(asked);
@@ -325,7 +337,7 @@ describe("resetMissed", () => {
   it("間違えた問題だけ box を 0 に戻す", () => {
     const wrong = currentKey(first) ?? keyOf("a", "forward");
     const done = answerAll(first, true, TO_COMPLETE);
-    const after = { ...done, answers: [{ key: wrong, correct: false }] };
+    const after = { ...done, answers: [{ key: wrong, correct: false, chosen: CHOSEN }] };
 
     const boxes = resetMissed(after.boxes, after.answers);
 
@@ -337,7 +349,7 @@ describe("resetMissed", () => {
   it("戻した box から組み直すと、その問題だけが出る", () => {
     const wrong = currentKey(first) ?? keyOf("a", "forward");
     const done = answerAll(first, true, TO_COMPLETE);
-    const boxes = resetMissed(done.boxes, [{ key: wrong, correct: false }]);
+    const boxes = resetMissed(done.boxes, [{ key: wrong, correct: false, chosen: CHOSEN }]);
 
     expect(createQuiz(small, createRng(1), boxes).queue).toEqual([wrong]);
   });
@@ -346,8 +358,8 @@ describe("resetMissed", () => {
     const wrong = currentKey(first) ?? keyOf("a", "forward");
     const done = answerAll(first, true, TO_COMPLETE);
     const answers = [
-      { key: wrong, correct: false },
-      { key: wrong, correct: false },
+      { key: wrong, correct: false, chosen: CHOSEN },
+      { key: wrong, correct: false, chosen: CHOSEN },
     ];
 
     expect(createQuiz(small, createRng(1), resetMissed(done.boxes, answers)).queue).toEqual([
@@ -364,7 +376,7 @@ describe("resetMissed", () => {
 
 describe("保存された成績から続ける", () => {
   it("回答を引き継いで組み直せる", () => {
-    const answers = [{ key: keyOf("a", "forward"), correct: false }] as const;
+    const answers = [{ key: keyOf("a", "forward"), correct: false, chosen: CHOSEN }] as const;
     const resumed = createQuiz(small, createRng(7), {}, answers);
 
     expect(score(resumed.answers, small)).toMatchObject({ asked: 1, correct: 0 });
@@ -376,5 +388,29 @@ describe("保存された成績から続ける", () => {
       asked: 0,
       correct: 0,
     });
+  });
+});
+
+describe("選んだ肢", () => {
+  const first = createQuiz(small, createRng(7));
+
+  it("答えるたびに残す", () => {
+    const key = currentKey(first) ?? keyOf("a", "forward");
+    const after = answerCurrent(first, false, "違う肢");
+
+    expect(chosenFor(after.answers, key)).toBe("違う肢");
+  });
+
+  /* why: 同じ問題に何度も答える。開き直すのは最後に選んだもの */
+  it("同じ問題なら最後に選んだものを返す", () => {
+    const key = currentKey(first) ?? keyOf("a", "forward");
+    const back = answerAll(answerCurrent(first, false, "1 回目"), true, 3);
+
+    expect(currentKey(back)).toBe(key);
+    expect(chosenFor(answerCurrent(back, false, "2 回目").answers, key)).toBe("2 回目");
+  });
+
+  it("答えていない問題は undefined", () => {
+    expect(chosenFor(first.answers, keyOf("a", "forward"))).toBeUndefined();
   });
 });

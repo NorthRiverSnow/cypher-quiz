@@ -9,7 +9,13 @@ export type QuestionKey = `${string}:${Direction}`;
 export type Boxes = Readonly<Record<string, Box>>;
 
 /** 1 回の答え。同じ問題に複数回答えれば複数入る */
-export type Answer = Readonly<{ key: QuestionKey; correct: boolean }>;
+export type Answer = Readonly<{
+  key: QuestionKey;
+  /* why: chosen から導かない。カードの文言を直すと、過去の正誤が書き換わる */
+  correct: boolean;
+  /** 選んだ肢の文言。結果画面から裏を開き直すときに要る */
+  chosen: string;
+}>;
 
 export type QuizState = Readonly<{
   /** 残りの出題。先頭が今の 1 問 */
@@ -73,13 +79,13 @@ export const createQuiz = (
 export const currentKey = (state: QuizState): QuestionKey | undefined => state.queue[0];
 
 /** 今の 1 問に答える。完了したものはキューから外し、残りは後ろへ回す */
-export const answerCurrent = (state: QuizState, correct: boolean): QuizState => {
+export const answerCurrent = (state: QuizState, correct: boolean, chosen: string): QuizState => {
   const key = currentKey(state);
   if (key === undefined) return state;
 
   const box = nextBox(state.boxes[key] ?? 0, correct);
   const boxes: Boxes = { ...state.boxes, [key]: box };
-  const answers: readonly Answer[] = [...state.answers, { key, correct }];
+  const answers: readonly Answer[] = [...state.answers, { key, correct, chosen }];
   const rest = state.queue.slice(1);
 
   if (isDone(box)) return { queue: rest, boxes, answers };
@@ -151,6 +157,14 @@ export const score = (answers: readonly Answer[], deck: readonly Card[]): Score 
  * why: キューは保存していないので、「この問題だけ出す」を伝える手段が box しかない。
  * 0 に戻る以上、解き直しにも 2 回連続の正解が要る（docs/01_spec.md#7-画面と導線）
  */
+/**
+ * その問題で最後に選んだ肢。**間違えた問題の裏を開き直すのに使う。**
+ *
+ * why: 同じ問題に何度も答えるので、最後の 1 回を採る
+ */
+export const chosenFor = (answers: readonly Answer[], key: QuestionKey): string | undefined =>
+  answers.findLast((answer) => answer.key === key)?.chosen;
+
 export const resetMissed = (boxes: Boxes, answers: readonly Answer[]): Boxes => ({
   ...boxes,
   ...Object.fromEntries(missedKeys(answers).map((key): [QuestionKey, Box] => [key, 0])),

@@ -35,8 +35,11 @@ const toBoxes = (parsed: unknown): Boxes =>
     : {};
 
 const toAnswer = (parsed: unknown): Answer[] =>
-  isRecord(parsed) && isKey(parsed.key) && typeof parsed.correct === "boolean"
-    ? [{ key: parsed.key, correct: parsed.correct }]
+  isRecord(parsed) &&
+  isKey(parsed.key) &&
+  typeof parsed.correct === "boolean" &&
+  typeof parsed.chosen === "string"
+    ? [{ key: parsed.key, correct: parsed.correct, chosen: parsed.chosen }]
     : [];
 
 const toAnswers = (parsed: unknown): readonly Answer[] =>

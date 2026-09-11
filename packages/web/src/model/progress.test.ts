@@ -10,8 +10,8 @@ const EMPTY: Saved = { boxes: {}, answers: [] };
 const SAVED: Saved = {
   boxes: { "match:forward": 1 as Box, "match:reverse": 2 as Box },
   answers: [
-    { key: "match:forward", correct: false },
-    { key: "match:forward", correct: true },
+    { key: "match:forward", correct: false, chosen: "違う肢" },
+    { key: "match:forward", correct: true, chosen: "正しい肢" },
   ],
 };
 
@@ -89,16 +89,17 @@ describe("壊れた保存", () => {
     const raw = JSON.stringify({
       boxes: {},
       answers: [
-        { key: "a:forward", correct: true },
-        { key: "a:sideways", correct: true },
-        { key: "b:reverse", correct: "はい" },
-        { key: 3, correct: false },
+        { key: "a:forward", correct: true, chosen: "肢" },
+        { key: "a:sideways", correct: true, chosen: "肢" },
+        { key: "b:reverse", correct: "はい", chosen: "肢" },
+        { key: 3, correct: false, chosen: "肢" },
+        { key: "c:forward", correct: true },
         "文字列",
         null,
       ],
     });
 
-    expect(loaded(raw).answers).toEqual([{ key: "a:forward", correct: true }]);
+    expect(loaded(raw).answers).toEqual([{ key: "a:forward", correct: true, chosen: "肢" }]);
   });
 
   it("answers が配列でなければ空にする", () => {

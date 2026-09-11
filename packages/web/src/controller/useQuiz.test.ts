@@ -236,16 +236,36 @@ describe("習熟度", () => {
 
     answerWith(result, false);
 
-    expect(saved()[0]?.answers).toEqual([{ key: expect.any(String), correct: false }]);
+    expect(saved()[0]?.answers).toEqual([
+      { key: expect.any(String), correct: false, chosen: expect.any(String) },
+    ]);
+  });
+
+  /* why: 結果画面から裏を開き直すのに要る。正誤の丸バツは CardBack が
+     chosen === correct で決めるので、当時選んだ文言そのものが要る */
+  it("選んだ肢の文言を保存する", () => {
+    const { result, saved } = setup();
+    const face = result.current.face;
+
+    if (face?.side !== "question") {
+      throw new Error("表が出ていない");
+    }
+
+    const wrong = (face.question.answer + 1) % face.question.choices.length;
+
+    act(() => result.current.select(wrong));
+    act(() => result.current.answer());
+
+    expect(saved()[0]?.answers[0]?.chosen).toBe(face.question.choices[wrong]);
   });
 
   it("保存された記録に続けて足す", () => {
-    const { result, saved } = setup({}, [{ key: "match:forward", correct: false }]);
+    const { result, saved } = setup({}, [{ key: "match:forward", correct: false, chosen: "肢" }]);
 
     answerWith(result, true);
 
     expect(saved()[0]?.answers).toHaveLength(2);
-    expect(saved()[0]?.answers[0]).toEqual({ key: "match:forward", correct: false });
+    expect(saved()[0]?.answers[0]).toEqual({ key: "match:forward", correct: false, chosen: "肢" });
   });
 
   it("counts が進む", () => {

@@ -658,7 +658,8 @@ cypher-quiz/
          │     ├─ StartPage/
          │     ├─ ConnectPage/
          │     ├─ QuizPage/         # 表か裏のどちらか
-         │     └─ ResultPage/
+         │     ├─ ResultPage/
+         │     └─ ReviewPage/      # 不正解カードを開き直す。進捗バーを出さない
          │
          ├─ controller/             # model の副作用を呼べる唯一の層
          │  ├─ useNotices.ts        # 通知の一覧。report が失敗の唯一の入口

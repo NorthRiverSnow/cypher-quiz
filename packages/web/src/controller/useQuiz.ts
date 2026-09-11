@@ -82,7 +82,7 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
     }
 
     const correct = selected === asked.question.answer;
-    const advanced = answerCurrent(state, correct);
+    const advanced = answerCurrent(state, correct, asked.question.choices[selected] ?? "");
 
     setAnswered({ ...asked, choice: selected, correct });
     setState(advanced);
