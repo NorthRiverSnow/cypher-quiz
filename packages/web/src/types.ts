@@ -18,7 +18,8 @@ export const SECTION_LABELS: Record<SectionId, string> = {
 };
 
 /* コードの色分け。意味は docs/07_design.md#7-コードのハイライト */
-export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm";
+/* note は Cypher ではない。読み手への矢印や言い換えで、実行するときは落とす */
+export type CodeKind = "kw" | "rel" | "hl" | "bad" | "cm" | "note";
 
 /** kind が無ければ素の字 */
 export type CodeSegment = { text: string; kind?: CodeKind };

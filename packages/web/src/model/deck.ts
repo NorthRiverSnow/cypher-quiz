@@ -15,6 +15,13 @@ export type Card = Readonly<{
   mutates: boolean;
 }>;
 
-/** 編集欄に出す本文。ハイライトの区切りを繋いで 1 本の文字列にする */
+/**
+ * 編集欄に出す本文。ハイライトの区切りを繋いで 1 本の文字列にする。
+ *
+ * why: note は落とす。読み手への注釈なので、そのまま送ると構文エラーになる
+ */
 export const cypherOf = (code: readonly CodeSegment[]): string =>
-  code.map(({ text }) => text).join("");
+  code
+    .filter(({ kind }) => kind !== "note")
+    .map(({ text }) => text)
+    .join("");

@@ -266,7 +266,11 @@ font-feature-settings: "palt" 1;
 | `rel` | `--keep` | semibold | リレーション型 |
 | `hl` | `--warn` | semibold | 強調・リテラル |
 | `bad` | `--alarm` | semibold | 誤り |
-| `cm` | `--muted` | regular | コメント |
+| `cm` | `--muted` | regular | コメント（`//`。**Cypher の一部**） |
+| `note` | `--muted` | regular | 読み手への注釈（矢印・言い換え）。**Cypher ではない** |
+
+**`note` は実行するとき落とす。** 見た目は `cm` と同じだが、そのまま送ると構文エラーになる
+（`model/deck.ts` の `cypherOf`）。
 
 `rel` が `--keep` なのは、[緑が 1 本しか置けない](#srgb-で取れない色)ため。
 

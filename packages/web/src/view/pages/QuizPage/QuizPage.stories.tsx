@@ -4,7 +4,7 @@ import { fn } from "storybook/test";
 import { OPTIONAL_MATCH, SET_REMOVE } from "../../../fixtures/cards";
 import { QuizPage } from "./QuizPage";
 
-const EDITOR = { onChange: fn(), onRun: fn(), onReset: fn() };
+const EDITOR = { onChange: fn(), onEdit: fn(), onRun: fn(), onReset: fn() };
 
 const QUESTION = {
   section: OPTIONAL_MATCH.section,

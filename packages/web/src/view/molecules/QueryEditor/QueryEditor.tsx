@@ -12,6 +12,8 @@ export type QueryEditorProps = {
   /** 編集後の本文。undefined なら未編集で、色付きのまま出す */
   value?: string;
   onChange: (value: string) => void;
+  /** 編集を始める。**色付きの表示から textarea に切り替わる唯一の入口** */
+  onEdit: () => void;
   onRun: () => void;
   onReset: () => void;
   status?: QueryStatus;
@@ -69,6 +71,7 @@ export const QueryEditor = ({
   code,
   value,
   onChange,
+  onEdit,
   onRun,
   onReset,
   status = "idle",
@@ -85,6 +88,12 @@ export const QueryEditor = ({
     <div style={{ display: "grid", gap: "var(--space-xs)" }}>
       <div style={FRAME}>
         <Toolbar>
+          <IconButton
+            icon="edit"
+            label="編集"
+            onClick={onEdit}
+            disabled={edited || status === "running"}
+          />
           <IconButton
             icon="restart_alt"
             label="リセット"

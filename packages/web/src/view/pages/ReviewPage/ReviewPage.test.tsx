@@ -67,7 +67,12 @@ describe("ReviewPage", () => {
         {...BASE}
         back={{
           ...BASE.back,
-          editor: { onChange: () => undefined, onRun, onReset: () => undefined },
+          editor: {
+            onChange: () => undefined,
+            onEdit: () => undefined,
+            onRun,
+            onReset: () => undefined,
+          },
         }}
       />,
     );

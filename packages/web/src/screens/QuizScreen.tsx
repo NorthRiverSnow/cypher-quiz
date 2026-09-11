@@ -64,6 +64,7 @@ export const QuizScreen = ({ notices, band, ...options }: QuizScreenProps) => {
                   editor: {
                     ...(draft === undefined ? {} : { value: draft }),
                     onChange: setDraft,
+                    onEdit: () => setDraft(face.cypher ?? ""),
                     onRun: () => void run.run(draft ?? face.cypher ?? ""),
                     onReset: () => setDraft(undefined),
                     status: run.status,

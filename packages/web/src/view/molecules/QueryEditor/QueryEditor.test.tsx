@@ -10,6 +10,7 @@ afterEach(cleanup);
 const BASE: QueryEditorProps = {
   code: WITH.code ?? [],
   onChange: () => undefined,
+  onEdit: () => undefined,
   onRun: () => undefined,
   onReset: () => undefined,
 };
@@ -75,5 +76,35 @@ describe("QueryEditor", () => {
     render(<QueryEditor {...BASE} />);
 
     expect(screen.queryByRole("img", { name: "注意" })).toBeNull();
+  });
+});
+
+describe("編集に入る", () => {
+  /* why: value が undefined のあいだ textarea が出ない。ここが唯一の入口 */
+  it("編集ボタンで onEdit を呼ぶ", async () => {
+    const onEdit = vi.fn();
+    render(<QueryEditor {...BASE} onEdit={onEdit} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "編集" }));
+
+    expect(onEdit).toHaveBeenCalledOnce();
+  });
+
+  it("未編集のうちは textarea を出さない", () => {
+    render(<QueryEditor {...BASE} />);
+
+    expect(screen.queryByRole("textbox", { name: "クエリ" })).toBeNull();
+  });
+
+  it("value が入ると textarea になる", () => {
+    render(<QueryEditor {...BASE} value="MATCH (n) RETURN n" />);
+
+    expect(screen.getByRole("textbox", { name: "クエリ" })).toBeDefined();
+  });
+
+  it("編集中は編集ボタンを押せない", () => {
+    render(<QueryEditor {...BASE} value="MATCH (n)" />);
+
+    expect(screen.getByRole("button", { name: "編集" }).hasAttribute("disabled")).toBe(true);
   });
 });

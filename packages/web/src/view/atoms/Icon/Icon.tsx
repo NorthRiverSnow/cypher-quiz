@@ -5,6 +5,7 @@ export const ICONS = {
   info: "\ue88e",
   radio_button_unchecked: "\ue836",
   close: "\ue5cd",
+  edit: "\ue3c9",
   play_arrow: "\ue037",
   restart_alt: "\uf053",
   light_mode: "\ue518",

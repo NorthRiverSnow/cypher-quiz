@@ -40,6 +40,7 @@ export const ReviewScreen = ({ notices, band }: ScreenProps) => {
               editor: {
                 ...(draft === undefined ? {} : { value: draft }),
                 onChange: setDraft,
+                onEdit: () => setDraft(review.cypher ?? ""),
                 onRun: () => void run.run(draft ?? review.cypher ?? ""),
                 onReset: () => setDraft(undefined),
                 status: run.status,

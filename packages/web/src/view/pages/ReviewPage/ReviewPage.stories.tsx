@@ -4,7 +4,7 @@ import { fn } from "storybook/test";
 import { OPTIONAL_MATCH, SET_REMOVE } from "../../../fixtures/cards";
 import { ReviewPage } from "./ReviewPage";
 
-const EDITOR = { onChange: fn(), onRun: fn(), onReset: fn() };
+const EDITOR = { onChange: fn(), onEdit: fn(), onRun: fn(), onReset: fn() };
 
 const meta = {
   title: "pages/ReviewPage",

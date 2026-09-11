@@ -13,7 +13,7 @@ const meta = {
   title: "molecules/QueryEditor",
   component: QueryEditor,
   parameters: { layout: "padded" },
-  args: { code: WITH.code ?? [], onChange: fn(), onRun: fn(), onReset: fn() },
+  args: { code: WITH.code ?? [], onChange: fn(), onEdit: fn(), onRun: fn(), onReset: fn() },
   decorators: [
     (Story) => (
       <div style={{ maxWidth: "var(--col)" }}>

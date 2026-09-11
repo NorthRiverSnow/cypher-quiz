@@ -15,6 +15,7 @@ const SEGMENT: Record<CodeKind, CSSProperties> = {
   hl: { color: "var(--warn)", fontWeight: "var(--weight-semibold)" },
   bad: { color: "var(--alarm)", fontWeight: "var(--weight-semibold)" },
   cm: { color: "var(--muted)" },
+  note: { color: "var(--muted)" },
 };
 
 const SURFACE: CSSProperties = {
