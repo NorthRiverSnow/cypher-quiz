@@ -61,7 +61,7 @@ describe("createQuiz", () => {
     const state = createQuiz(DECK, createRng(1));
 
     expect(state.queue).toHaveLength(60);
-    expect(counts(state)).toEqual([60, 0, 0]);
+    expect(counts(state.boxes, DECK)).toEqual([60, 0, 0]);
   });
 
   it("同じシードなら同じ出題順になる", () => {
@@ -102,7 +102,7 @@ describe("続きから始める", () => {
 
     const state = createQuiz(small, createRng(1), boxes);
 
-    expect(counts(state)).toEqual([3, 2, 1]);
+    expect(counts(state.boxes, small)).toEqual([3, 2, 1]);
     expect(state.boxes[keyOf("a", "reverse")]).toBe(1);
   });
 
@@ -125,7 +125,7 @@ describe("続きから始める", () => {
     const state = createQuiz(small, createRng(1), { [keyOf("a", "forward")]: 1 as Box });
 
     expect(state.boxes[keyOf("c", "reverse")]).toBe(0);
-    expect(counts(state)).toEqual([5, 1, 0]);
+    expect(counts(state.boxes, small)).toEqual([5, 1, 0]);
   });
 
   /* why: 教材からカードが消えても、残った box だけで組み直せる */
@@ -140,8 +140,8 @@ describe("続きから始める", () => {
     const first = answerAll(createQuiz(small, createRng(1)), true, 4);
     const resumed = createQuiz(small, createRng(2), first.boxes);
 
-    expect(counts(resumed)).toEqual(counts(first));
-    expect(resumed.queue).toHaveLength(QUESTIONS - counts(first)[2]);
+    expect(counts(resumed.boxes, small)).toEqual(counts(first.boxes, small));
+    expect(resumed.queue).toHaveLength(QUESTIONS - counts(first.boxes, small)[2]);
   });
 });
 
@@ -205,7 +205,7 @@ describe("完了と集計", () => {
   it("全問 2 回正解で完了する", () => {
     const state = answerAll(createQuiz(small, createRng(1)), true, TO_COMPLETE);
 
-    expect(counts(state)).toEqual([0, 0, QUESTIONS]);
+    expect(counts(state.boxes, small)).toEqual([0, 0, QUESTIONS]);
     expect(isComplete(state)).toBe(true);
     expect(currentKey(state)).toBeUndefined();
   });
@@ -287,7 +287,7 @@ describe("成績", () => {
 
     expect(fixed.boxes[wrong]).toBe(1);
     expect(score(fixed.answers, small).missed).toEqual([
-      { section: card?.section, name: card?.name, direction: directionOf(wrong) },
+      { id: card?.id, section: card?.section, name: card?.name, direction: directionOf(wrong) },
     ]);
   });
 
@@ -412,5 +412,36 @@ describe("選んだ肢", () => {
 
   it("答えていない問題は undefined", () => {
     expect(chosenFor(first.answers, keyOf("a", "forward"))).toBeUndefined();
+  });
+});
+
+describe("counts はデッキから数える", () => {
+  /* why: 保存された boxes だけを数えない。デッキにカードを足すと、古い保存には
+     そのキーが無く、合計が問題数に届かない */
+  it("保存に無いキーは box 0 として数える", () => {
+    expect(counts({ [keyOf("a", "forward")]: 2 }, small)).toEqual([QUESTIONS - 1, 0, 1]);
+  });
+
+  it("空の保存でも問題数ぶん並ぶ", () => {
+    expect(counts({}, small)).toEqual([QUESTIONS, 0, 0]);
+  });
+
+  it("デッキに無いキーは数えない", () => {
+    expect(counts({ [keyOf("z", "forward")]: 2 }, small)).toEqual([QUESTIONS, 0, 0]);
+  });
+});
+
+describe("不正解一覧は識別子を載せる", () => {
+  /* why: 押されたときに URL を組む。名前を使うと、文言を直した瞬間にリンクが壊れる */
+  it("カードの id を持つ", () => {
+    const first = createQuiz(small, createRng(7));
+    const wrong = currentKey(first) ?? keyOf("a", "forward");
+
+    expect(score(answerCurrent(first, false, CHOSEN).answers, small).missed[0]).toEqual({
+      id: cardIdOf(wrong),
+      section: small.find(({ id }) => id === cardIdOf(wrong))?.section,
+      name: small.find(({ id }) => id === cardIdOf(wrong))?.name,
+      direction: directionOf(wrong),
+    });
   });
 });

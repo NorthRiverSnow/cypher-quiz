@@ -95,8 +95,10 @@ export const answerCurrent = (state: QuizState, correct: boolean, chosen: string
   return { queue: [...rest.slice(0, at), key, ...rest.slice(at)], boxes, answers };
 };
 
-export const counts = (state: QuizState): [number, number, number] =>
-  distribution(Object.values(state.boxes));
+/* why: 保存された boxes だけを数えない。デッキにカードを足すと、古い保存には
+   そのキーが無く、合計が問題数に届かない */
+export const counts = (boxes: Boxes, deck: readonly Card[]): [number, number, number] =>
+  distribution(allKeys(deck).map((key) => boxes[key] ?? 0));
 
 export const isComplete = (state: QuizState): boolean => allDone(Object.values(state.boxes));
 
@@ -135,7 +137,7 @@ const missedCards = (deck: readonly Card[], answers: readonly Answer[]): MissedC
 
     return card === undefined
       ? []
-      : [{ section: card.section, name: card.name, direction: directionOf(key) }];
+      : [{ id: card.id, section: card.section, name: card.name, direction: directionOf(key) }];
   });
 
 /**

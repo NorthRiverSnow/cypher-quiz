@@ -105,7 +105,7 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
   }, [answered, asked, selected]);
 
   return {
-    counts: countsOf(state),
+    counts: countsOf(state.boxes, deck),
     face,
     complete: isComplete(state),
     select: setSelected,

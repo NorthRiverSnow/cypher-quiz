@@ -13,8 +13,8 @@ const BY_SECTION: readonly SectionScore[] = [
 ];
 
 const MISSED: readonly MissedCard[] = [
-  { section: "patterns", name: "varlen", direction: "reverse" },
-  { section: "shaping", name: "ORDER BY", direction: "forward" },
+  { id: "varlen", section: "patterns", name: "varlen", direction: "reverse" },
+  { id: "order-by", section: "shaping", name: "ORDER BY", direction: "forward" },
 ];
 
 const BASE: SummaryProps = {

@@ -14,8 +14,8 @@ const BY_SECTION: readonly SectionScore[] = [
 ];
 
 const MISSED: readonly MissedCard[] = [
-  { section: "patterns", name: "varlen", direction: "reverse" },
-  { section: "lists", name: "count(DISTINCT x)", direction: "reverse" },
+  { id: "varlen", section: "patterns", name: "varlen", direction: "reverse" },
+  { id: "distinct", section: "lists", name: "count(DISTINCT x)", direction: "reverse" },
 ];
 
 const meta = {
