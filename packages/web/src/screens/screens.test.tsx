@@ -288,7 +288,11 @@ describe("章を選んで解く", () => {
     }
 
     await userEvent.click(screen.getByRole("button", { name: "開始" }));
-    await userEvent.click(screen.getByRole("button", { name: "接続せずに始める" }));
+    await userEvent.click(await screen.findByRole("button", { name: "接続せずに始める" }));
+
+    /* why: 出題画面に着くまで待つ。接続の問い合わせが失敗する間に遷移するので、
+       同期で探すと接続画面のまま読んでしまう */
+    await screen.findByRole("progressbar");
   };
 
   /** 進捗バーが読み上げる「あと N 回」 */
