@@ -77,11 +77,6 @@ export const save = (store: Store, saved: Saved): Result<void, "store-unavailabl
     () => "store-unavailable" as const,
   );
 
-/** 最初から解き直すときに消す */
-export const clear = (store: Store): void => {
-  store.removeItem(KEY);
-};
-
 const isSection = (value: unknown): value is SectionId =>
   typeof value === "string" && value in SECTION_LABELS;
 

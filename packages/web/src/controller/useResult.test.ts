@@ -30,7 +30,6 @@ const TO_COMPLETE = QUESTIONS * 2;
 
 const setup = (saved: Saved = { boxes: {}, answers: [] }, sections = SECTIONS) => {
   const written: Saved[] = [];
-  let cleared = 0;
 
   const progress: Progress = {
     load: () => saved,
@@ -41,15 +40,11 @@ const setup = (saved: Saved = { boxes: {}, answers: [] }, sections = SECTIONS) =
     },
     loadSections: () => sections,
     saveSections: () => ok(undefined),
-    clear: () => {
-      cleared += 1;
-    },
   };
 
   return {
     ...renderHook(() => useResult(progress, DECK)),
     written: () => written,
-    cleared: () => cleared,
   };
 };
 
@@ -128,14 +123,6 @@ describe("不正解だけもう一度", () => {
     act(() => result.current.retryMissed());
 
     expect(written()[0]?.answers).toEqual([]);
-  });
-
-  it("消さずに書き換える", () => {
-    const { result, cleared } = setup(MISSED);
-
-    act(() => result.current.retryMissed());
-
-    expect(cleared()).toBe(0);
   });
 
   /* why: 保存は 1 つ。範囲を絞らないと、前に解いた章の box まで巻き戻る

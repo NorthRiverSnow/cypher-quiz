@@ -1,6 +1,6 @@
 import type { Result } from "@cypher-quiz/shared";
 
-import { type Store, clear, load, loadSections, save, saveSections } from "../model/progress";
+import { type Store, load, loadSections, save, saveSections } from "../model/progress";
 import type { Saved } from "../model/quiz";
 import type { SectionId } from "../types";
 import type { Notices } from "./useNotices";
@@ -11,8 +11,6 @@ export type Progress = Readonly<{
   /** 前に選んだ章。初めて開いたときは空 */
   loadSections: () => readonly SectionId[];
   saveSections: (sections: readonly SectionId[]) => Result<void, "store-unavailable">;
-  /** 最初から解き直すときに消す */
-  clear: () => void;
 }>;
 
 /* why: 章の選択も同じ種類の通知に積む。書けない理由は同じ localStorage で、
@@ -34,7 +32,4 @@ export const useProgress = (notices: Notices, store: Store = window.localStorage
   loadSections: () => loadSections(store),
   saveSections: (sections) =>
     notices.report("progress-save", saveSections(store, sections), () => UNAVAILABLE),
-  clear: () => {
-    clear(store);
-  },
 });

@@ -48,7 +48,6 @@ const setup = (saved: Saved = { boxes: {}, answers: [] }, sections: readonly Sec
 
       return ok(undefined);
     },
-    clear: () => undefined,
   };
 
   return {

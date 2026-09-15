@@ -37,7 +37,6 @@ const TO_COMPLETE = QUESTIONS * 2;
 
 const setup = (boxes: Boxes = {}, answers: Saved["answers"] = []) => {
   const saved: Saved[] = [];
-  let cleared = 0;
 
   const progress: Progress = {
     load: () => ({ boxes, answers }),
@@ -48,15 +47,11 @@ const setup = (boxes: Boxes = {}, answers: Saved["answers"] = []) => {
     },
     loadSections: () => SECTIONS,
     saveSections: () => ok(undefined),
-    clear: () => {
-      cleared += 1;
-    },
   };
 
   return {
     ...renderHook(() => useQuiz(progress, { deck: DECK, seed: 42 })),
     saved: () => saved,
-    cleared: () => cleared,
   };
 };
 
@@ -311,7 +306,6 @@ describe("選んだ章", () => {
       save: () => ok(undefined),
       loadSections: () => sections,
       saveSections: () => ok(undefined),
-      clear: () => undefined,
     };
 
     return renderHook(() => useQuiz(progress, { deck: DECK, seed: 42 }));

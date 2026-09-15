@@ -44,7 +44,6 @@ const setup = (cardId: string, direction: string, answers = ANSWERS) => {
     save: () => ok(undefined),
     loadSections: () => [],
     saveSections: () => ok(undefined),
-    clear: () => undefined,
   };
 
   return renderHook(() => useReview(cardId, direction, progress, DECK));
@@ -120,7 +119,6 @@ describe("編集欄を出してよいか", () => {
       save: () => ok(undefined),
       loadSections: () => [],
       saveSections: () => ok(undefined),
-      clear: () => undefined,
     };
     const { result } = renderHook(() => useReview("list", "forward", progress, [listing]));
 
@@ -142,7 +140,6 @@ describe("編集欄を出してよいか", () => {
       save: () => ok(undefined),
       loadSections: () => [],
       saveSections: () => ok(undefined),
-      clear: () => undefined,
     };
     const { result } = renderHook(() => useReview("listing", "forward", progress, [listing]));
 

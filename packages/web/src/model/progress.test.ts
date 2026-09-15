@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import type { Box } from "./leitner";
-import { type Store, clear, load, loadSections, save, saveSections } from "./progress";
+import { type Store, load, loadSections, save, saveSections } from "./progress";
 import type { Saved } from "./quiz";
 
 const KEY = "cypher-quiz:progress";
@@ -125,18 +125,6 @@ describe("保存できない環境", () => {
   });
 });
 
-describe("clear", () => {
-  it("進捗も成績も消す", () => {
-    const { store, items } = fakeStore();
-    save(store, SAVED);
-
-    clear(store);
-
-    expect(items.has(KEY)).toBe(false);
-    expect(load(store)).toEqual(EMPTY);
-  });
-});
-
 describe("選んだ章", () => {
   const loadedSections = (raw: string) => loadSections(fakeStore({ [SECTIONS_KEY]: raw }).store);
 
@@ -158,14 +146,6 @@ describe("選んだ章", () => {
 
     expect(items.get(SECTIONS_KEY)).toBe('["writing"]');
     expect(items.get(KEY)).toBeUndefined();
-  });
-
-  it("進捗を消しても選択は残る", () => {
-    const { store } = fakeStore();
-    saveSections(store, ["writing"]);
-    clear(store);
-
-    expect(loadSections(store)).toEqual(["writing"]);
   });
 
   it("壊れていれば空", () => {
