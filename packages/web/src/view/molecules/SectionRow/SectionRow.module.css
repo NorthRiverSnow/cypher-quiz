@@ -48,3 +48,7 @@
     background: var(--panel-sunken);
   }
 }
+
+.blank {
+  visibility: hidden;
+}

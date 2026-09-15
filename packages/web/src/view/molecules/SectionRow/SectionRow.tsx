@@ -12,6 +12,15 @@ export type SectionRowProps = {
   onReset?: () => void;
 };
 
+const Reset = () => (
+  <>
+    <Text variant="micro" tone="alarm">
+      成績をリセット
+    </Text>
+    <Icon name="restart_alt" size="0.9rem" color="var(--alarm)" />
+  </>
+);
+
 export const SectionRow = ({ label, status, checked, onToggle, onReset }: SectionRowProps) => (
   <div className={styles.row}>
     <button
@@ -31,17 +40,19 @@ export const SectionRow = ({ label, status, checked, onToggle, onReset }: Sectio
       </Text>
     </button>
     {/* why: 読み上げの名前に章名を足す。一覧に 7 行並ぶので、見えている文言だけでは行を指せない */}
-    {onReset === undefined ? null : (
+    {onReset === undefined ? (
+      /* why: 場所だけ空けておく。無い行では状態が右端まで寄り、一覧で桁が揃わない */
+      <span className={`${styles.reset} ${styles.blank}`} aria-hidden>
+        <Reset />
+      </span>
+    ) : (
       <button
         type="button"
         className={styles.reset}
         aria-label={`${label}の成績をリセット`}
         onClick={onReset}
       >
-        <Text variant="micro" tone="alarm">
-          成績をリセット
-        </Text>
-        <Icon name="restart_alt" size="0.9rem" color="var(--alarm)" />
+        <Reset />
       </button>
     )}
   </div>

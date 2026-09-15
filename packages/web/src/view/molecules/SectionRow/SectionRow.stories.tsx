@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import { Card } from "../../atoms/Card/Card";
 import { SectionRow } from "./SectionRow";
 
 /* 状態の文言は docs/01_spec.md#7-画面と導線 */
@@ -11,12 +10,11 @@ const meta = {
   parameters: { layout: "padded" },
   args: { label: "読み取りの骨格", status: "0 / 10", checked: false, onToggle: fn() },
   decorators: [
-    /* why: Card に入れて撮る。行は必ずカードの中に置かれ、面の色で文字のコントラストが変わる */
+    /* why: 面を --panel にする。行はカードの中に置かれ、--ground の上では
+       「成績をリセット」の赤が 4.40 まで下がって AA を切る */
     (Story) => (
-      <div style={{ maxWidth: "var(--col)" }}>
-        <Card>
-          <Story />
-        </Card>
+      <div style={{ maxWidth: "var(--col)", background: "var(--panel)" }}>
+        <Story />
       </div>
     ),
   ],
