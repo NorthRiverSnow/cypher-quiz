@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import useSWR from "swr";
 
 import { type ApiClient, createApiClient } from "../api/client";
+import { HAS_API } from "../env";
 import { apiErrorOf, unwrap } from "./swr";
 import type { NoticeBody, Notices } from "./useNotices";
 
@@ -40,18 +41,23 @@ const shared = createApiClient();
 export const useConnection = (notices: Notices, client: ApiClient = shared): Connection => {
   const { report } = notices;
 
-  const { data, isLoading, mutate } = useSWR(CONNECTION_KEY, () => unwrap(client.status()), {
-    onSuccess: () => void report("connect", ok(undefined), describe),
-    onError: (cause: unknown) => void report("connect", err(apiErrorOf(cause, BROKEN)), describe),
+  /* why: api が居なければキーを null にする。SWR は fetcher を呼ばない */
+  const { data, isLoading, mutate } = useSWR(
+    HAS_API ? CONNECTION_KEY : null,
+    () => unwrap(client.status()),
+    {
+      onSuccess: () => void report("connect", ok(undefined), describe),
+      onError: (cause: unknown) => void report("connect", err(apiErrorOf(cause, BROKEN)), describe),
 
-    /* why: 失敗が error に載るようになったので、既定の無限再試行を切る。
+      /* why: 失敗が error に載るようになったので、既定の無限再試行を切る。
        not-connected も client のバグも、投げ直して直るものではない */
-    shouldRetryOnError: false,
+      shouldRetryOnError: false,
 
-    /* why: 取り直さない。dev 自動接続は「クッキーが無ければ繋ぐ」なので、
+      /* why: 取り直さない。dev 自動接続は「クッキーが無ければ繋ぐ」なので、
        タブを戻っただけで切断が取り消され、手入力に戻す道（docs/03_api.md#歯止め の 5）が塞がる */
-    revalidateOnFocus: false,
-  });
+      revalidateOnFocus: false,
+    },
+  );
 
   const connect = useCallback(
     async (request: ConnectRequest) => {

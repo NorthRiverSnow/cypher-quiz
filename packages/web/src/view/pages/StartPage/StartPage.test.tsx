@@ -14,7 +14,7 @@ const PICKER: StartPageProps["picker"] = {
 };
 
 const show = (props: Partial<StartPageProps> = {}) =>
-  render(<StartPage picker={PICKER} canStart onStart={() => undefined} {...props} />);
+  render(<StartPage picker={PICKER} canStart canRunQuery onStart={() => undefined} {...props} />);
 
 describe("StartPage", () => {
   it("開始を押すと onStart を呼ぶ", async () => {
@@ -39,6 +39,13 @@ describe("StartPage", () => {
     show();
 
     expect(screen.getByRole("checkbox", { name: "骨組み 0 / 10" })).toBeDefined();
+  });
+
+  it("クエリを実行できなければ、手元で動かす案内を出す", () => {
+    show({ canRunQuery: false });
+
+    expect(screen.getByText(/手元で vp run dev を動かします/)).toBeDefined();
+    expect(screen.queryByText(/DB に繋ぐと/)).toBeNull();
   });
 
   it("始める前は進捗を出さない", () => {

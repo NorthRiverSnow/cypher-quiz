@@ -41,7 +41,7 @@ const meta = {
   title: "pages/StartPage",
   component: StartPage,
   parameters: { layout: "fullscreen" },
-  args: { picker: picker(() => false), canStart: false, onStart: fn() },
+  args: { picker: picker(() => false), canStart: false, canRunQuery: true, onStart: fn() },
 } satisfies Meta<typeof StartPage>;
 
 export default meta;
@@ -54,3 +54,6 @@ export const 既定: Story = {};
 export const 章を選んだ: Story = {
   args: { picker: picker((id) => id === "skeleton" || id === "lists"), canStart: true },
 };
+
+/** 配布版（GitHub Pages）。api が居ないので、手元で動かす案内に変わる */
+export const クエリを実行できない: Story = { args: { canRunQuery: false } };

@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router";
+import { HashRouter } from "react-router";
 
 import "./styles";
 import { AppRoutes } from "./routes";
@@ -20,9 +20,12 @@ createRoot(el).render(
         </QuizLayout>
       )}
     >
-      <BrowserRouter>
+      {/* why: GitHub Pages は SPA のフォールバックを持たない。`/quiz` を直に開くと 404 になり、
+          `404.html` を置く手も、消えたアセットの要求に HTML が返って白い画面になる
+          （docs/04_roadmap.md#フェーズ-f--配る） */}
+      <HashRouter>
         <AppRoutes />
-      </BrowserRouter>
+      </HashRouter>
     </ErrorBoundary>
   </StrictMode>,
 );

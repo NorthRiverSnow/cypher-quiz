@@ -14,6 +14,8 @@ export type StartPageProps = {
   picker: SectionPickerProps;
   /** 1 つも選んでいなければ始められない（docs/01_spec.md#7-画面と導線） */
   canStart: boolean;
+  /** 裏面のサンプルクエリを実行できるか。**できないときは手元で動かす案内に変わる** */
+  canRunQuery: boolean;
   onStart: () => void;
 };
 
@@ -37,13 +39,18 @@ const POINT: CSSProperties = {
 
 const ACTIONS: CSSProperties = { display: "flex", justifyContent: "flex-end" };
 
-const POINT_ITEMS: readonly { key: string; text: string }[] = [
+const pointItems = (canRunQuery: boolean): readonly { key: string; text: string }[] => [
   { key: "60 問", text: "30 枚のカードを、構文 → 目的と目的 → 構文の両方で出します" },
   { key: "4 択", text: "2 回続けて正解すると完了。不正解はそのセッション中にもう一度出ます" },
-  { key: "任意", text: "DB に繋ぐと、裏面のサンプルクエリを編集して実行できます" },
+  {
+    key: "任意",
+    text: canRunQuery
+      ? "DB に繋ぐと、裏面のサンプルクエリを編集して実行できます"
+      : "サンプルクエリを実行するには、手元で vp run dev を動かします",
+  },
 ];
 
-export const StartPage = ({ notices, picker, canStart, onStart }: StartPageProps) => (
+export const StartPage = ({ notices, picker, canStart, canRunQuery, onStart }: StartPageProps) => (
   <QuizLayout notices={notices}>
     <Card>
       <div style={STACK}>
@@ -55,7 +62,7 @@ export const StartPage = ({ notices, picker, canStart, onStart }: StartPageProps
         </Text>
 
         <div style={POINTS}>
-          {POINT_ITEMS.map((item) => (
+          {pointItems(canRunQuery).map((item) => (
             <div key={item.key} style={POINT}>
               <Text variant="micro" tone="accent">
                 {item.key}
