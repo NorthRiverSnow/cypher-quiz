@@ -15,12 +15,15 @@ const STATUS: Record<SectionId, string> = {
   subqueries: "8 / 8",
 };
 
+const RESETTABLE: readonly SectionId[] = ["patterns", "lists", "subqueries"];
+
 const choices = (checked: (id: SectionId) => boolean): SectionChoice[] =>
   (Object.keys(SECTION_LABELS) as SectionId[]).map((id) => ({
     id,
     label: SECTION_LABELS[id],
     status: STATUS[id],
     checked: checked(id),
+    ...(RESETTABLE.includes(id) ? { onReset: fn() } : {}),
   }));
 
 const meta = {

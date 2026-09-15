@@ -71,6 +71,15 @@ const SKELETON_DONE = {
   ]),
 };
 
+/** 「読み取りの骨格」と「結果の整形」を 1 問ずつ解いた保存 */
+const TWO_ONGOING = {
+  boxes: { "match:forward": 2, "orderby:forward": 2 },
+  answers: [
+    { key: "match:forward", correct: true, chosen: "" },
+    { key: "orderby:forward", correct: true, chosen: "" },
+  ],
+};
+
 const savedAnswers = (): readonly { key: string }[] =>
   JSON.parse(window.localStorage.getItem(KEY) ?? "{}").answers ?? [];
 
@@ -96,10 +105,20 @@ describe("StartScreen", () => {
     expect(window.localStorage.getItem(SECTIONS_KEY)).toBe(JSON.stringify(["skeleton"]));
   });
 
-  it("解きかけの章の行は、状態が「進行中」になる", () => {
+  it("解きかけの章の行は、状態が「進行中」になり、リセットのボタンが出る", () => {
     renderWithStored({ progress: PART_WAY });
 
     expect(row("読み取りの骨格 進行中")).toBeDefined();
+    expect(screen.getByRole("button", { name: "読み取りの骨格の成績をリセット" })).toBeDefined();
+  });
+
+  it("リセットのボタンを押すと、その章の box と成績が消える", async () => {
+    renderWithStored({ progress: PART_WAY });
+
+    await userEvent.click(screen.getByRole("button", { name: "読み取りの骨格の成績をリセット" }));
+
+    expect(row("読み取りの骨格 0 / 10")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "読み取りの骨格の成績をリセット" })).toBeNull();
   });
 
   /* why: 完了していた章は最初から出し直す（docs/01_spec.md#スタート画面--出す章を選ぶ） */
@@ -134,5 +153,15 @@ describe("StartScreen", () => {
     );
 
     expect(row("読み取りの骨格 0 / 10").getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("リセットのボタンは、押した章だけを未着手に戻す", async () => {
+    renderWithStored({ progress: TWO_ONGOING });
+
+    await userEvent.click(screen.getByRole("button", { name: "読み取りの骨格の成績をリセット" }));
+
+    expect(row("読み取りの骨格 0 / 10")).toBeDefined();
+    expect(row("結果の整形 進行中")).toBeDefined();
+    expect(boxOf("orderby:forward")).toBe(2);
   });
 });

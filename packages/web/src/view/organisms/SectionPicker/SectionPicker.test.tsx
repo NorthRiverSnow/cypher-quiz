@@ -7,6 +7,8 @@ import { SectionPicker, type SectionChoice } from "./SectionPicker";
 
 afterEach(cleanup);
 
+const noop = () => undefined;
+
 const choice = (id: SectionId, label: string, checked: boolean): SectionChoice => ({
   id,
   label,
@@ -84,5 +86,15 @@ describe("SectionPicker", () => {
     setup([]);
 
     expect(box("全て").getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("onReset がある章にだけリセットを出す", () => {
+    setup([
+      { ...choice("skeleton", "読み取りの骨格", false), onReset: noop },
+      choice("lists", "リストと集約", false),
+    ]);
+
+    expect(screen.getByRole("button", { name: "読み取りの骨格の成績をリセット" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "リストと集約の成績をリセット" })).toBeNull();
   });
 });

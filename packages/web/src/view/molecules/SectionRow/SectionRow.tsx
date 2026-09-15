@@ -8,23 +8,52 @@ export type SectionRowProps = {
   status: string;
   checked: boolean;
   onToggle: () => void;
+  /** 成績をリセットする。**渡さなければボタンを出さない** */
+  onReset?: () => void;
 };
 
-export const SectionRow = ({ label, status, checked, onToggle }: SectionRowProps) => (
-  <button
-    type="button"
-    role="checkbox"
-    aria-checked={checked}
-    className={styles.toggle}
-    onClick={onToggle}
-  >
-    <Icon
-      name={checked ? "check_box" : "check_box_outline_blank"}
-      color={checked ? "var(--accent)" : "var(--muted)"}
-    />
-    <Text variant="annotation">{label}</Text>
-    <Text variant="code" tone="soft">
-      {status}
+const Reset = () => (
+  <>
+    <Text variant="micro" tone="alarm">
+      成績をリセット
     </Text>
-  </button>
+    <Icon name="restart_alt" size="0.9rem" color="var(--alarm)" />
+  </>
+);
+
+export const SectionRow = ({ label, status, checked, onToggle, onReset }: SectionRowProps) => (
+  <div className={styles.row}>
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      className={styles.toggle}
+      onClick={onToggle}
+    >
+      <Icon
+        name={checked ? "check_box" : "check_box_outline_blank"}
+        color={checked ? "var(--accent)" : "var(--muted)"}
+      />
+      <Text variant="annotation">{label}</Text>
+      <Text variant="code" tone="soft">
+        {status}
+      </Text>
+    </button>
+    {/* why: 読み上げの名前に章名を足す。一覧に 7 行並ぶので、見えている文言だけでは行を指せない */}
+    {onReset === undefined ? (
+      /* why: 場所だけ空けておく。無い行では状態が右端まで寄り、一覧で桁が揃わない */
+      <span className={`${styles.reset} ${styles.blank}`} aria-hidden>
+        <Reset />
+      </span>
+    ) : (
+      <button
+        type="button"
+        className={styles.reset}
+        aria-label={`${label}の成績をリセット`}
+        onClick={onReset}
+      >
+        <Reset />
+      </button>
+    )}
+  </div>
 );

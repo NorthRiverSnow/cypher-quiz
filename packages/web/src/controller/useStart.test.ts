@@ -151,6 +151,35 @@ describe("選ぶ", () => {
   });
 });
 
+describe("記録のリセット", () => {
+  it("記録が無い章にはボタンを渡さない", () => {
+    const { result } = setup();
+
+    expect(row(result, "skeleton")?.onReset).toBeUndefined();
+  });
+
+  it("記録がある章にはボタンを渡す", () => {
+    const answers = [{ key: keyOf("a", "forward"), correct: true, chosen: "肢" }];
+    const { result } = setup({ boxes: {}, answers });
+
+    expect(row(result, "skeleton")?.onReset).toBeDefined();
+  });
+
+  it("押すとその章だけ未着手に戻り、保存する", () => {
+    const answers = [
+      { key: keyOf("a", "forward"), correct: true, chosen: "肢" },
+      { key: keyOf("c", "forward"), correct: true, chosen: "肢" },
+    ];
+    const { result, written } = setup({ boxes: { [keyOf("a", "forward")]: 1 as Box }, answers });
+
+    act(() => row(result, "skeleton")?.onReset?.());
+
+    expect(row(result, "skeleton")?.status).toBe("0 / 4");
+    expect(row(result, "lists")?.status).toBe("進行中");
+    expect(written()[0]).toEqual({ boxes: {}, answers: [answers[1]] });
+  });
+});
+
 describe("始める", () => {
   it("完了した章は捨ててから始める", () => {
     const answers = [{ key: keyOf("a", "forward"), correct: true, chosen: "肢" }];
