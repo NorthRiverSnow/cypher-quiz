@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { type Card, cypherOf } from "../model/deck";
 import { DECK } from "../model/deck.data";
 import { type Question, buildQuestion } from "../model/question";
-import { cardOf, directionOf } from "../model/quiz.common";
+import { cardOf, directionOf, keysOfSections } from "../model/quiz.common";
 import {
   type QuizState,
   answerCurrent,
@@ -38,6 +38,8 @@ export type Quiz = Readonly<{
   face: Face | undefined;
   /** 全ての向きが box 2 に届いた */
   complete: boolean;
+  /** 出題の対象が 1 問も無い。**章を選ばずに来た**ときにだけ起きる */
+  empty: boolean;
   select: (choice: number) => void;
   /** 選んでいなければ何もしない */
   answer: () => void;
@@ -66,7 +68,7 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
   const [state, setState] = useState<QuizState>(() => {
     const { boxes, answers } = progress.load();
 
-    return createQuiz(deck, rng, boxes, answers);
+    return createQuiz(deck, rng, boxes, answers, keysOfSections(deck, progress.loadSections()));
   });
   const [selected, setSelected] = useState<number>();
   const [answered, setAnswered] = useState<Answered>();
@@ -116,12 +118,13 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
   }, [answered, asked, selected]);
 
   return {
-    counts: answerCounts(state.answers, state.boxes, state.pool),
+    counts: answerCounts(state.answers, state.boxes, state.targetQuestions),
     remaining: Object.values(state.boxes).some((box) => box > 0)
       ? remainingOf(state.boxes, deck)
       : undefined,
     face,
     complete: isComplete(state),
+    empty: state.targetQuestions.length === 0,
     select: setSelected,
     answer,
     next,

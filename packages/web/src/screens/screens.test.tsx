@@ -4,13 +4,17 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { AppRoutes } from "../routes";
+import { SECTION_LABELS } from "../types";
 
 afterEach(cleanup);
 
 const KEY = "cypher-quiz:progress";
+const SECTIONS_KEY = "cypher-quiz:sections";
 
 beforeEach(() => {
   window.localStorage.clear();
+  /* why: 章を選ばないと出題が 0 問になる。章の選択そのものは useStart のテストで見る */
+  window.localStorage.setItem(SECTIONS_KEY, JSON.stringify(Object.keys(SECTION_LABELS)));
 });
 
 /** 1 枚だけのデッキ。完了まで 2 方向 × 2 回 = 4 回で着く */

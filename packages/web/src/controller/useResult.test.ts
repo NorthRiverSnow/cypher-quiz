@@ -20,12 +20,15 @@ const card = (id: string, section: Card["section"]): Card => ({
 const DECK: readonly Card[] = [card("match", "skeleton"), card("with", "shaping")];
 
 /** 2 枚 × 2 方向 */
+/** 既定はデッキの全章。章の選択は useStart のテストで見る */
+const SECTIONS = [...new Set(DECK.map(({ section }) => section))];
+
 const QUESTIONS = DECK.length * 2;
 
 /** 1 問につき 2 回続けて正解が要る */
 const TO_COMPLETE = QUESTIONS * 2;
 
-const setup = (saved: Saved = { boxes: {}, answers: [] }) => {
+const setup = (saved: Saved = { boxes: {}, answers: [] }, sections = SECTIONS) => {
   const written: Saved[] = [];
   let cleared = 0;
 
@@ -36,7 +39,7 @@ const setup = (saved: Saved = { boxes: {}, answers: [] }) => {
 
       return ok(undefined);
     },
-    loadSections: () => [],
+    loadSections: () => sections,
     saveSections: () => ok(undefined),
     clear: () => {
       cleared += 1;
@@ -147,5 +150,31 @@ describe("不正解だけもう一度", () => {
     act(() => result.current.retryMissed());
 
     expect(cleared()).toBe(0);
+  });
+});
+
+describe("選んだ章に限る", () => {
+  const ANSWERS = [
+    { key: "match:forward", correct: true, chosen: "あ" },
+    { key: "with:reverse", correct: false, chosen: "い" },
+  ] as const;
+
+  it("選んだ章だけ成績に並べる", () => {
+    const { result } = setup({ boxes: {}, answers: [...ANSWERS] }, ["skeleton"]);
+
+    expect(result.current.score.bySection).toEqual([{ section: "skeleton", asked: 1, correct: 1 }]);
+    expect(result.current.score).toMatchObject({ asked: 1, correct: 1 });
+  });
+
+  it("選ばなかった章の不正解を一覧に出さない", () => {
+    const { result } = setup({ boxes: {}, answers: [...ANSWERS] }, ["skeleton"]);
+
+    expect(result.current.score.missed).toEqual([]);
+  });
+
+  it("進捗バーの分母が選んだ章の分だけになる", () => {
+    const { result } = setup({ boxes: {}, answers: [] }, ["skeleton"]);
+
+    expect(result.current.counts).toEqual([0, 0, 4]);
   });
 });

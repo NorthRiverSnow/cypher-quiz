@@ -180,7 +180,7 @@ describe("answerCurrent", () => {
   });
 
   it("キューが空なら何も起きない", () => {
-    const empty: QuizState = { pool: [], queue: [], boxes: {}, answers: [] };
+    const empty: QuizState = { targetQuestions: [], queue: [], boxes: {}, answers: [] };
 
     expect(answerCurrent(empty, true, CHOSEN)).toEqual(empty);
   });
@@ -475,15 +475,15 @@ describe("章で絞る", () => {
   /** lists は c の 1 枚だけ。2 問 */
   const lists = keysOf(small, "lists");
 
-  it("pool の問題だけを積む", () => {
+  it("targetQuestions の問題だけを積む", () => {
     const state = createQuiz(small, createRng(1), {}, [], lists);
 
-    expect(state.pool).toEqual(lists);
+    expect(state.targetQuestions).toEqual(lists);
     expect([...state.queue].sort()).toEqual([...lists].sort());
   });
 
   /* why: 選ばなかった章の box を残すので、boxes 全体を見ると絞ったのに完了しない */
-  it("完了は pool の中だけを見る", () => {
+  it("完了は targetQuestions の中だけを見る", () => {
     const saved: Boxes = { [keyOf("a", "forward")]: 0 };
     const state = answerAll(
       createQuiz(small, createRng(1), saved, [], lists),
@@ -504,11 +504,11 @@ describe("章で絞る", () => {
     expect(state.boxes[keyOf("a", "reverse")]).toBe(1);
   });
 
-  it("進捗バーの分母が pool の分だけになる", () => {
+  it("進捗バーの分母が targetQuestions の分だけになる", () => {
     expect(answerCounts([], {}, lists)).toEqual([0, 0, lists.length * 2]);
   });
 
-  it("pool の外の回答を数えない", () => {
+  it("targetQuestions の外の回答を数えない", () => {
     const outside = [{ key: keyOf("a", "forward"), correct: true, chosen: CHOSEN }];
 
     expect(answerCounts(outside, {}, lists)).toEqual([0, 0, lists.length * 2]);
@@ -527,8 +527,8 @@ describe("章で絞る", () => {
     expect(result).toMatchObject({ asked: 1, correct: 1 });
   });
 
-  it("pool を渡さなければデッキ全体", () => {
-    expect(createQuiz(small, createRng(1)).pool).toHaveLength(QUESTIONS);
+  it("targetQuestions を渡さなければデッキ全体", () => {
+    expect(createQuiz(small, createRng(1)).targetQuestions).toHaveLength(QUESTIONS);
   });
 });
 

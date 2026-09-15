@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 
 import type { Card } from "../model/deck";
 import { DECK } from "../model/deck.data";
-import { allKeys } from "../model/quiz.common";
+import { keysOfSections } from "../model/quiz.common";
 import { type Score, answerCounts, resetMissed, score } from "../model/quiz";
 import type { Progress } from "./useProgress";
 
@@ -26,6 +26,9 @@ export type Result = Readonly<{
  */
 export const useResult = (progress: Progress, deck: readonly Card[] = DECK): Result => {
   const [{ boxes, answers }] = useState(() => progress.load());
+  /* why: 章は mount のとき 1 回だけ読む。成績はこの範囲で数える
+     （docs/01_spec.md#7-画面と導線） */
+  const [targetQuestions] = useState(() => keysOfSections(deck, progress.loadSections()));
 
   const restart = useCallback(() => {
     progress.clear();
@@ -36,9 +39,8 @@ export const useResult = (progress: Progress, deck: readonly Card[] = DECK): Res
   }, [answers, boxes, progress]);
 
   return {
-    /* TODO: E-7 で選んだ章に絞る。今はデッキ全体 */
-    counts: answerCounts(answers, boxes, allKeys(deck)),
-    score: score(answers, deck),
+    counts: answerCounts(answers, boxes, targetQuestions),
+    score: score(answers, deck, targetQuestions),
     restart,
     retryMissed,
   };
