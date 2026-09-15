@@ -170,7 +170,8 @@ lint で model を引けないため、controller まで揃っていないと結
 8. **フロントに識別子が無いことを確認する**
    - DevTools の Application → Cookies に `HttpOnly` の印が付いている
    - コンソールで `document.cookie` を叩いて**そのクッキーが見えない**
-   - `localStorage` に接続系のキーが無い（`cypher-quiz:progress` と `cypher-quiz:theme` だけ）
+   - `localStorage` に接続系のキーが無い（`cypher-quiz:progress` / `cypher-quiz:sections` /
+     `cypher-quiz:theme` だけ）
    - **`POST /api/connect` の応答の本文にも識別子が無い**
 9. 切断ボタンで手入力の接続画面に戻り、**`bolt://neo4j:7687`** と dev 資格情報で接続できる（本番経路の確認）
    - **api はコンテナの中で動く**（[C-8](#c-8--api-をコンテナで動かす)）。`localhost` は

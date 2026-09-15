@@ -630,7 +630,7 @@ cypher-quiz/
          │  ├─ sections.ts          # 章ごとの状態（未着手 / 進行中 / 完了 と正解数）
          │  ├─ leitner.ts           # box 遷移
          │  ├─ rng.ts               # シード付き擬似乱数
-         │  ├─ progress.ts          # model で localStorage を触るのはここだけ。box と成績を 1 キーに
+         │  ├─ progress.ts          # model で localStorage を触るのはここだけ。box と成績、選んだ章
          │  └─ result.ts            # Cell → ResultCell。色が付くのはノードだけ
          │
          ├─ view/                   # ★ 純関数。props in / callback out

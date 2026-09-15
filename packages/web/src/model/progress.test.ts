@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import type { Box } from "./leitner";
-import { type Saved, type Store, clear, load, save } from "./progress";
+import { type Saved, type Store, clear, load, loadSections, save, saveSections } from "./progress";
 
 const KEY = "cypher-quiz:progress";
+const SECTIONS_KEY = "cypher-quiz:sections";
 
 const EMPTY: Saved = { boxes: {}, answers: [] };
 
@@ -132,5 +133,57 @@ describe("clear", () => {
 
     expect(items.has(KEY)).toBe(false);
     expect(load(store)).toEqual(EMPTY);
+  });
+});
+
+describe("選んだ章", () => {
+  const loadedSections = (raw: string) => loadSections(fakeStore({ [SECTIONS_KEY]: raw }).store);
+
+  it("保存して読み直せる", () => {
+    const { store } = fakeStore();
+    saveSections(store, ["skeleton", "lists"]);
+
+    expect(loadSections(store)).toEqual(["skeleton", "lists"]);
+  });
+
+  /* why: 空が「何も選んでいない」。全章を既定にすると、選ばずに押した人が 60 問を始める */
+  it("保存が無ければ空", () => {
+    expect(loadSections(fakeStore().store)).toEqual([]);
+  });
+
+  it("進捗とは別のキーに書く", () => {
+    const { store, items } = fakeStore();
+    saveSections(store, ["writing"]);
+
+    expect(items.get(SECTIONS_KEY)).toBe('["writing"]');
+    expect(items.get(KEY)).toBeUndefined();
+  });
+
+  it("進捗を消しても選択は残る", () => {
+    const { store } = fakeStore();
+    saveSections(store, ["writing"]);
+    clear(store);
+
+    expect(loadSections(store)).toEqual(["writing"]);
+  });
+
+  it("壊れていれば空", () => {
+    expect(loadedSections("{")).toEqual([]);
+    expect(loadedSections('"skeleton"')).toEqual([]);
+    expect(loadedSections("3")).toEqual([]);
+  });
+
+  it("章にならない値を捨てる", () => {
+    expect(loadedSections('["skeleton", "zzz", 3, null]')).toEqual(["skeleton"]);
+  });
+
+  it("重複を潰す", () => {
+    expect(loadedSections('["lists", "lists"]')).toEqual(["lists"]);
+  });
+
+  it("書けなければ store-unavailable", () => {
+    const result = saveSections(brokenStore(), ["lists"]);
+
+    expect(result).toEqual({ ok: false, error: "store-unavailable" });
   });
 });
