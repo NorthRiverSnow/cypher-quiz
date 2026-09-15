@@ -28,11 +28,26 @@ const ONE = [
   },
 ] as const;
 
+/** 2 章 × 1 枚。章をまたぐ検証に使う。1 章あたり 2 問（2 方向） */
+const TWO_SECTIONS = [
+  ONE[0],
+  {
+    id: "return",
+    section: "shaping",
+    name: "RETURN",
+    role: "出す列を決める",
+    mutates: false,
+  },
+] as const;
+
 /* why: このシードだと 1 番目の肢が不正解になる。正解を選んでしまうと、
    「選んだ肢を出す」と「正解を出す」を区別できない */
 const SEED = 1;
 
-const open = (path: string, quiz: { seed?: number; deck?: typeof ONE } = { seed: SEED }) =>
+const open = (
+  path: string,
+  quiz: { seed?: number; deck?: typeof ONE | typeof TWO_SECTIONS } = { seed: SEED },
+) =>
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppRoutes quiz={quiz} />
@@ -209,6 +224,112 @@ describe("復習", () => {
       expect(screen.getByRole("button", { name: "もう一度" })).toBeDefined();
     },
   );
+});
+
+describe("章を選んで解く", () => {
+  /** 章ごとの問題数（枚数 × 2 方向。docs/05_reference.md） */
+  const SKELETON = 10;
+  const SHAPING = 8;
+  const ALL = 60;
+
+  /** 完了に要る正解は 1 問 2 回 */
+  const toComplete = (questions: number) => questions * 2;
+
+  /**
+   * スタート画面で章を選び、接続を飛ばして出題まで進む。
+   *
+   * why: 選択を消してから開く。初めて開いたときは何も選ばれていない
+   * （docs/01_spec.md#スタート画面--出す章を選ぶ）
+   */
+  const startWith = async (...labels: string[]) => {
+    window.localStorage.removeItem(SECTIONS_KEY);
+    open("/", {});
+
+    for (const label of labels) {
+      await userEvent.click(screen.getByRole("checkbox", { name: new RegExp(`^${label}`) }));
+    }
+
+    await userEvent.click(screen.getByRole("button", { name: "開始" }));
+    await userEvent.click(screen.getByRole("button", { name: "接続せずに始める" }));
+  };
+
+  /** 進捗バーが読み上げる「あと N 回」 */
+  const left = (): number =>
+    Number(
+      /あと (\d+) 回/.exec(
+        screen.getByRole("progressbar").getAttribute("aria-valuetext") ?? "",
+      )?.[1],
+    );
+
+  /** 出題中のカードの章。`§ ` が前に付く（`atoms/SectionLabel`） */
+  const shownSection = () => screen.getByText(/^§ /).textContent;
+
+  /** 1 章ぶんを box 2 で埋める */
+  const doneBoxes = (ids: readonly string[]) =>
+    Object.fromEntries(
+      ids.flatMap((id) => [
+        [`${id}:forward`, 2],
+        [`${id}:reverse`, 2],
+      ]),
+    );
+
+  const SKELETON_IDS = ["match", "optional-match", "where", "with", "return"];
+
+  it("選んだ章だけが出て、進捗バーの分母もその章の分になる", async () => {
+    await startWith("読み取りの骨格");
+
+    expect(shownSection()).toBe("§ 読み取りの骨格");
+    expect(left()).toBe(toComplete(SKELETON));
+  });
+
+  /* why: 進み具合をばらけさせて始める。空から始めると、消さない実装でも同じ数になる */
+  it("全て選ぶと、進み具合に関わらず 60 問が最初から出る", async () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        boxes: { ...doneBoxes(SKELETON_IDS), "orderby:forward": 1 },
+        answers: [{ key: "match:forward", correct: true, chosen: "あ" }],
+      }),
+    );
+
+    await startWith("全て");
+
+    expect(left()).toBe(toComplete(ALL));
+  });
+
+  /* why: 完了した章を選び直すと、間違いの有無に関わらず全問を最初から出す */
+  it("完了した章を選び直すと全問出る", async () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        boxes: doneBoxes(SKELETON_IDS),
+        answers: [{ key: "match:forward", correct: false, chosen: "あ" }],
+      }),
+    );
+
+    await startWith("読み取りの骨格");
+
+    expect(left()).toBe(toComplete(SKELETON));
+  });
+
+  /** 「読み取りの骨格」を途中まで解いた保存 */
+  const PART_WAY = {
+    boxes: { "match:forward": 1 },
+    answers: [{ key: "match:forward", correct: true, chosen: "あ" }],
+  };
+
+  /* why: 前回どの章で終えたかは出題に影響しない（docs/01_spec.md#選んだ章に限るもの） */
+  it.each([
+    ["解きかけの問題があっても", PART_WAY],
+    ["解きかけの問題が無くても", { boxes: {}, answers: [] }],
+  ])("%s、章選択で選ばなかった章は出題されない", async (_situation, stored) => {
+    window.localStorage.setItem(KEY, JSON.stringify(stored));
+
+    await startWith("結果の整形");
+
+    expect(shownSection()).toBe("§ 結果の整形");
+    expect(left()).toBe(toComplete(SHAPING));
+  });
 });
 
 describe("知らない URL", () => {
