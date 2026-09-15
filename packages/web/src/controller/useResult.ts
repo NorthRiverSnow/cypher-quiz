@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import type { Card } from "../model/deck";
 import { DECK } from "../model/deck.data";
+import { allKeys } from "../model/quiz.common";
 import { type Score, answerCounts, resetMissed, score } from "../model/quiz";
 import type { Progress } from "./useProgress";
 
@@ -35,7 +36,8 @@ export const useResult = (progress: Progress, deck: readonly Card[] = DECK): Res
   }, [answers, boxes, progress]);
 
   return {
-    counts: answerCounts(answers, boxes, deck),
+    /* TODO: E-7 で選んだ章に絞る。今はデッキ全体 */
+    counts: answerCounts(answers, boxes, allKeys(deck)),
     score: score(answers, deck),
     restart,
     retryMissed,

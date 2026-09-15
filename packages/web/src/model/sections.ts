@@ -2,7 +2,7 @@ import type { SectionId } from "../types";
 import type { Card } from "./deck";
 import { type QuestionKey, keysOf, sectionsOf } from "./quiz.common";
 import { isDone } from "./leitner";
-import { type Answer, type Boxes, tally } from "./quiz";
+import { type Answer, type Boxes, questionScore } from "./quiz";
 
 /**
  * スタート画面の 1 行が持つもの（docs/01_spec.md#7-画面と導線）。
@@ -35,7 +35,7 @@ export const sectionProgress = (
   return {
     section,
     total: keys.length,
-    correct: tally(mine).correct,
+    correct: questionScore(mine).correct,
     /* why: [].every は true。デッキに無い章を渡すと完了になる */
     state:
       keys.length > 0 && keys.every((key) => isDone(boxes[key] ?? 0))

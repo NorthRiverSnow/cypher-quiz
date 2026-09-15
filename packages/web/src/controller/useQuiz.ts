@@ -116,7 +116,7 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
   }, [answered, asked, selected]);
 
   return {
-    counts: answerCounts(state.answers, state.boxes, deck),
+    counts: answerCounts(state.answers, state.boxes, state.pool),
     remaining: Object.values(state.boxes).some((box) => box > 0)
       ? remainingOf(state.boxes, deck)
       : undefined,
