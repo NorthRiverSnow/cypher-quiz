@@ -31,6 +31,14 @@ type Schema<T> = Readonly<{
 const CONNECT = "/api/connect";
 const RUN = "/api/run";
 
+/**
+ * api が居るか。**配布版（GitHub Pages）では居ない**（docs/04_roadmap.md#フェーズ-f--配る）。
+ *
+ * why: 居ないと分かっているなら問い合わせに行かせない。行かせると、開いた直後に
+ * 「接続できません」の通知が出て、壊れているように見える
+ */
+export const HAS_API = import.meta.env.VITE_HAS_API !== "false";
+
 /* why: ApiError は api が返す形だが、api へ届かなかったときの形でもある。
    1 つに揃えないと、呼ぶ側が 2 種類の失敗を書き分けることになる
    （docs/03_api.md#7-失敗の返し方） */
