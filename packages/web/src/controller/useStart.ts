@@ -14,6 +14,8 @@ export type SectionOption = Readonly<{
   /** 行の右端。`0 / 10` か `進行中` */
   status: string;
   checked: boolean;
+  /** その章の問題を全て正解している */
+  allCorrect: boolean;
   /** 記録がある章だけ。**渡さなければリセットのボタンが出ない** */
   onReset?: () => void;
 }>;
@@ -67,6 +69,8 @@ export const useStart = (progress: Progress, deck: readonly Card[] = DECK): Star
          並べると比べられてしまう（docs/01_spec.md#7-画面と導線） */
       status: state === "ongoing" ? "進行中" : `${correct} / ${total}`,
       checked: selected.includes(section),
+      /* why: 解きかけは数を出さないので、正解数が揃っていても強調しない */
+      allCorrect: state === "done" && correct === total,
       ...(state === "fresh" ? {} : { onReset: () => reset(section) }),
     }),
   );

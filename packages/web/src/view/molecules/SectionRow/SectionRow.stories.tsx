@@ -32,6 +32,11 @@ export const 進行中: Story = { args: { status: "進行中", onReset: fn() } }
 
 export const 完了: Story = { args: { status: "8 / 10", onReset: fn() } };
 
+/** 全問正解。1 問でも間違えていれば「完了」と同じ出方になる */
+export const 全問正解: Story = {
+  args: { status: "10 / 10", allCorrect: true, onReset: fn() },
+};
+
 export const 全て: Story = { args: { label: "全て", status: "60 問・最初から" } };
 
 /* 一覧で最も長い章名。状態が行の外へ出ないこと */

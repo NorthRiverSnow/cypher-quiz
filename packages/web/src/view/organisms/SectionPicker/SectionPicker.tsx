@@ -9,6 +9,8 @@ export type SectionChoice = Readonly<{
   /** 行の右端に出す状態。`0 / 10` や `進行中`（docs/01_spec.md#7-画面と導線） */
   status: string;
   checked: boolean;
+  /** その章の問題を全て正解している */
+  allCorrect?: boolean;
   /** 成績をリセットする。**渡さなければボタンを出さない** */
   onReset?: () => void;
 }>;
@@ -45,12 +47,13 @@ export const SectionPicker = ({
       onToggle={onToggleAll}
     />
     <span style={RULE} aria-hidden />
-    {sections.map(({ id, label, status, checked, onReset }) => (
+    {sections.map(({ id, label, status, checked, allCorrect, onReset }) => (
       <SectionRow
         key={id}
         label={label}
         status={status}
         checked={checked}
+        allCorrect={allCorrect ?? false}
         onToggle={() => onToggle(id)}
         {...(onReset === undefined ? {} : { onReset })}
       />
