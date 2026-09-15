@@ -4,6 +4,8 @@ export const ICONS = {
   cancel: "\ue888",
   info: "\ue88e",
   radio_button_unchecked: "\ue836",
+  check_box: "\ue834",
+  check_box_outline_blank: "\ue835",
   close: "\ue5cd",
   edit: "\ue3c9",
   play_arrow: "\ue037",

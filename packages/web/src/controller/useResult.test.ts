@@ -3,7 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "../model/deck";
-import type { Saved } from "../model/progress";
+import type { Saved } from "../model/quiz";
 import type { Progress } from "./useProgress";
 import { useResult } from "./useResult";
 
@@ -20,14 +20,16 @@ const card = (id: string, section: Card["section"]): Card => ({
 const DECK: readonly Card[] = [card("match", "skeleton"), card("with", "shaping")];
 
 /** 2 枚 × 2 方向 */
+/** 既定はデッキの全章。章の選択は useStart のテストで見る */
+const SECTIONS = [...new Set(DECK.map(({ section }) => section))];
+
 const QUESTIONS = DECK.length * 2;
 
 /** 1 問につき 2 回続けて正解が要る */
 const TO_COMPLETE = QUESTIONS * 2;
 
-const setup = (saved: Saved = { boxes: {}, answers: [] }) => {
+const setup = (saved: Saved = { boxes: {}, answers: [] }, sections = SECTIONS) => {
   const written: Saved[] = [];
-  let cleared = 0;
 
   const progress: Progress = {
     load: () => saved,
@@ -36,15 +38,13 @@ const setup = (saved: Saved = { boxes: {}, answers: [] }) => {
 
       return ok(undefined);
     },
-    clear: () => {
-      cleared += 1;
-    },
+    loadSections: () => sections,
+    saveSections: () => ok(undefined),
   };
 
   return {
     ...renderHook(() => useResult(progress, DECK)),
     written: () => written,
-    cleared: () => cleared,
   };
 };
 
@@ -99,20 +99,6 @@ describe("進捗バー", () => {
   });
 });
 
-describe("もう一度", () => {
-  it("保存を消す", () => {
-    const { result, cleared, written } = setup({
-      boxes: { "match:forward": 2 },
-      answers: [{ key: "match:forward", correct: true, chosen: "あ" }],
-    });
-
-    act(() => result.current.restart());
-
-    expect(cleared()).toBe(1);
-    expect(written()).toEqual([]);
-  });
-});
-
 describe("不正解だけもう一度", () => {
   const MISSED: Saved = {
     boxes: { "match:forward": 2, "with:reverse": 2 },
@@ -139,11 +125,47 @@ describe("不正解だけもう一度", () => {
     expect(written()[0]?.answers).toEqual([]);
   });
 
-  it("消さずに書き換える", () => {
-    const { result, cleared } = setup(MISSED);
+  /* why: 保存は 1 つ。範囲を絞らないと、前に解いた章の box まで巻き戻る
+     （docs/01_spec.md#選んだ章に限るもの） */
+  it("選ばなかった章の box は戻さない", () => {
+    const { result, written } = setup(MISSED, ["skeleton"]);
 
     act(() => result.current.retryMissed());
 
-    expect(cleared()).toBe(0);
+    expect(written()[0]?.boxes).toEqual({ "match:forward": 2, "with:reverse": 2 });
+  });
+
+  it("選ばなかった章の回答は残す", () => {
+    const { result, written } = setup(MISSED, ["skeleton"]);
+
+    act(() => result.current.retryMissed());
+
+    expect(written()[0]?.answers).toEqual([{ key: "with:reverse", correct: false, chosen: "い" }]);
+  });
+});
+
+describe("選んだ章に限る", () => {
+  const ANSWERS = [
+    { key: "match:forward", correct: true, chosen: "あ" },
+    { key: "with:reverse", correct: false, chosen: "い" },
+  ] as const;
+
+  it("選んだ章だけ成績に並べる", () => {
+    const { result } = setup({ boxes: {}, answers: [...ANSWERS] }, ["skeleton"]);
+
+    expect(result.current.score.bySection).toEqual([{ section: "skeleton", asked: 1, correct: 1 }]);
+    expect(result.current.score).toMatchObject({ asked: 1, correct: 1 });
+  });
+
+  it("選ばなかった章の不正解を一覧に出さない", () => {
+    const { result } = setup({ boxes: {}, answers: [...ANSWERS] }, ["skeleton"]);
+
+    expect(result.current.score.missed).toEqual([]);
+  });
+
+  it("進捗バーの分母が選んだ章の分だけになる", () => {
+    const { result } = setup({ boxes: {}, answers: [] }, ["skeleton"]);
+
+    expect(result.current.counts).toEqual([0, 0, 4]);
   });
 });

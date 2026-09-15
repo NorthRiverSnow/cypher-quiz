@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "../model/deck";
 import type { Boxes } from "../model/quiz";
-import type { Saved } from "../model/progress";
+import type { SectionId } from "../types";
+import type { Saved } from "../model/quiz";
 import type { Progress } from "./useProgress";
 import { useQuiz } from "./useQuiz";
 
@@ -25,6 +26,9 @@ const DECK: readonly Card[] = [
   card("collect", "shaping"),
 ];
 
+/** 既定はデッキの全章。章の選択は useStart のテストで見る */
+const SECTIONS = [...new Set(DECK.map(({ section }) => section))];
+
 /** 1 枚 × 2 方向。4 枚なので 8 問 */
 const QUESTIONS = DECK.length * 2;
 
@@ -33,7 +37,6 @@ const TO_COMPLETE = QUESTIONS * 2;
 
 const setup = (boxes: Boxes = {}, answers: Saved["answers"] = []) => {
   const saved: Saved[] = [];
-  let cleared = 0;
 
   const progress: Progress = {
     load: () => ({ boxes, answers }),
@@ -42,15 +45,13 @@ const setup = (boxes: Boxes = {}, answers: Saved["answers"] = []) => {
 
       return ok(undefined);
     },
-    clear: () => {
-      cleared += 1;
-    },
+    loadSections: () => SECTIONS,
+    saveSections: () => ok(undefined),
   };
 
   return {
     ...renderHook(() => useQuiz(progress, { deck: DECK, seed: 42 })),
     saved: () => saved,
-    cleared: () => cleared,
   };
 };
 
@@ -294,6 +295,60 @@ describe("習熟度", () => {
     answerWith(result, false);
 
     expect(result.current.counts).toEqual([QUESTIONS, 1, QUESTIONS + 1]);
+  });
+});
+
+describe("選んだ章", () => {
+  /** DECK は skeleton 2 枚 / shaping 2 枚。1 章に絞れば 4 問 */
+  const setupWith = (sections: readonly SectionId[]) => {
+    const progress: Progress = {
+      load: () => ({ boxes: {}, answers: [] }),
+      save: () => ok(undefined),
+      loadSections: () => sections,
+      saveSections: () => ok(undefined),
+    };
+
+    return renderHook(() => useQuiz(progress, { deck: DECK, seed: 42 }));
+  };
+
+  it("選んだ章の問題だけを出す", () => {
+    const { result } = setupWith(["skeleton"]);
+    const ids = new Set<string>();
+
+    for (let i = 0; i < 20 && result.current.face !== undefined; i += 1) {
+      ids.add(result.current.face.card.id);
+      answerWith(result, true);
+    }
+
+    expect([...ids].sort()).toEqual(["match", "where"]);
+  });
+
+  it("進捗バーの分母が選んだ章の分だけになる", () => {
+    const { result } = setupWith(["skeleton"]);
+
+    expect(result.current.counts).toEqual([0, 0, 8]);
+  });
+
+  it("選んだ章が全て完了すれば complete", () => {
+    const { result } = setupWith(["skeleton"]);
+
+    for (let i = 0; i < 20 && result.current.face !== undefined; i += 1) {
+      answerWith(result, true);
+    }
+
+    expect(result.current.complete).toBe(true);
+  });
+
+  /* why: 章を選ばずに /quiz へ来たときだけ起きる。画面はスタートへ送り返す */
+  it("章を 1 つも選んでいなければ empty", () => {
+    const { result } = setupWith([]);
+
+    expect(result.current.empty).toBe(true);
+    expect(result.current.face).toBeUndefined();
+  });
+
+  it("章があれば empty ではない", () => {
+    expect(setupWith(["skeleton"]).result.current.empty).toBe(false);
   });
 });
 

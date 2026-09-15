@@ -2,18 +2,15 @@ import { describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "./deck";
 import { DECK } from "./deck.data";
-import type { Box } from "./leitner";
+import { type Box, DONE } from "./leitner";
+import type { Boxes } from "./quiz";
+import { allKeys, cardIdOf, directionOf, keyOf, keysOf } from "./quiz.common";
 import {
-  allKeys,
   answerCurrent,
-  cardIdOf,
   answerCounts,
-  remaining,
   createQuiz,
   currentKey,
-  directionOf,
   isComplete,
-  keyOf,
   type QuizState,
   chosenFor,
   resetMissed,
@@ -43,26 +40,16 @@ const answerAll = (state: QuizState, correct: boolean, times: number) => {
   return next;
 };
 
-describe("キー", () => {
-  it("カードと方向を往復できる", () => {
-    const key = keyOf("optional-match", "reverse");
-
-    expect(cardIdOf(key)).toBe("optional-match");
-    expect(directionOf(key)).toBe("reverse");
-  });
-
-  it("30 枚から 60 問できる", () => {
-    expect(allKeys(DECK)).toHaveLength(60);
-    expect(new Set(allKeys(DECK)).size).toBe(60);
-  });
-});
+/** 完了していない問題の数。box を持たないキーも未完了として数える */
+const countNotDone = (deck: readonly Card[], boxes: Boxes): number =>
+  allKeys(deck).filter((key) => (boxes[key] ?? 0) !== DONE).length;
 
 describe("createQuiz", () => {
   it("全問が box 0 から始まる", () => {
     const state = createQuiz(DECK, createRng(1));
 
     expect(state.queue).toHaveLength(60);
-    expect(remaining(state.boxes, DECK)).toBe(60);
+    expect(countNotDone(DECK, state.boxes)).toBe(60);
   });
 
   it("同じシードなら同じ出題順になる", () => {
@@ -103,7 +90,7 @@ describe("続きから始める", () => {
 
     const state = createQuiz(small, createRng(1), boxes);
 
-    expect(remaining(state.boxes, small)).toBe(QUESTIONS - 1);
+    expect(countNotDone(small, state.boxes)).toBe(QUESTIONS - 1);
     expect(state.boxes[keyOf("a", "reverse")]).toBe(1);
   });
 
@@ -126,7 +113,7 @@ describe("続きから始める", () => {
     const state = createQuiz(small, createRng(1), { [keyOf("a", "forward")]: 1 as Box });
 
     expect(state.boxes[keyOf("c", "reverse")]).toBe(0);
-    expect(remaining(state.boxes, small)).toBe(QUESTIONS);
+    expect(countNotDone(small, state.boxes)).toBe(QUESTIONS);
   });
 
   /* why: 教材からカードが消えても、残った box だけで組み直せる */
@@ -141,8 +128,8 @@ describe("続きから始める", () => {
     const first = answerAll(createQuiz(small, createRng(1)), true, 4);
     const resumed = createQuiz(small, createRng(2), first.boxes);
 
-    expect(remaining(resumed.boxes, small)).toBe(remaining(first.boxes, small));
-    expect(resumed.queue).toHaveLength(remaining(first.boxes, small));
+    expect(countNotDone(small, resumed.boxes)).toBe(countNotDone(small, first.boxes));
+    expect(resumed.queue).toHaveLength(countNotDone(small, first.boxes));
   });
 });
 
@@ -196,7 +183,7 @@ describe("answerCurrent", () => {
   });
 
   it("キューが空なら何も起きない", () => {
-    const empty: QuizState = { queue: [], boxes: {}, answers: [] };
+    const empty: QuizState = { targetQuestions: [], queue: [], boxes: {}, answers: [] };
 
     expect(answerCurrent(empty, true, CHOSEN)).toEqual(empty);
   });
@@ -206,7 +193,7 @@ describe("完了と集計", () => {
   it("全問 2 回正解で完了する", () => {
     const state = answerAll(createQuiz(small, createRng(1)), true, TO_COMPLETE);
 
-    expect(remaining(state.boxes, small)).toBe(0);
+    expect(countNotDone(small, state.boxes)).toBe(0);
     expect(isComplete(state)).toBe(true);
     expect(currentKey(state)).toBeUndefined();
   });
@@ -416,22 +403,6 @@ describe("選んだ肢", () => {
   });
 });
 
-describe("remaining はデッキから数える", () => {
-  /* why: 保存された boxes だけを数えない。デッキにカードを足すと、古い保存には
-     そのキーが無く、未完了の数が足りなくなる */
-  it("保存に無いキーは box 0 として数える", () => {
-    expect(remaining({ [keyOf("a", "forward")]: 2 }, small)).toBe(QUESTIONS - 1);
-  });
-
-  it("空の保存なら全問が未完了", () => {
-    expect(remaining({}, small)).toBe(QUESTIONS);
-  });
-
-  it("デッキに無いキーは数えない", () => {
-    expect(remaining({ [keyOf("z", "forward")]: 2 }, small)).toBe(QUESTIONS);
-  });
-});
-
 /* why: 進捗バーは回答で数える。問題で数えると、一周した時点で満杯になる */
 describe("answerCounts は回答で数える", () => {
   const key = keyOf("a", "forward");
@@ -439,39 +410,112 @@ describe("answerCounts は回答で数える", () => {
   const answer = (correct: boolean) => ({ key, correct, chosen: CHOSEN });
 
   it("答える前は全て残り", () => {
-    expect(answerCounts([], {}, small)).toEqual([0, 0, TO_COMPLETE]);
+    expect(answerCounts([], {}, allKeys(small))).toEqual([0, 0, TO_COMPLETE]);
   });
 
   it("正解すると青が増え、残りが減る", () => {
-    expect(answerCounts([answer(true)], { [key]: 1 }, small)).toEqual([1, 0, TO_COMPLETE - 1]);
+    expect(answerCounts([answer(true)], { [key]: 1 }, allKeys(small))).toEqual([
+      1,
+      0,
+      TO_COMPLETE - 1,
+    ]);
   });
 
   it("不正解では残りが減らない", () => {
-    expect(answerCounts([answer(false)], { [key]: 0 }, small)).toEqual([0, 1, TO_COMPLETE]);
+    expect(answerCounts([answer(false)], { [key]: 0 }, allKeys(small))).toEqual([
+      0,
+      1,
+      TO_COMPLETE,
+    ]);
   });
 
   /* why: 1 度正解した分が失われる。問題の数で数えると、赤が増えた分だけ満杯に近づく */
   it("1 回正解したあと間違えると残りが増える", () => {
     const answers = [answer(true), answer(false)];
 
-    expect(answerCounts(answers, { [key]: 0 }, small)).toEqual([1, 1, TO_COMPLETE]);
+    expect(answerCounts(answers, { [key]: 0 }, allKeys(small))).toEqual([1, 1, TO_COMPLETE]);
   });
 
   it("同じ問題への回答をまとめない", () => {
     const answers = [answer(true), answer(true), { key: other, correct: true, chosen: CHOSEN }];
 
-    expect(answerCounts(answers, { [key]: 2, [other]: 1 }, small)).toEqual([3, 0, TO_COMPLETE - 3]);
+    expect(answerCounts(answers, { [key]: 2, [other]: 1 }, allKeys(small))).toEqual([
+      3,
+      0,
+      TO_COMPLETE - 3,
+    ]);
   });
 
   it("全て完了すると残りが 0", () => {
     const boxes = Object.fromEntries(allKeys(small).map((done): [string, Box] => [done, 2]));
 
-    expect(answerCounts([], boxes, small)[2]).toBe(0);
+    expect(answerCounts([], boxes, allKeys(small))[2]).toBe(0);
   });
 
   /* why: 残りは今のデッキから数える。消えたカードの box が保存に残っていても足さない */
   it("デッキに無い box を残りに数えない", () => {
-    expect(answerCounts([], { "z:forward": 0 }, small)[2]).toBe(TO_COMPLETE);
+    expect(answerCounts([], { "z:forward": 0 }, allKeys(small))[2]).toBe(TO_COMPLETE);
+  });
+});
+
+describe("章で絞る", () => {
+  /** lists は c の 1 枚だけ。2 問 */
+  const lists = keysOf(small, "lists");
+
+  it("targetQuestions の問題だけを積む", () => {
+    const state = createQuiz(small, createRng(1), {}, [], lists);
+
+    expect(state.targetQuestions).toEqual(lists);
+    expect([...state.queue].sort()).toEqual([...lists].sort());
+  });
+
+  /* why: 選ばなかった章の box を残すので、boxes 全体を見ると絞ったのに完了しない */
+  it("完了は targetQuestions の中だけを見る", () => {
+    const saved: Boxes = { [keyOf("a", "forward")]: 0 };
+    const state = answerAll(
+      createQuiz(small, createRng(1), saved, [], lists),
+      true,
+      lists.length * 2,
+    );
+
+    expect(isComplete(state)).toBe(true);
+    expect(state.queue).toHaveLength(0);
+  });
+
+  /* why: 捨てると、章を絞って解いたあと保存し直した時点で他の章の進捗が消える */
+  it("選ばなかった章の box を残す", () => {
+    const saved: Boxes = { [keyOf("a", "forward")]: 2, [keyOf("a", "reverse")]: 1 };
+    const state = createQuiz(small, createRng(1), saved, [], lists);
+
+    expect(state.boxes[keyOf("a", "forward")]).toBe(2);
+    expect(state.boxes[keyOf("a", "reverse")]).toBe(1);
+  });
+
+  it("進捗バーの分母が targetQuestions の分だけになる", () => {
+    expect(answerCounts([], {}, lists)).toEqual([0, 0, lists.length * 2]);
+  });
+
+  it("targetQuestions の外の回答を数えない", () => {
+    const outside = [{ key: keyOf("a", "forward"), correct: true, chosen: CHOSEN }];
+
+    expect(answerCounts(outside, {}, lists)).toEqual([0, 0, lists.length * 2]);
+  });
+
+  /* why: 選ばなかった章は並べない。0 / 0 で並ぶと解き残しに見える */
+  it("章別の成績に、選ばなかった章を並べない", () => {
+    const answers = [
+      { key: keyOf("a", "forward"), correct: false, chosen: CHOSEN },
+      { key: keyOf("c", "forward"), correct: true, chosen: CHOSEN },
+    ];
+    const result = score(answers, small, lists);
+
+    expect(result.bySection).toEqual([{ section: "lists", asked: 1, correct: 1 }]);
+    expect(result.missed).toEqual([]);
+    expect(result).toMatchObject({ asked: 1, correct: 1 });
+  });
+
+  it("targetQuestions を渡さなければデッキ全体", () => {
+    expect(createQuiz(small, createRng(1)).targetQuestions).toHaveLength(QUESTIONS);
   });
 });
 

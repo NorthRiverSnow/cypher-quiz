@@ -42,7 +42,9 @@ describe("AppRoutes", () => {
     renderAt("/");
     throwOutsideRender();
 
-    await userEvent.click(screen.getByRole("button", { name: "クイズスタート！" }));
+    /* why: 章を 1 つも選んでいないと開始が押せない */
+    await userEvent.click(screen.getByRole("checkbox", { name: /^全て/ }));
+    await userEvent.click(screen.getByRole("button", { name: "開始" }));
 
     expect(screen.getByText("予期しないエラーが起きました。壊れた")).toBeDefined();
   });

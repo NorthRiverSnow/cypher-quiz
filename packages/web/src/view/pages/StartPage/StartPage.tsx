@@ -3,13 +3,18 @@ import type { CSSProperties, ReactNode } from "react";
 import { Button } from "../../atoms/Button/Button";
 import { Card } from "../../atoms/Card/Card";
 import { Text } from "../../atoms/Text/Text";
+import {
+  SectionPicker,
+  type SectionPickerProps,
+} from "../../organisms/SectionPicker/SectionPicker";
 import { QuizLayout } from "../../templates/QuizLayout/QuizLayout";
 
 export type StartPageProps = {
   notices?: ReactNode;
+  picker: SectionPickerProps;
+  /** 1 つも選んでいなければ始められない（docs/01_spec.md#7-画面と導線） */
+  canStart: boolean;
   onStart: () => void;
-  /** 前回の続きがあるときの残り問題数。渡さなければ未着手 */
-  remaining?: number;
 };
 
 const STACK: CSSProperties = { display: "grid", gap: "var(--space-md)" };
@@ -38,7 +43,7 @@ const POINT_ITEMS: readonly { key: string; text: string }[] = [
   { key: "任意", text: "DB に繋ぐと、裏面のサンプルクエリを編集して実行できます" },
 ];
 
-export const StartPage = ({ notices, onStart, remaining }: StartPageProps) => (
+export const StartPage = ({ notices, picker, canStart, onStart }: StartPageProps) => (
   <QuizLayout notices={notices}>
     <Card>
       <div style={STACK}>
@@ -62,9 +67,13 @@ export const StartPage = ({ notices, onStart, remaining }: StartPageProps) => (
           ))}
         </div>
 
+        <Card label="章選択">
+          <SectionPicker {...picker} />
+        </Card>
+
         <div style={ACTIONS}>
-          <Button onClick={onStart}>
-            {remaining === undefined ? "クイズスタート！" : `続きから（残り ${remaining} 問）`}
+          <Button onClick={onStart} disabled={!canStart}>
+            開始
           </Button>
         </div>
       </div>

@@ -1,0 +1,54 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.toggle {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-sm);
+  align-items: center;
+  /* why: grid の子は既定で縮まない。長い章名で状態が行の外へ押し出される */
+  min-width: 0;
+  text-align: left;
+  padding: var(--space-2xs) var(--space-xs);
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .toggle:hover {
+    background: var(--panel-sunken);
+  }
+}
+
+/* why: 面を塗らない。--alarm を --alarm-bg に載せると light で 3.99 になり AA を切る
+   （docs/07_design.md#淡い面に自色を載せない）。--panel なら 4.84、hover の沈んだ面でも 4.53 */
+.reset {
+  display: inline-flex;
+  gap: var(--space-2xs);
+  align-items: center;
+  padding: var(--space-2xs) var(--space-xs);
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .reset:hover {
+    background: var(--panel-sunken);
+  }
+}
+
+.blank {
+  visibility: hidden;
+}

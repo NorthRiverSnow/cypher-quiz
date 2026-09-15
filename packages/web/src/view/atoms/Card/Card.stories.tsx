@@ -23,3 +23,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const 既定: Story = {};
+
+/** 上辺の罫線を切って見出しを重ねる */
+export const 見出し付き: Story = { args: { label: "章選択" } };

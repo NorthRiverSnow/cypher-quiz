@@ -3,7 +3,7 @@ import { cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "../model/deck";
-import type { Saved } from "../model/progress";
+import type { Saved } from "../model/quiz";
 import type { Progress } from "./useProgress";
 import { useReview } from "./useReview";
 
@@ -42,7 +42,8 @@ const setup = (cardId: string, direction: string, answers = ANSWERS) => {
   const progress: Progress = {
     load: () => ({ boxes: {}, answers }),
     save: () => ok(undefined),
-    clear: () => undefined,
+    loadSections: () => [],
+    saveSections: () => ok(undefined),
   };
 
   return renderHook(() => useReview(cardId, direction, progress, DECK));
@@ -116,7 +117,8 @@ describe("編集欄を出してよいか", () => {
     const progress: Progress = {
       load: () => ({ boxes: {}, answers: [{ key: "list:forward", correct: false, chosen: "あ" }] }),
       save: () => ok(undefined),
-      clear: () => undefined,
+      loadSections: () => [],
+      saveSections: () => ok(undefined),
     };
     const { result } = renderHook(() => useReview("list", "forward", progress, [listing]));
 
@@ -136,7 +138,8 @@ describe("編集欄を出してよいか", () => {
         answers: [{ key: "listing:forward", correct: false, chosen: "あ" }],
       }),
       save: () => ok(undefined),
-      clear: () => undefined,
+      loadSections: () => [],
+      saveSections: () => ok(undefined),
     };
     const { result } = renderHook(() => useReview("listing", "forward", progress, [listing]));
 

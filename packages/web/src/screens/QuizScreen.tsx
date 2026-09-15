@@ -23,6 +23,11 @@ export const QuizScreen = ({ notices, band, ...options }: QuizScreenProps) => {
 
   const { face } = quiz;
 
+  /* why: 章を選ばずに来たらスタートへ返す。結果へ送ると 0 問のサマリが出る */
+  if (quiz.empty) {
+    return <Navigate to="/" replace />;
+  }
+
   /* why: 出題が尽きたら結果へ。effect で送ると 1 度空の画面が描かれる */
   if (face === undefined) {
     return <Navigate to="/result" replace />;

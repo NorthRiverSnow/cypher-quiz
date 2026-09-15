@@ -625,10 +625,12 @@ cypher-quiz/
          │  ├─ deck.data.ts          # 30 枚の固定データ
          │  ├─ deck.ts               # Card の型。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
+         │  ├─ quiz.common.ts       # 問題キーの代数と引き当て。model も controller も引く
          │  ├─ quiz.ts              # QuizState（queue / boxes / answers）と セレクタ（counts / score）
+         │  ├─ sections.ts          # 章ごとの状態（未着手 / 進行中 / 完了 と正解数）
          │  ├─ leitner.ts           # box 遷移
          │  ├─ rng.ts               # シード付き擬似乱数
-         │  ├─ progress.ts          # model で localStorage を触るのはここだけ。box と成績を 1 キーに
+         │  ├─ progress.ts          # model で localStorage を触るのはここだけ。box と成績、選んだ章
          │  └─ result.ts            # Cell → ResultCell。色が付くのはノードだけ
          │
          ├─ view/                   # ★ 純関数。props in / callback out
@@ -664,7 +666,7 @@ cypher-quiz/
          ├─ controller/             # model の副作用を呼べる唯一の層
          │  ├─ useNotices.ts        # 通知の一覧。report が失敗の唯一の入口
          │  ├─ useGlobalErrors.ts   # 境界が拾えない例外を通知に積む
-         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所。load / save / clear
+         │  ├─ useProgress.ts       # model/progress を呼ぶ唯一の場所。進捗・成績と、選んだ章
          │  ├─ useTheme.ts          # data-theme と localStorage。View の外
          │  ├─ useQuiz.ts           # 出題・答え合わせ・習熟度の保存。表と裏を Face で返す
          │  ├─ useResult.ts         # サマリ。クイズを組まず、保存された回答を数える
@@ -718,13 +720,13 @@ view/pages/     全状態を props で受ける純関数
 
 ### やり直しは保存を書き換えて遷移する
 
-サマリの「もう一度」と「不正解だけもう一度」は、**`useQuiz` の口ではない。**
+サマリの「不正解だけもう一度」は、**`useQuiz` の口ではない。**
 保存を書き換えてから `/quiz` へ送れば、次の `QuizScreen` がそれを読んで組み直す。
 
-| ボタン | 書き換えるもの |
-|---|---|
-| もう一度 | 保存を消す（`progress.clear()`） |
-| 不正解だけもう一度 | 間違えた問題の box を 0 に戻し、成績を空にして保存（`resetMissed`） |
+| ボタン | 行き先 | 書き換えるもの |
+|---|---|---|
+| もう一度 | `/`（スタート） | なし。消すのは章を選んで開始したとき（`startingFrom`） |
+| 不正解だけもう一度 | `/quiz` | 選んだ章の、間違えた問題の box を 0 に戻す（`resetMissed`）。その章の成績は空にし、**選ばなかった章の回答は残す**（`answersOutside`） |
 
 **成績はクイズを組まずに出せる。** `score(answers, deck)` は回答だけを引くので、
 `ResultScreen` は `progress.load()` の `answers` を渡すだけでよい。

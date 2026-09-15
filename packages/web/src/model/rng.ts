@@ -29,11 +29,3 @@ export const shuffle = <T>(items: readonly T[], rng: Rng): T[] => {
 
   return shuffled;
 };
-
-/**
- * 重複なしで count 個選ぶ。
- *
- * @param count 足りなければある分だけ返す
- */
-export const pick = <T>(items: readonly T[], count: number, rng: Rng): T[] =>
-  shuffle(items, rng).slice(0, Math.max(0, count));

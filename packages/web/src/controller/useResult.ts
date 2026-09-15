@@ -2,16 +2,22 @@ import { useCallback, useState } from "react";
 
 import type { Card } from "../model/deck";
 import { DECK } from "../model/deck.data";
-import { type Score, answerCounts, resetMissed, score } from "../model/quiz";
+import { keysOfSections } from "../model/quiz.common";
+import {
+  type Score,
+  answerCounts,
+  answersIn,
+  answersOutside,
+  resetMissed,
+  score,
+} from "../model/quiz";
 import type { Progress } from "./useProgress";
 
 export type Result = Readonly<{
   /** 進捗バーに渡す 正解 / 不正解 / 完了までに残る回答 */
   counts: [number, number, number];
   score: Score;
-  /** 進捗も成績も消す */
-  restart: () => void;
-  /** 間違えた問題の box を 0 に戻し、成績を空にする */
+  /** 選んだ章の、間違えた問題の box を 0 に戻す。**その章の成績は空になる** */
   retryMissed: () => void;
 }>;
 
@@ -25,19 +31,22 @@ export type Result = Readonly<{
  */
 export const useResult = (progress: Progress, deck: readonly Card[] = DECK): Result => {
   const [{ boxes, answers }] = useState(() => progress.load());
+  /* why: 章は mount のとき 1 回だけ読む。成績はこの範囲で数える
+     （docs/01_spec.md#7-画面と導線） */
+  const [targetQuestions] = useState(() => keysOfSections(deck, progress.loadSections()));
 
-  const restart = useCallback(() => {
-    progress.clear();
-  }, [progress]);
-
+  /* why: 選んだ章の外へは触れない。保存は 1 つなので、範囲を絞らないと
+     前に解いた章の box と成績まで巻き戻る（docs/01_spec.md#選んだ章に限るもの） */
   const retryMissed = useCallback(() => {
-    progress.save({ boxes: resetMissed(boxes, answers), answers: [] });
-  }, [answers, boxes, progress]);
+    progress.save({
+      boxes: resetMissed(boxes, answersIn(answers, targetQuestions)),
+      answers: answersOutside(answers, targetQuestions),
+    });
+  }, [answers, boxes, progress, targetQuestions]);
 
   return {
-    counts: answerCounts(answers, boxes, deck),
-    score: score(answers, deck),
-    restart,
+    counts: answerCounts(answers, boxes, targetQuestions),
+    score: score(answers, deck, targetQuestions),
     retryMissed,
   };
 };

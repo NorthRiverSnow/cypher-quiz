@@ -4,13 +4,17 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { AppRoutes } from "../routes";
+import { SECTION_LABELS } from "../types";
 
 afterEach(cleanup);
 
 const KEY = "cypher-quiz:progress";
+const SECTIONS_KEY = "cypher-quiz:sections";
 
 beforeEach(() => {
   window.localStorage.clear();
+  /* why: 章を選ばないと出題が 0 問になる。章の選択そのものは useStart のテストで見る */
+  window.localStorage.setItem(SECTIONS_KEY, JSON.stringify(Object.keys(SECTION_LABELS)));
 });
 
 /** 1 枚だけのデッキ。完了まで 2 方向 × 2 回 = 4 回で着く */
@@ -48,13 +52,21 @@ describe("スタート", () => {
   it("押すと接続画面へ進む", async () => {
     open("/");
 
-    await userEvent.click(screen.getByRole("button", { name: "クイズスタート！" }));
+    await userEvent.click(screen.getByRole("button", { name: "開始" }));
 
     expect(screen.getByRole("heading", { name: /接続/ })).toBeDefined();
   });
 });
 
 describe("出題", () => {
+  /* why: 結果へ送ると 0 問のサマリが出る（docs/01_spec.md#スタート画面--出す章を選ぶ） */
+  it("章を選んでいなければスタートへ返す", () => {
+    window.localStorage.removeItem(SECTIONS_KEY);
+    open("/quiz");
+
+    expect(screen.getByRole("button", { name: "開始" })).toBeDefined();
+  });
+
   it("4 択が出る", () => {
     open("/quiz");
 
@@ -121,14 +133,15 @@ describe("結果", () => {
     expect(screen.getByRole("button", { name: /MATCH/ })).toBeDefined();
   });
 
-  it("もう一度で保存を消して出題へ戻る", async () => {
+  /* why: 消すのは章を選んで開始したとき（docs/01_spec.md#スタート画面--出す章を選ぶ） */
+  it("もう一度でスタートへ戻り、成績は消えない", async () => {
     window.localStorage.setItem(KEY, JSON.stringify(ALL_DONE));
     open("/result");
 
     await userEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
-    expect(window.localStorage.getItem(KEY)).toBeNull();
-    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    expect(screen.getByRole("button", { name: "開始" })).toBeDefined();
+    expect(saved()).toMatchObject(ALL_DONE);
   });
 
   /* why: 間違えた問題の box を 0 に戻して遷移する。次の画面はそれを読んで組み直す */
@@ -202,6 +215,6 @@ describe("知らない URL", () => {
   it("スタートへ送る", () => {
     open("/nosuch");
 
-    expect(screen.getByRole("button", { name: "クイズスタート！" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "開始" })).toBeDefined();
   });
 });

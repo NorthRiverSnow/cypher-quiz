@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { createRng, pick, shuffle } from "./rng";
+import { createRng, shuffle } from "./rng";
 
 const take = (seed: number, count: number) => {
   const rng = createRng(seed);
@@ -58,24 +58,5 @@ describe("shuffle", () => {
     const last = Array.from({ length: 20 }, (_, seed) => shuffle(items, createRng(seed)).at(-1));
 
     expect(new Set(last).size).toBeGreaterThan(1);
-  });
-});
-
-describe("pick", () => {
-  const items = ["a", "b", "c", "d"];
-
-  it("重複なく count 個返す", () => {
-    const picked = pick(items, 3, createRng(9));
-
-    expect(picked).toHaveLength(3);
-    expect(new Set(picked).size).toBe(3);
-  });
-
-  it("足りなければある分だけ返す", () => {
-    expect(pick(items, 10, createRng(9))).toHaveLength(4);
-  });
-
-  it("0 個なら空になる", () => {
-    expect(pick(items, 0, createRng(9))).toEqual([]);
   });
 });

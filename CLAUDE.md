@@ -25,6 +25,56 @@ NordWind ワークショップの Cypher 教材（`../nordwind-workshop/guides/`
 **docs は現行仕様だけを書く。** guide から変わったものは変わったあとの内容を書く。
 履歴（「以前は X だった」）は書かない——git log の役目。
 
+## 命名
+
+**名前と型だけで、何を返すか・何を受け取るかが分かるようにする。**
+コメントの規則 1（名前と型で言えるか）はこれが前提。
+
+### 決まっている形
+
+| 形                | 使うとき                             | 例                                       |
+| ----------------- | ------------------------------------ | ---------------------------------------- |
+| `〜Of(source, …)` | source から引く・導く                | `cardOf` `sectionOf` `keysOf` `cypherOf` |
+| `is〜`            | 真偽を返す                           | `isDone` `isEverySection` `isComplete`   |
+| `read〜(stored)`  | 保存された、形が保証されない値を読む | `readBoxes` `readSaved`                  |
+| `use〜`           | React の hook                        | `useQuiz` `useStart`                     |
+| `SCREAMING_SNAKE` | モジュールの定数、インラインの style | `REINSERT_AFTER` `STACK` `FILL`          |
+| `名詞.修飾.ts`    | ファイル。小文字 1 語を `.` で絞る   | `deck.data.ts` `quiz.common.ts`          |
+
+コンポーネントだけ `PascalCase/PascalCase.tsx`。
+
+### 付ける前に、上から確かめる
+
+1. **返すものを名乗っているか。** 呼ぶ先の都合で名付けない
+   `✗ poolFor`（pool は `createQuiz` の引数名） → `○ keysOfSections`
+2. **目的語がずれていないか**
+   `✗ dropSections`（章を捨てる？） → `○ resetSections`（章の**記録**を消す）
+3. **同種の関数と動詞が揃っているか**
+   `✗ dropSections` と `resetMissed` → `○ resetSections` と `resetMissed`
+4. **対になる関数と区別が付くか。** 単位や範囲が違うなら名前に出す
+   `✗ tally` と `answerCounts` → `○ questionScore` と `answerCounts`（問題 / 回答）
+5. **docs の言葉を使っているか。** 比喩と内部語を避ける
+   `✗ pool` → `○ targetQuestions`（仕様の「出題の対象」）
+6. **引数の名前が、何が入るかを言っているか**
+   `✗ parsed`（何をパースした？） → `○ stored`（保存から読んだ、形が保証されない値）
+7. **引数の順が同族と揃っているか**
+   `✗ poolFor(sections, deck)` と `keysOf(deck, section)` → `○ どちらも (deck, …)`
+8. **判断に名前が付いているか。** 条件式を裸で置かない
+   `✗ all.every((s) => selected.includes(s))` → `○ isEverySection(deck, selected)`
+
+### 短縮しない
+
+`of` `res` `val` `tmp` のような名前を使わない。**テストのヘルパも同じ**で、
+何を固定したかを名前に入れる（`✗ of(boxes, answers)` → `○ skeletonProgress(boxes, answers)`）。
+
+### 置き場所も名前の一部
+
+**共通部分は、使う側の都合ではなく中身で分ける。** `quiz.common.ts`（問題キーの代数と引き当て）を
+`quiz.ts`（出題キューと box）から分けたのは、前者を controller も引くため。
+**同じ処理が 2 箇所に出たら、3 箇所目を書く前に共通へ移す。**
+
+---
+
 ## コメント
 
 **書く前に、上から順に判断する。** 途中で「書かない」に当たったら、そこで終わり。
