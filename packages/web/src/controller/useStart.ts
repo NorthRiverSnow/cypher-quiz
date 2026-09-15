@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import type { Card } from "../model/deck";
 import { DECK } from "../model/deck.data";
 import { allKeys, isEverySection, sectionsOf } from "../model/quiz.common";
-import { allSectionProgress, resetSections, startingFrom } from "../model/sections";
+import { allSectionProgress, startingFrom } from "../model/sections";
 import { SECTION_LABELS, type SectionId } from "../types";
 import type { Progress } from "./useProgress";
 
@@ -14,8 +14,6 @@ export type SectionOption = Readonly<{
   /** 行の右端。`0 / 10` か `進行中` */
   status: string;
   checked: boolean;
-  /** 記録がある章だけ。**渡さなければリセットのボタンが出ない** */
-  onReset?: () => void;
 }>;
 
 export type Start = Readonly<{
@@ -32,13 +30,13 @@ export type Start = Readonly<{
 }>;
 
 /**
- * 出す章の選択。**章の記録を消すのもここ。**
+ * 出す章の選択。
  *
  * why: 遷移しない。保存を書き換えてから画面が移る形に揃える
  * （docs/02_architecture.md#やり直しは保存を書き換えて遷移する）
  */
 export const useStart = (progress: Progress, deck: readonly Card[] = DECK): Start => {
-  const [saved, setSaved] = useState(() => progress.load());
+  const [saved] = useState(() => progress.load());
   const [selected, setSelected] = useState(() => progress.loadSections());
 
   const choose = useCallback(
@@ -49,16 +47,6 @@ export const useStart = (progress: Progress, deck: readonly Card[] = DECK): Star
     [progress],
   );
 
-  const reset = useCallback(
-    (section: SectionId) => {
-      const next = resetSections([section], saved.boxes, saved.answers, deck);
-
-      setSaved(next);
-      progress.save(next);
-    },
-    [deck, progress, saved],
-  );
-
   const sections = allSectionProgress(saved.boxes, saved.answers, deck).map(
     ({ section, total, correct, state }): SectionOption => ({
       id: section,
@@ -67,7 +55,6 @@ export const useStart = (progress: Progress, deck: readonly Card[] = DECK): Star
          並べると比べられてしまう（docs/01_spec.md#7-画面と導線） */
       status: state === "ongoing" ? "進行中" : `${correct} / ${total}`,
       checked: selected.includes(section),
-      ...(state === "fresh" ? {} : { onReset: () => reset(section) }),
     }),
   );
 

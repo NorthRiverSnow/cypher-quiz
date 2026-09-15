@@ -31,40 +31,4 @@ describe("SectionRow", () => {
 
     expect(screen.getByRole("checkbox", { name: "書き込み 8 / 10" })).toBeDefined();
   });
-
-  it("onReset が無ければリセットのボタンを出さない", () => {
-    render(<SectionRow label="書き込み" status="0 / 10" checked={false} onToggle={noop} />);
-
-    expect(screen.queryByRole("button", { name: /成績をリセット/ })).toBeNull();
-  });
-
-  it("リセットを押すと onReset を呼ぶ", async () => {
-    const onReset = vi.fn();
-    render(
-      <SectionRow
-        label="書き込み"
-        status="8 / 10"
-        checked={false}
-        onToggle={noop}
-        onReset={onReset}
-      />,
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: "書き込みの成績をリセット" }));
-
-    expect(onReset).toHaveBeenCalledOnce();
-  });
-
-  /* why: 一覧に 7 行並ぶ。見えている文言は全て同じなので、読み上げの名前で行を分ける */
-  it("リセットの読み上げの名前に章名を入れる", () => {
-    render(
-      <>
-        <SectionRow label="書き込み" status="8 / 10" checked onToggle={noop} onReset={noop} />
-        <SectionRow label="リストと集約" status="2 / 12" checked onToggle={noop} onReset={noop} />
-      </>,
-    );
-
-    expect(screen.getByRole("button", { name: "書き込みの成績をリセット" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "リストと集約の成績をリセット" })).toBeDefined();
-  });
 });
