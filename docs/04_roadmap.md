@@ -161,8 +161,14 @@ localStorage）ので、静的ホスティングで全機能が動く。
 | F-1 | 方針（この節）と、公開版で接続機能をどう出すかの仕様 |
 | F-2 | `HashRouter` への差し替え、`vite.config.ts` の `base`、ビルドの確認 |
 | F-3 | 公開版の接続機能——問い合わせに行かせない |
-| F-4 | `.github/workflows/` — ビルドして Pages へ |
+| F-4 | `.github/workflows/pages.yml` — `main` への push でビルドして Pages へ |
 | F-5 | 公開した URL で通し確認 |
+
+**公開する前に `vp check` と `vp test run` を通す。** 壊れたものを配らない。
+api のテストは Docker が要るのでここでは走らせない（ホストの分だけ）。
+
+**リポジトリの Settings → Pages で、ソースを `GitHub Actions` にする。**
+ここを変えないとワークフローが成功しても公開されない。
 
 **`BrowserRouter` を `HashRouter` に変える。** GitHub Pages は SPA のフォールバックを持たないので、
 `/quiz` を直に開くと 404 になる。`404.html` に `index.html` を複製する手もあるが、3 つ困る。

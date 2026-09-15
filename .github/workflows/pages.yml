@@ -1,0 +1,56 @@
+# web だけを GitHub Pages に置く。api は置かない（docs/04_roadmap.md#フェーズ-f--配る）
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時に流さない。cancel-in-progress は false——途中で止めると公開が中途半端になる
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # `vp` はシェル関数なので CI には無い。実体は node_modules/.bin に入る
+      - run: pnpm install --frozen-lockfile
+
+      # 壊れたものを公開しない。api のテストは Docker が要るので、ここではホストの分だけ
+      - run: pnpm exec vp check
+      - run: pnpm exec vp test run
+
+      # VITE_HAS_API=false で、接続の問い合わせに行かせない（docs/01_spec.md#7-画面と導線）
+      - run: pnpm exec vp -C packages/web build
+        env:
+          VITE_HAS_API: "false"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
