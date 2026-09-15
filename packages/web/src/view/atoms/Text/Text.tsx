@@ -53,14 +53,25 @@ export const TONES = {
 
 export type TextTone = keyof typeof TONES;
 
+export const WEIGHTS = {
+  medium: "var(--weight-medium)",
+  semibold: "var(--weight-semibold)",
+  bold: "var(--weight-bold)",
+  black: "var(--weight-black)",
+} as const;
+
+export type TextWeight = keyof typeof WEIGHTS;
+
 export type TextProps = {
   variant: TextVariant;
   as?: "span" | "p" | "div" | "code" | "h1" | "h2" | "h3";
   tone?: TextTone;
+  /** variant の太さを上書きする。**意味の強調が要るときだけ**（docs/07_design.md#字の段階） */
+  weight?: TextWeight;
   children: ReactNode;
 };
 
-export const Text = ({ variant, as: Tag = "span", tone, children }: TextProps) => (
+export const Text = ({ variant, as: Tag = "span", tone, weight, children }: TextProps) => (
   <Tag
     style={{
       /* why: h1 / h2 / p のブラウザ既定 margin を毎回消さずに済ませる。
@@ -68,6 +79,7 @@ export const Text = ({ variant, as: Tag = "span", tone, children }: TextProps) =
       margin: 0,
       ...TEXT[variant],
       ...(tone === undefined ? {} : { color: TONES[tone] }),
+      ...(weight === undefined ? {} : { fontWeight: WEIGHTS[weight] }),
     }}
   >
     {children}

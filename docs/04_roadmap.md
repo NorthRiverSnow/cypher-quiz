@@ -225,6 +225,14 @@ lint で model を引けないため、controller まで揃っていないと結
 17-g. **途中で章を変えても対象が入れ替わる。** A 章を途中まで解き、B 章だけを選び直すと
     B 章だけが出る
 
+**17-a〜17-g は Vitest で検証する。** 画面をまたぐ項目（17-a / 17-d / 17-e / 17-e2 / 17-g）は
+`screens/screens.test.tsx` に、スタート画面の中で閉じる項目（17-b / 17-c / 17-f）は
+`screens/StartScreen.test.tsx` に書いてある。
+
+**この 7 項目は、本物のデッキ（`model/deck.data.ts` の 30 枚）で検証する。**
+`AppRoutes` の `quiz` props が届くのは `QuizScreen` だけで、`StartScreen` と `ResultScreen` は
+`DECK` を直に読む。テスト用の小さいデッキを `quiz` に渡すと、画面ごとに章の数と問題数が食い違う。
+
 ### 失敗の伝わり方
 
 18. **実際に壊して、画面に出るか見る。**

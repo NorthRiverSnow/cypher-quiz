@@ -117,12 +117,14 @@ describe("不正解だけもう一度", () => {
     expect(written()[0]?.boxes).toEqual({ "match:forward": 2, "with:reverse": 0 });
   });
 
-  it("成績を空にする", () => {
+  /* why: スタート画面は保存された回答から章の成績を出す。捨てると、
+     解き直したぶんだけが残って正解数が減る（docs/01_spec.md#選んだ章に限るもの） */
+  it("解き直す章の、それまでの回答を捨てない", () => {
     const { result, written } = setup(MISSED);
 
     act(() => result.current.retryMissed());
 
-    expect(written()[0]?.answers).toEqual([]);
+    expect(written()[0]?.answers).toEqual(MISSED.answers);
   });
 
   /* why: 保存は 1 つ。範囲を絞らないと、前に解いた章の box まで巻き戻る
@@ -135,12 +137,12 @@ describe("不正解だけもう一度", () => {
     expect(written()[0]?.boxes).toEqual({ "match:forward": 2, "with:reverse": 2 });
   });
 
-  it("選ばなかった章の回答は残す", () => {
+  it("選ばなかった章の box は戻さないまま、回答も全て残す", () => {
     const { result, written } = setup(MISSED, ["skeleton"]);
 
     act(() => result.current.retryMissed());
 
-    expect(written()[0]?.answers).toEqual([{ key: "with:reverse", correct: false, chosen: "い" }]);
+    expect(written()[0]?.answers).toEqual(MISSED.answers);
   });
 });
 

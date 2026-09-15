@@ -28,11 +28,26 @@ const ONE = [
   },
 ] as const;
 
+/** 2 章 × 1 枚。章をまたぐ検証に使う。1 章あたり 2 問（2 方向） */
+const TWO_SECTIONS = [
+  ONE[0],
+  {
+    id: "return",
+    section: "shaping",
+    name: "RETURN",
+    role: "出す列を決める",
+    mutates: false,
+  },
+] as const;
+
 /* why: このシードだと 1 番目の肢が不正解になる。正解を選んでしまうと、
    「選んだ肢を出す」と「正解を出す」を区別できない */
 const SEED = 1;
 
-const open = (path: string, quiz: { seed?: number; deck?: typeof ONE } = { seed: SEED }) =>
+const open = (
+  path: string,
+  quiz: { seed?: number; deck?: typeof ONE | typeof TWO_SECTIONS } = { seed: SEED },
+) =>
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppRoutes quiz={quiz} />
@@ -40,6 +55,18 @@ const open = (path: string, quiz: { seed?: number; deck?: typeof ONE } = { seed:
   );
 
 const saved = () => JSON.parse(window.localStorage.getItem(KEY) ?? "null") as unknown;
+
+/** 「読み取りの骨格」の 5 枚（docs/05_reference.md） */
+const SKELETON_IDS = ["match", "optional-match", "where", "with", "return"];
+
+/** 渡したカードの 2 方向を box 2 で埋める */
+const doneBoxes = (ids: readonly string[]) =>
+  Object.fromEntries(
+    ids.flatMap((id) => [
+      [`${id}:forward`, 2],
+      [`${id}:reverse`, 2],
+    ]),
+  );
 
 /** 表に出ている 4 択から、正解でない肢を選んで決定する */
 const answerWrong = async () => {
@@ -60,7 +87,7 @@ describe("スタート", () => {
 
 describe("出題", () => {
   /* why: 結果へ送ると 0 問のサマリが出る（docs/01_spec.md#スタート画面--出す章を選ぶ） */
-  it("章を選んでいなければスタートへ返す", () => {
+  it("章を 1 つも選ばずに出題の URL を開くと、スタート画面へ返す", () => {
     window.localStorage.removeItem(SECTIONS_KEY);
     open("/quiz");
 
@@ -134,7 +161,7 @@ describe("結果", () => {
   });
 
   /* why: 消すのは章を選んで開始したとき（docs/01_spec.md#スタート画面--出す章を選ぶ） */
-  it("もう一度でスタートへ戻り、成績は消えない", async () => {
+  it("「もう一度」を押すとスタート画面へ戻り、保存された成績は消えない", async () => {
     window.localStorage.setItem(KEY, JSON.stringify(ALL_DONE));
     open("/result");
 
@@ -145,7 +172,7 @@ describe("結果", () => {
   });
 
   /* why: 間違えた問題の box を 0 に戻して遷移する。次の画面はそれを読んで組み直す */
-  it("不正解だけもう一度で box が 0 に戻る", async () => {
+  it("「不正解だけもう一度」を押すと、間違えた問題の box だけが 0 に戻る", async () => {
     window.localStorage.setItem(KEY, JSON.stringify(ALL_DONE));
     open("/result");
 
@@ -153,8 +180,34 @@ describe("結果", () => {
 
     expect(saved()).toMatchObject({
       boxes: { "match:forward": 0, "match:reverse": 2 },
-      answers: [],
+      /* why: 回答は 1 つも捨てない。捨てると、スタート画面の章の成績が
+         解き直したぶんだけになる */
+      answers: ALL_DONE.answers,
     });
+  });
+
+  /* why: ボタンから出題までを通す。box を戻すのと回答を残すのは別のテストで見ているが、
+     その 2 つを繋いだ結果、出題が間違えた 1 問だけになるかは、ここでしか分からない */
+  it("「不正解だけもう一度」を押すと、間違えた問題だけが出題される", async () => {
+    window.localStorage.setItem(SECTIONS_KEY, JSON.stringify(["skeleton"]));
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        boxes: doneBoxes(SKELETON_IDS),
+        answers: [
+          { key: "match:forward", correct: false, chosen: "違う肢" },
+          { key: "match:forward", correct: true, chosen: "MATCH の役目" },
+        ],
+      }),
+    );
+    open("/result");
+
+    await userEvent.click(screen.getByRole("button", { name: "不正解だけもう一度" }));
+
+    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    /* why: 章は 10 問あるので、残らず出ていれば「あと 20 回」になる。
+       2 回なら、box 0 に戻ったのは間違えた 1 問だけ */
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toContain("あと 2 回");
   });
 
   it("不正解の行を押すと復習画面へ進む", async () => {
@@ -209,6 +262,101 @@ describe("復習", () => {
       expect(screen.getByRole("button", { name: "もう一度" })).toBeDefined();
     },
   );
+});
+
+describe("章を選んで解く", () => {
+  /** 章ごとの問題数（枚数 × 2 方向。docs/05_reference.md） */
+  const SKELETON = 10;
+  const SHAPING = 8;
+  const ALL = 60;
+
+  /** 完了に要る正解は 1 問 2 回 */
+  const toComplete = (questions: number) => questions * 2;
+
+  /**
+   * スタート画面で章を選び、接続を飛ばして出題まで進む。
+   *
+   * why: 選択を消してから開く。初めて開いたときは何も選ばれていない
+   * （docs/01_spec.md#スタート画面--出す章を選ぶ）
+   */
+  const startWith = async (...labels: string[]) => {
+    window.localStorage.removeItem(SECTIONS_KEY);
+    open("/", {});
+
+    for (const label of labels) {
+      await userEvent.click(screen.getByRole("checkbox", { name: new RegExp(`^${label}`) }));
+    }
+
+    await userEvent.click(screen.getByRole("button", { name: "開始" }));
+    await userEvent.click(screen.getByRole("button", { name: "接続せずに始める" }));
+  };
+
+  /** 進捗バーが読み上げる「あと N 回」 */
+  const left = (): number =>
+    Number(
+      /あと (\d+) 回/.exec(
+        screen.getByRole("progressbar").getAttribute("aria-valuetext") ?? "",
+      )?.[1],
+    );
+
+  /** 出題中のカードの章。`§ ` が前に付く（`atoms/SectionLabel`） */
+  const shownSection = () => screen.getByText(/^§ /).textContent;
+
+  it("選んだ章の問題だけが出題され、進捗バーの残りもその章の分だけになる", async () => {
+    await startWith("読み取りの骨格");
+
+    expect(shownSection()).toBe("§ 読み取りの骨格");
+    expect(left()).toBe(toComplete(SKELETON));
+  });
+
+  /* why: 進み具合をばらけさせて始める。空から始めると、消さない実装でも同じ数になる */
+  it("「全て」を選ぶと、章ごとの進み具合に関わらず 60 問が最初から出題される", async () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        boxes: { ...doneBoxes(SKELETON_IDS), "orderby:forward": 1 },
+        answers: [{ key: "match:forward", correct: true, chosen: "あ" }],
+      }),
+    );
+
+    await startWith("全て");
+
+    expect(left()).toBe(toComplete(ALL));
+  });
+
+  /* why: 完了した章を選び直すと、間違いの有無に関わらず全問を最初から出す */
+  it("完了した章をもう一度選ぶと、その章の全問が最初から出題される", async () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        boxes: doneBoxes(SKELETON_IDS),
+        answers: [{ key: "match:forward", correct: false, chosen: "あ" }],
+      }),
+    );
+
+    await startWith("読み取りの骨格");
+
+    expect(left()).toBe(toComplete(SKELETON));
+  });
+
+  /** 「読み取りの骨格」を途中まで解いた保存 */
+  const PART_WAY = {
+    boxes: { "match:forward": 1 },
+    answers: [{ key: "match:forward", correct: true, chosen: "あ" }],
+  };
+
+  /* why: 前回どの章で終えたかは出題に影響しない（docs/01_spec.md#選んだ章に限るもの） */
+  it.each([
+    ["解きかけの問題があっても", PART_WAY],
+    ["解きかけの問題が無くても", { boxes: {}, answers: [] }],
+  ])("%s、章選択で選ばなかった章は出題されない", async (_situation, stored) => {
+    window.localStorage.setItem(KEY, JSON.stringify(stored));
+
+    await startWith("結果の整形");
+
+    expect(shownSection()).toBe("§ 結果の整形");
+    expect(left()).toBe(toComplete(SHAPING));
+  });
 });
 
 describe("知らない URL", () => {

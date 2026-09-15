@@ -17,12 +17,16 @@ const STATUS: Record<SectionId, string> = {
 
 const RESETTABLE: readonly SectionId[] = ["patterns", "lists", "subqueries"];
 
+/** 8 / 8 の章。行の右端が緑の太字になる */
+const ALL_CORRECT: readonly SectionId[] = ["subqueries"];
+
 const choices = (checked: (id: SectionId) => boolean): SectionChoice[] =>
   (Object.keys(SECTION_LABELS) as SectionId[]).map((id) => ({
     id,
     label: SECTION_LABELS[id],
     status: STATUS[id],
     checked: checked(id),
+    allCorrect: ALL_CORRECT.includes(id),
     ...(RESETTABLE.includes(id) ? { onReset: fn() } : {}),
   }));
 

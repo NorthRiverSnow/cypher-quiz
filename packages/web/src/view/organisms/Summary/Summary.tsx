@@ -47,9 +47,6 @@ const SCORE_ROW: CSSProperties = {
 
 const NUM: CSSProperties = { justifySelf: "end" };
 
-/* why: font-weight は継承されるので、style を持たない Text ではなくセルに置く */
-const NUM_DONE: CSSProperties = { ...NUM, fontWeight: "var(--weight-semibold)" };
-
 const MISSED: CSSProperties = { display: "grid", gap: "var(--space-2xs)" };
 
 /* why: 内側に余白を取り、同じ幅の負の margin で外へ戻す。押せる範囲は字より広くなり、
@@ -103,24 +100,24 @@ export const Summary = ({
           <div style={SCORES}>
             {bySection.map((score) => {
               const done = score.correct === score.asked;
-              const cell = done ? NUM_DONE : NUM;
               const tone = done ? "keep" : "soft";
+              const strong = done ? { weight: "semibold" as const } : {};
 
               return (
                 <div key={score.section} style={SCORE_ROW}>
                   <Text variant="annotation">{SECTION_LABELS[score.section]}</Text>
-                  <span style={cell}>
-                    <Text variant="code" tone={tone}>
+                  <span style={NUM}>
+                    <Text variant="code" tone={tone} {...strong}>
                       {score.correct}
                     </Text>
                   </span>
-                  <span style={cell}>
-                    <Text variant="code" tone={tone}>
+                  <span style={NUM}>
+                    <Text variant="code" tone={tone} {...strong}>
                       /
                     </Text>
                   </span>
-                  <span style={cell}>
-                    <Text variant="code" tone={tone}>
+                  <span style={NUM}>
+                    <Text variant="code" tone={tone} {...strong}>
                       {score.asked}
                     </Text>
                   </span>

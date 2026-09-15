@@ -83,6 +83,35 @@ describe("章の行", () => {
     expect(row(result, "skeleton")?.status).toBe("1 / 4");
   });
 
+  it("その章の問題を全て正解していれば、全問正解として印を付ける", () => {
+    const answers = ["a", "b"].flatMap((id) => [
+      { key: keyOf(id, "forward"), correct: true, chosen: "肢" },
+      { key: keyOf(id, "reverse"), correct: true, chosen: "肢" },
+    ]);
+    const { result } = setup({ boxes: done(["a", "b"]), answers });
+
+    expect(row(result, "skeleton")?.status).toBe("4 / 4");
+    expect(row(result, "skeleton")?.allCorrect).toBe(true);
+  });
+
+  /* why: 1 問でも間違えていれば、完了していても印を付けない */
+  it("1 問でも間違えていれば、全問正解の印は付けない", () => {
+    const answers = [
+      { key: keyOf("a", "forward"), correct: true, chosen: "肢" },
+      { key: keyOf("a", "reverse"), correct: false, chosen: "肢" },
+    ];
+    const { result } = setup({ boxes: done(["a", "b"]), answers });
+
+    expect(row(result, "skeleton")?.allCorrect).toBe(false);
+  });
+
+  /* why: 未着手は 0 / 4 で、正解数が全問に届いていない */
+  it("未着手の章に、全問正解の印は付けない", () => {
+    const { result } = setup();
+
+    expect(row(result, "skeleton")?.allCorrect).toBe(false);
+  });
+
   /* why: 途中の数は成績ではない。他の章の `8 / 10` と並べると比べられてしまう */
   it("解きかけは数を出さずに 進行中", () => {
     const answers = [{ key: keyOf("a", "forward"), correct: true, chosen: "肢" }];
