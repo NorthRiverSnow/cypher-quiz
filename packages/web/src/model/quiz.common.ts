@@ -30,7 +30,17 @@ export const sectionOf = (deck: readonly Card[], key: QuestionKey): SectionId | 
 export const keysOf = (deck: readonly Card[], section: SectionId): QuestionKey[] =>
   allKeys(deck.filter((card) => card.section === section));
 
+/** 複数の章ぶん。選んだ章の出題に渡す */
+export const keysOfSections = (
+  deck: readonly Card[],
+  sections: readonly SectionId[],
+): QuestionKey[] => sections.flatMap((section) => keysOf(deck, section));
+
 /* why: デッキに出てくる順で並べる。`SECTION_LABELS` の順に頼ると、デッキに無い章も並ぶ */
 export const sectionsOf = (deck: readonly Card[]): SectionId[] => [
   ...new Set(deck.map(({ section }) => section)),
 ];
+
+/** デッキの章を残らず選んでいるか。**「全て」＝総ざらいの判定**（docs/01_spec.md#7-画面と導線） */
+export const isEverySection = (deck: readonly Card[], sections: readonly SectionId[]): boolean =>
+  sectionsOf(deck).every((section) => sections.includes(section));

@@ -1,6 +1,7 @@
 import type { Result } from "@cypher-quiz/shared";
 
-import { type Saved, type Store, clear, load, save } from "../model/progress";
+import { type Store, clear, load, save } from "../model/progress";
+import type { Saved } from "../model/quiz";
 import type { Notices } from "./useNotices";
 
 export type Progress = Readonly<{

@@ -1,8 +1,14 @@
 import type { SectionId } from "../types";
 import type { Card } from "./deck";
-import { type QuestionKey, keysOf, sectionsOf } from "./quiz.common";
+import {
+  type QuestionKey,
+  isEverySection,
+  keysOf,
+  keysOfSections,
+  sectionsOf,
+} from "./quiz.common";
 import { isDone } from "./leitner";
-import { type Answer, type Boxes, questionScore } from "./quiz";
+import { type Answer, type Boxes, type Saved, questionScore } from "./quiz";
 
 /**
  * スタート画面の 1 行が持つもの（docs/01_spec.md#7-画面と導線）。
@@ -52,3 +58,40 @@ export const allSectionProgress = (
   deck: readonly Card[],
 ): SectionProgress[] =>
   sectionsOf(deck).map((section) => sectionProgress(section, boxes, answers, deck));
+
+/**
+ * その章の box と成績を消して未着手に戻す。**章ごとの記録リセットがこれ**
+ * （docs/01_spec.md#章ごとの記録リセット）。
+ */
+export const resetSections = (
+  sections: readonly SectionId[],
+  boxes: Boxes,
+  answers: readonly Answer[],
+  deck: readonly Card[],
+): Saved => {
+  const dropped = new Set<string>(keysOfSections(deck, sections));
+
+  return {
+    boxes: Object.fromEntries(Object.entries(boxes).filter(([key]) => !dropped.has(key))),
+    answers: answers.filter(({ key }) => !dropped.has(key)),
+  };
+};
+
+/**
+ * 選んだ章で始めるときに残すもの。**完了していた章は捨てて最初から出す。**
+ *
+ * why: 6 章すべてを選んだときは総ざらい。各章の状態に関わらず全問を出すので、
+ * 完了しているかを見ずに全部捨てる（docs/01_spec.md#7-画面と導線）
+ */
+export const startingFrom = (
+  selected: readonly SectionId[],
+  boxes: Boxes,
+  answers: readonly Answer[],
+  deck: readonly Card[],
+): Saved => {
+  const restart = isEverySection(deck, selected)
+    ? sectionsOf(deck)
+    : selected.filter((section) => sectionProgress(section, boxes, answers, deck).state === "done");
+
+  return resetSections(restart, boxes, answers, deck);
+};

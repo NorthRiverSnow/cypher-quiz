@@ -3,7 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "../model/deck";
-import type { Saved } from "../model/progress";
+import type { Saved } from "../model/quiz";
 import type { Progress } from "./useProgress";
 import { useResult } from "./useResult";
 

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import type { Box } from "./leitner";
-import { type Saved, type Store, clear, load, loadSections, save, saveSections } from "./progress";
+import { type Store, clear, load, loadSections, save, saveSections } from "./progress";
+import type { Saved } from "./quiz";
 
 const KEY = "cypher-quiz:progress";
 const SECTIONS_KEY = "cypher-quiz:sections";

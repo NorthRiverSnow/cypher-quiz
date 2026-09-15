@@ -3,7 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { Card } from "./deck";
 import { keyOf } from "./quiz.common";
 import type { Answer, Boxes } from "./quiz";
-import { allSectionProgress, sectionProgress } from "./sections";
+import { allSectionProgress, resetSections, sectionProgress, startingFrom } from "./sections";
 
 const deck: Card[] = [
   { id: "a", section: "skeleton", name: "A", role: "あ", mutates: false },
@@ -89,5 +89,51 @@ describe("章を並べる", () => {
       { section: "skeleton", total: 4, correct: 1, state: "ongoing" },
       { section: "lists", total: 2, correct: 0, state: "ongoing" },
     ]);
+  });
+});
+
+describe("章の記録をリセットする", () => {
+  const saved = {
+    boxes: { [keyOf("a", "forward")]: 2, [keyOf("c", "forward")]: 1 } as Boxes,
+    answers: [answer("a", true), answer("c", false)],
+  };
+
+  it("その章だけ未着手に戻す", () => {
+    const next = resetSections(["skeleton"], saved.boxes, saved.answers, deck);
+
+    expect(next.boxes).toEqual({ [keyOf("c", "forward")]: 1 });
+    expect(next.answers).toEqual([answer("c", false)]);
+  });
+
+  it("何も渡さなければ変えない", () => {
+    expect(resetSections([], saved.boxes, saved.answers, deck)).toEqual(saved);
+  });
+});
+
+describe("選んだ章で始める", () => {
+  /** skeleton は a / b。全問 box 2 で完了。lists の c は手つかず */
+  const boxes = { ...done(["a", "b"]), [keyOf("c", "forward")]: 1 } as Boxes;
+  const answers = [answer("a", true), answer("c", true)];
+
+  it("完了した章は捨てて最初から出す", () => {
+    const next = startingFrom(["skeleton"], boxes, answers, deck);
+
+    expect(next.boxes[keyOf("a", "forward")]).toBeUndefined();
+    expect(next.answers).toEqual([answer("c", true)]);
+  });
+
+  it("完了していない章はそのまま続ける", () => {
+    expect(startingFrom(["lists"], boxes, answers, deck)).toEqual({ boxes, answers });
+  });
+
+  /* why: 6 章すべてを選んだら総ざらい。完了しているかを見ずに全部捨てる */
+  it("全ての章を選ぶと、完了していなくても全部捨てる", () => {
+    const next = startingFrom(["skeleton", "lists"], boxes, answers, deck);
+
+    expect(next).toEqual({ boxes: {}, answers: [] });
+  });
+
+  it("何も選ばなければ変えない", () => {
+    expect(startingFrom([], boxes, answers, deck)).toEqual({ boxes, answers });
   });
 });

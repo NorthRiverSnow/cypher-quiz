@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "../model/deck";
 import type { Boxes } from "../model/quiz";
-import type { Saved } from "../model/progress";
+import type { Saved } from "../model/quiz";
 import type { Progress } from "./useProgress";
 import { useQuiz } from "./useQuiz";
 

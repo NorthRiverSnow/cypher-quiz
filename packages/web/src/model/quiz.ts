@@ -15,6 +15,14 @@ export type Answer = Readonly<{
   chosen: string;
 }>;
 
+/**
+ * 端末に残すもの（`model/progress.ts`）。
+ *
+ * why: 成績も残す。結果画面でリロードしても、正解率と不正解一覧が消えない
+ * （docs/01_spec.md#7-画面と導線）
+ */
+export type Saved = Readonly<{ boxes: Boxes; answers: readonly Answer[] }>;
+
 export type QuizState = Readonly<{
   /** この出題の対象。選んだ章の問題だけが入る（docs/01_spec.md#7-画面と導線） */
   pool: readonly QuestionKey[];

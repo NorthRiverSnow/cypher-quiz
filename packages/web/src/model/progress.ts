@@ -4,18 +4,10 @@ import { SECTION_LABELS, type SectionId } from "../types";
 
 import type { Box } from "./leitner";
 import type { QuestionKey } from "./quiz.common";
-import type { Answer, Boxes } from "./quiz";
+import type { Answer, Boxes, Saved } from "./quiz";
 
 /** model で localStorage を触るのはこのファイルだけ（docs/02_architecture.md#5-ディレクトリ） */
 export type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-
-/**
- * 端末に残すもの。
- *
- * why: 成績も残す。結果画面でリロードしても、正解率と不正解一覧が消えない
- * （docs/01_spec.md#7-画面と導線）
- */
-export type Saved = Readonly<{ boxes: Boxes; answers: readonly Answer[] }>;
 
 const KEY = "cypher-quiz:progress";
 

@@ -9,7 +9,9 @@ import {
   cardOf,
   directionOf,
   keyOf,
+  isEverySection,
   keysOf,
+  keysOfSections,
   sectionOf,
   sectionsOf,
 } from "./quiz.common";
@@ -67,6 +69,33 @@ describe("章で絞る", () => {
 
   it("デッキに無い章は空", () => {
     expect(keysOf(deck, "writing")).toEqual([]);
+  });
+
+  it("複数の章をまとめて広げる", () => {
+    expect(keysOfSections(deck, ["lists", "skeleton"])).toEqual([
+      keyOf("b", "forward"),
+      keyOf("b", "reverse"),
+      keyOf("a", "forward"),
+      keyOf("a", "reverse"),
+    ]);
+  });
+
+  it("章を 1 つも渡さなければ空", () => {
+    expect(keysOfSections(deck, [])).toEqual([]);
+  });
+
+  it("デッキの章を残らず選んでいれば true", () => {
+    expect(isEverySection(deck, ["skeleton", "lists"])).toBe(true);
+  });
+
+  it("1 つでも欠ければ false", () => {
+    expect(isEverySection(deck, ["skeleton"])).toBe(false);
+    expect(isEverySection(deck, [])).toBe(false);
+  });
+
+  /* why: デッキに無い章を足しても「全て」にはならない */
+  it("デッキに無い章で埋めても true にしない", () => {
+    expect(isEverySection(deck, ["skeleton", "writing"])).toBe(false);
   });
 
   /* why: デッキに出てくる順。SECTION_LABELS の順だと、デッキに無い章まで並ぶ */
