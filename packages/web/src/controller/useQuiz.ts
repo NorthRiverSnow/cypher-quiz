@@ -3,14 +3,13 @@ import { useCallback, useMemo, useState } from "react";
 import { type Card, cypherOf } from "../model/deck";
 import { DECK } from "../model/deck.data";
 import { type Question, buildQuestion } from "../model/question";
+import { cardOf, directionOf } from "../model/quiz.common";
 import {
   type QuizState,
   answerCurrent,
-  cardIdOf,
   answerCounts,
   createQuiz,
   currentKey,
-  directionOf,
   isComplete,
   remaining as remainingOf,
 } from "../model/quiz";
@@ -75,7 +74,7 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
   const key = currentKey(state);
 
   const asked = useMemo(() => {
-    const card = key === undefined ? undefined : deck.find(({ id }) => id === cardIdOf(key));
+    const card = key === undefined ? undefined : cardOf(deck, key);
 
     return card === undefined || key === undefined
       ? undefined

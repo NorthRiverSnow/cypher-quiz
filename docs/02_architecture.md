@@ -625,7 +625,9 @@ cypher-quiz/
          │  ├─ deck.data.ts          # 30 枚の固定データ
          │  ├─ deck.ts               # Card の型。API を通らない
          │  ├─ question.ts          # 出題生成・不正解の肢選択
+         │  ├─ quiz.common.ts       # 問題キーの代数と引き当て。model も controller も引く
          │  ├─ quiz.ts              # QuizState（queue / boxes / answers）と セレクタ（counts / score）
+         │  ├─ sections.ts          # 章ごとの状態（未着手 / 進行中 / 完了 と正解数）
          │  ├─ leitner.ts           # box 遷移
          │  ├─ rng.ts               # シード付き擬似乱数
          │  ├─ progress.ts          # model で localStorage を触るのはここだけ。box と成績を 1 キーに

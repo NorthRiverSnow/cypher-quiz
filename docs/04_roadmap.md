@@ -135,11 +135,15 @@ C-7 を先に済ませた。
 | E-1 | 仕様（[`01_spec.md#スタート画面--出す章を選ぶ`](./01_spec.md#スタート画面--出す章を選ぶ)） |
 | E-2 | `view` — 章の行（`molecules`）。3 つの状態とリセットを story に並べる |
 | E-3 | `view` — 章の一覧（`organisms`）。「全て」の行と選択の結線 |
-| E-4 | `view` — `StartPage` に差し込む |
-| E-5 | `model` — 出題・完了・進捗バー・成績を、選んだ章に限る |
+| E-4 | `model` — 章ごとの状態（未着手 / 進行中 / 完了 と正解数） |
+| E-5 | `model` — 出題・完了・進捗バーを、選んだ章に限る |
 | E-6 | `model/progress.ts` — 選んだ章を端末に残す |
-| E-7 | `controller` と `screens/StartScreen` — 結線 |
-| E-8 | 通し確認 |
+| E-7 | `controller` — `useStart` |
+| E-8 | `view` + `screens` — `StartPage` に差し込み、`StartScreen` を結線する |
+| E-9 | 通し確認 |
+
+**`StartPage` を E-8 に置く。** props を変えると `StartScreen` が連鎖し、`screens/**` は
+lint で model を引けないため、controller まで揃っていないと結線できない。
 
 ---
 

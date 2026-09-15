@@ -3,7 +3,8 @@ import { useState } from "react";
 import { type Card, cypherOf } from "../model/deck";
 import { DECK } from "../model/deck.data";
 import { answerOf, promptOf } from "../model/question";
-import { chosenFor, keyOf } from "../model/quiz";
+import { cardById, keyOf } from "../model/quiz.common";
+import { chosenFor } from "../model/quiz";
 import { DIRECTION_LABELS, type CodeSegment, type Direction, type SectionId } from "../types";
 import type { Progress } from "./useProgress";
 
@@ -48,7 +49,7 @@ export const useReview = (
     return undefined;
   }
 
-  const card = deck.find(({ id }) => id === cardId);
+  const card = cardById(deck, cardId);
   const chosen = chosenFor(answers, keyOf(cardId, direction));
 
   if (card === undefined || chosen === undefined) {

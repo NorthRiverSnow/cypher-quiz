@@ -1,10 +1,8 @@
-import type { Direction, MissedCard, SectionId, SectionScore } from "../types";
+import type { MissedCard, SectionScore } from "../types";
 import type { Card } from "./deck";
+import { type QuestionKey, allKeys, cardOf, directionOf, sectionOf } from "./quiz.common";
 import { type Box, DONE, allDone, isDone, nextBox, remaining as notDone } from "./leitner";
 import { type Rng, shuffle } from "./rng";
-
-/** カード × 方向で 1 問。習熟度は向きごとに数える（docs/01_spec.md#2-出題形式） */
-export type QuestionKey = `${string}:${Direction}`;
 
 export type Boxes = Readonly<Record<string, Box>>;
 
@@ -37,17 +35,6 @@ export type Score = Readonly<{
 
 /** 不正解のカードを何問後ろに差し戻すか。0 なら次の問題がまた同じカードになる */
 const REINSERT_AFTER = 3;
-
-export const keyOf = (cardId: string, direction: Direction): QuestionKey =>
-  `${cardId}:${direction}`;
-
-export const cardIdOf = (key: QuestionKey): string => key.slice(0, key.lastIndexOf(":"));
-
-export const directionOf = (key: QuestionKey): Direction =>
-  key.endsWith(":forward") ? "forward" : "reverse";
-
-export const allKeys = (deck: readonly Card[]): QuestionKey[] =>
-  deck.flatMap((card) => [keyOf(card.id, "forward"), keyOf(card.id, "reverse")]);
 
 /**
  * 出題を組む。完了済みは並べず、box の低いものを先に出す。
@@ -102,9 +89,6 @@ export const remaining = (boxes: Boxes, deck: readonly Card[]): number =>
 
 export const isComplete = (state: QuizState): boolean => allDone(Object.values(state.boxes));
 
-const sectionOf = (deck: readonly Card[], key: QuestionKey): SectionId | undefined =>
-  deck.find(({ id }) => id === cardIdOf(key))?.section;
-
 /* why: 同じ問題を 2 回間違えても 1 つ。一覧はカード×方向の一覧で、回数の一覧ではない */
 const missedKeys = (answers: readonly Answer[]): QuestionKey[] => [
   ...new Set(answers.filter(({ correct }) => !correct).map(({ key }) => key)),
@@ -116,7 +100,8 @@ const askedKeys = (answers: readonly Answer[]): QuestionKey[] => [
   ...new Set(answers.map(({ key }) => key)),
 ];
 
-const tally = (answers: readonly Answer[]): Readonly<{ asked: number; correct: number }> => {
+/** 出題数と正解数。**数えるのは問題で、回答の回数ではない**（docs/01_spec.md#7-画面と導線） */
+export const tally = (answers: readonly Answer[]): Readonly<{ asked: number; correct: number }> => {
   const missed = new Set(missedKeys(answers));
   const asked = askedKeys(answers);
 
@@ -133,7 +118,7 @@ const scoreBySection = (deck: readonly Card[], answers: readonly Answer[]): Sect
 
 const missedCards = (deck: readonly Card[], answers: readonly Answer[]): MissedCard[] =>
   missedKeys(answers).flatMap((key) => {
-    const card = deck.find(({ id }) => id === cardIdOf(key));
+    const card = cardOf(deck, key);
 
     return card === undefined
       ? []

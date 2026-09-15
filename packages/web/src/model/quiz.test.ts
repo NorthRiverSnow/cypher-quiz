@@ -3,17 +3,14 @@ import { describe, expect, it } from "vite-plus/test";
 import type { Card } from "./deck";
 import { DECK } from "./deck.data";
 import type { Box } from "./leitner";
+import { allKeys, cardIdOf, directionOf, keyOf } from "./quiz.common";
 import {
-  allKeys,
   answerCurrent,
-  cardIdOf,
   answerCounts,
   remaining,
   createQuiz,
   currentKey,
-  directionOf,
   isComplete,
-  keyOf,
   type QuizState,
   chosenFor,
   resetMissed,
@@ -42,20 +39,6 @@ const answerAll = (state: QuizState, correct: boolean, times: number) => {
 
   return next;
 };
-
-describe("キー", () => {
-  it("カードと方向を往復できる", () => {
-    const key = keyOf("optional-match", "reverse");
-
-    expect(cardIdOf(key)).toBe("optional-match");
-    expect(directionOf(key)).toBe("reverse");
-  });
-
-  it("30 枚から 60 問できる", () => {
-    expect(allKeys(DECK)).toHaveLength(60);
-    expect(new Set(allKeys(DECK)).size).toBe(60);
-  });
-});
 
 describe("createQuiz", () => {
   it("全問が box 0 から始まる", () => {
