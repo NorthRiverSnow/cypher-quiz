@@ -42,6 +42,8 @@ const setup = (cardId: string, direction: string, answers = ANSWERS) => {
   const progress: Progress = {
     load: () => ({ boxes: {}, answers }),
     save: () => ok(undefined),
+    loadSections: () => [],
+    saveSections: () => ok(undefined),
     clear: () => undefined,
   };
 
@@ -116,6 +118,8 @@ describe("編集欄を出してよいか", () => {
     const progress: Progress = {
       load: () => ({ boxes: {}, answers: [{ key: "list:forward", correct: false, chosen: "あ" }] }),
       save: () => ok(undefined),
+      loadSections: () => [],
+      saveSections: () => ok(undefined),
       clear: () => undefined,
     };
     const { result } = renderHook(() => useReview("list", "forward", progress, [listing]));
@@ -136,6 +140,8 @@ describe("編集欄を出してよいか", () => {
         answers: [{ key: "listing:forward", correct: false, chosen: "あ" }],
       }),
       save: () => ok(undefined),
+      loadSections: () => [],
+      saveSections: () => ok(undefined),
       clear: () => undefined,
     };
     const { result } = renderHook(() => useReview("listing", "forward", progress, [listing]));

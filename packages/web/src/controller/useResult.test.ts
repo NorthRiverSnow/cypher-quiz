@@ -36,6 +36,8 @@ const setup = (saved: Saved = { boxes: {}, answers: [] }) => {
 
       return ok(undefined);
     },
+    loadSections: () => [],
+    saveSections: () => ok(undefined),
     clear: () => {
       cleared += 1;
     },
