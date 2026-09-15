@@ -1,7 +1,7 @@
 import type { MissedCard, SectionScore } from "../types";
 import type { Card } from "./deck";
 import { type QuestionKey, allKeys, cardOf, directionOf, sectionOf } from "./quiz.common";
-import { type Box, DONE, allDone, isDone, nextBox, remaining as notDone } from "./leitner";
+import { type Box, DONE, allDone, isDone, nextBox } from "./leitner";
 import { type Rng, shuffle } from "./rng";
 
 export type Boxes = Readonly<Record<string, Box>>;
@@ -95,11 +95,6 @@ export const answerCurrent = (state: QuizState, correct: boolean, chosen: string
 
   return { ...state, queue: [...rest.slice(0, at), key, ...rest.slice(at)], boxes, answers };
 };
-
-/* why: 保存された boxes だけを数えない。デッキにカードを足すと、古い保存には
-   そのキーが無く、合計が問題数に届かない */
-export const remaining = (boxes: Boxes, deck: readonly Card[]): number =>
-  notDone(allKeys(deck).map((key) => boxes[key] ?? 0));
 
 /* why: boxes ではなく対象だけを見る。章を絞ると boxes には対象外のキーも残る */
 export const isComplete = (state: QuizState): boolean =>

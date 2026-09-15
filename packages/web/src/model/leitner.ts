@@ -16,14 +16,3 @@ export const isDone = (box: Box): boolean => box === DONE;
 
 /** 全ての カード×方向 が完了したか */
 export const allDone = (boxes: readonly Box[]): boolean => boxes.every(isDone);
-
-/** 完了していない数 */
-export const remaining = (boxes: readonly Box[]): number =>
-  boxes.filter((box) => !isDone(box)).length;
-
-/** box ごとの枚数。ProgressBar が受け取る形 */
-export const distribution = (boxes: readonly Box[]): [number, number, number] => [
-  boxes.filter((box) => box === 0).length,
-  boxes.filter((box) => box === 1).length,
-  boxes.filter((box) => box === 2).length,
-];

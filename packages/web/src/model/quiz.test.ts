@@ -2,13 +2,12 @@ import { describe, expect, it } from "vite-plus/test";
 
 import type { Card } from "./deck";
 import { DECK } from "./deck.data";
-import type { Box } from "./leitner";
+import { type Box, DONE } from "./leitner";
 import type { Boxes } from "./quiz";
 import { allKeys, cardIdOf, directionOf, keyOf, keysOf } from "./quiz.common";
 import {
   answerCurrent,
   answerCounts,
-  remaining,
   createQuiz,
   currentKey,
   isComplete,
@@ -41,12 +40,16 @@ const answerAll = (state: QuizState, correct: boolean, times: number) => {
   return next;
 };
 
+/** 完了していない問題の数。box を持たないキーも未完了として数える */
+const countNotDone = (deck: readonly Card[], boxes: Boxes): number =>
+  allKeys(deck).filter((key) => (boxes[key] ?? 0) !== DONE).length;
+
 describe("createQuiz", () => {
   it("全問が box 0 から始まる", () => {
     const state = createQuiz(DECK, createRng(1));
 
     expect(state.queue).toHaveLength(60);
-    expect(remaining(state.boxes, DECK)).toBe(60);
+    expect(countNotDone(DECK, state.boxes)).toBe(60);
   });
 
   it("同じシードなら同じ出題順になる", () => {
@@ -87,7 +90,7 @@ describe("続きから始める", () => {
 
     const state = createQuiz(small, createRng(1), boxes);
 
-    expect(remaining(state.boxes, small)).toBe(QUESTIONS - 1);
+    expect(countNotDone(small, state.boxes)).toBe(QUESTIONS - 1);
     expect(state.boxes[keyOf("a", "reverse")]).toBe(1);
   });
 
@@ -110,7 +113,7 @@ describe("続きから始める", () => {
     const state = createQuiz(small, createRng(1), { [keyOf("a", "forward")]: 1 as Box });
 
     expect(state.boxes[keyOf("c", "reverse")]).toBe(0);
-    expect(remaining(state.boxes, small)).toBe(QUESTIONS);
+    expect(countNotDone(small, state.boxes)).toBe(QUESTIONS);
   });
 
   /* why: 教材からカードが消えても、残った box だけで組み直せる */
@@ -125,8 +128,8 @@ describe("続きから始める", () => {
     const first = answerAll(createQuiz(small, createRng(1)), true, 4);
     const resumed = createQuiz(small, createRng(2), first.boxes);
 
-    expect(remaining(resumed.boxes, small)).toBe(remaining(first.boxes, small));
-    expect(resumed.queue).toHaveLength(remaining(first.boxes, small));
+    expect(countNotDone(small, resumed.boxes)).toBe(countNotDone(small, first.boxes));
+    expect(resumed.queue).toHaveLength(countNotDone(small, first.boxes));
   });
 });
 
@@ -190,7 +193,7 @@ describe("完了と集計", () => {
   it("全問 2 回正解で完了する", () => {
     const state = answerAll(createQuiz(small, createRng(1)), true, TO_COMPLETE);
 
-    expect(remaining(state.boxes, small)).toBe(0);
+    expect(countNotDone(small, state.boxes)).toBe(0);
     expect(isComplete(state)).toBe(true);
     expect(currentKey(state)).toBeUndefined();
   });
@@ -397,22 +400,6 @@ describe("選んだ肢", () => {
 
   it("答えていない問題は undefined", () => {
     expect(chosenFor(first.answers, keyOf("a", "forward"))).toBeUndefined();
-  });
-});
-
-describe("remaining はデッキから数える", () => {
-  /* why: 保存された boxes だけを数えない。デッキにカードを足すと、古い保存には
-     そのキーが無く、未完了の数が足りなくなる */
-  it("保存に無いキーは box 0 として数える", () => {
-    expect(remaining({ [keyOf("a", "forward")]: 2 }, small)).toBe(QUESTIONS - 1);
-  });
-
-  it("空の保存なら全問が未完了", () => {
-    expect(remaining({}, small)).toBe(QUESTIONS);
-  });
-
-  it("デッキに無いキーは数えない", () => {
-    expect(remaining({ [keyOf("z", "forward")]: 2 }, small)).toBe(QUESTIONS);
   });
 });
 

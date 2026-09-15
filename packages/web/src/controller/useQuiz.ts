@@ -11,7 +11,6 @@ import {
   createQuiz,
   currentKey,
   isComplete,
-  remaining as remainingOf,
 } from "../model/quiz";
 import { createRng } from "../model/rng";
 import type { Progress } from "./useProgress";
@@ -33,8 +32,6 @@ export type Face =
 export type Quiz = Readonly<{
   /** 進捗バーに渡す 正解 / 不正解 / 完了までに残る回答 */
   counts: [number, number, number];
-  /** 完了していない問題の数。まだ何も答えていなければ undefined */
-  remaining: number | undefined;
   face: Face | undefined;
   /** 全ての向きが box 2 に届いた */
   complete: boolean;
@@ -119,9 +116,6 @@ export const useQuiz = (progress: Progress, { deck = DECK, seed }: QuizOptions =
 
   return {
     counts: answerCounts(state.answers, state.boxes, state.targetQuestions),
-    remaining: Object.values(state.boxes).some((box) => box > 0)
-      ? remainingOf(state.boxes, deck)
-      : undefined,
     face,
     complete: isComplete(state),
     empty: state.targetQuestions.length === 0,

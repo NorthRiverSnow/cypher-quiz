@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { allDone, type Box, distribution, isDone, nextBox, remaining } from "./leitner";
+import { allDone, type Box, isDone, nextBox } from "./leitner";
 
 describe("nextBox", () => {
   it("正解で 1 つ進む", () => {
@@ -35,11 +35,6 @@ describe("nextBox", () => {
 describe("集計", () => {
   const boxes: Box[] = [0, 0, 1, 2, 2, 2];
 
-  it("完了していない数を数える", () => {
-    expect(remaining(boxes)).toBe(3);
-    expect(remaining([2, 2])).toBe(0);
-  });
-
   it("全て完了したかを見る", () => {
     expect(allDone(boxes)).toBe(false);
     expect(allDone([2, 2, 2])).toBe(true);
@@ -48,9 +43,5 @@ describe("集計", () => {
   /* why: 空なら「全部完了」。出題が 0 件のときに完了扱いにする */
   it("空は完了扱い", () => {
     expect(allDone([])).toBe(true);
-  });
-
-  it("box ごとの枚数を数える", () => {
-    expect(distribution(boxes)).toEqual([2, 1, 3]);
   });
 });
