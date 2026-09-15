@@ -75,7 +75,7 @@ describe("スタート", () => {
 
 describe("出題", () => {
   /* why: 結果へ送ると 0 問のサマリが出る（docs/01_spec.md#スタート画面--出す章を選ぶ） */
-  it("章を選んでいなければスタートへ返す", () => {
+  it("章を 1 つも選ばずに出題の URL を開くと、スタート画面へ返す", () => {
     window.localStorage.removeItem(SECTIONS_KEY);
     open("/quiz");
 
@@ -149,7 +149,7 @@ describe("結果", () => {
   });
 
   /* why: 消すのは章を選んで開始したとき（docs/01_spec.md#スタート画面--出す章を選ぶ） */
-  it("もう一度でスタートへ戻り、成績は消えない", async () => {
+  it("「もう一度」を押すとスタート画面へ戻り、保存された成績は消えない", async () => {
     window.localStorage.setItem(KEY, JSON.stringify(ALL_DONE));
     open("/result");
 
@@ -275,7 +275,7 @@ describe("章を選んで解く", () => {
 
   const SKELETON_IDS = ["match", "optional-match", "where", "with", "return"];
 
-  it("選んだ章だけが出て、進捗バーの分母もその章の分になる", async () => {
+  it("選んだ章の問題だけが出題され、進捗バーの残りもその章の分だけになる", async () => {
     await startWith("読み取りの骨格");
 
     expect(shownSection()).toBe("§ 読み取りの骨格");
@@ -283,7 +283,7 @@ describe("章を選んで解く", () => {
   });
 
   /* why: 進み具合をばらけさせて始める。空から始めると、消さない実装でも同じ数になる */
-  it("全て選ぶと、進み具合に関わらず 60 問が最初から出る", async () => {
+  it("「全て」を選ぶと、章ごとの進み具合に関わらず 60 問が最初から出題される", async () => {
     window.localStorage.setItem(
       KEY,
       JSON.stringify({
@@ -298,7 +298,7 @@ describe("章を選んで解く", () => {
   });
 
   /* why: 完了した章を選び直すと、間違いの有無に関わらず全問を最初から出す */
-  it("完了した章を選び直すと全問出る", async () => {
+  it("完了した章をもう一度選ぶと、その章の全問が最初から出題される", async () => {
     window.localStorage.setItem(
       KEY,
       JSON.stringify({
