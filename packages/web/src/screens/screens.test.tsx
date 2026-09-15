@@ -56,6 +56,18 @@ const open = (
 
 const saved = () => JSON.parse(window.localStorage.getItem(KEY) ?? "null") as unknown;
 
+/** 「読み取りの骨格」の 5 枚（docs/05_reference.md） */
+const SKELETON_IDS = ["match", "optional-match", "where", "with", "return"];
+
+/** 渡したカードの 2 方向を box 2 で埋める */
+const doneBoxes = (ids: readonly string[]) =>
+  Object.fromEntries(
+    ids.flatMap((id) => [
+      [`${id}:forward`, 2],
+      [`${id}:reverse`, 2],
+    ]),
+  );
+
 /** 表に出ている 4 択から、正解でない肢を選んで決定する */
 const answerWrong = async () => {
   const choices = screen.getAllByRole("radio");
@@ -160,7 +172,7 @@ describe("結果", () => {
   });
 
   /* why: 間違えた問題の box を 0 に戻して遷移する。次の画面はそれを読んで組み直す */
-  it("不正解だけもう一度で box が 0 に戻る", async () => {
+  it("「不正解だけもう一度」を押すと、間違えた問題の box だけが 0 に戻る", async () => {
     window.localStorage.setItem(KEY, JSON.stringify(ALL_DONE));
     open("/result");
 
@@ -168,8 +180,34 @@ describe("結果", () => {
 
     expect(saved()).toMatchObject({
       boxes: { "match:forward": 0, "match:reverse": 2 },
-      answers: [],
+      /* why: 回答は 1 つも捨てない。捨てると、スタート画面の章の成績が
+         解き直したぶんだけになる */
+      answers: ALL_DONE.answers,
     });
+  });
+
+  /* why: ボタンから出題までを通す。box を戻すのと回答を残すのは別のテストで見ているが、
+     その 2 つを繋いだ結果、出題が間違えた 1 問だけになるかは、ここでしか分からない */
+  it("「不正解だけもう一度」を押すと、間違えた問題だけが出題される", async () => {
+    window.localStorage.setItem(SECTIONS_KEY, JSON.stringify(["skeleton"]));
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        boxes: doneBoxes(SKELETON_IDS),
+        answers: [
+          { key: "match:forward", correct: false, chosen: "違う肢" },
+          { key: "match:forward", correct: true, chosen: "MATCH の役目" },
+        ],
+      }),
+    );
+    open("/result");
+
+    await userEvent.click(screen.getByRole("button", { name: "不正解だけもう一度" }));
+
+    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    /* why: 章は 10 問あるので、残らず出ていれば「あと 20 回」になる。
+       2 回なら、box 0 に戻ったのは間違えた 1 問だけ */
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toContain("あと 2 回");
   });
 
   it("不正解の行を押すと復習画面へ進む", async () => {
@@ -263,17 +301,6 @@ describe("章を選んで解く", () => {
 
   /** 出題中のカードの章。`§ ` が前に付く（`atoms/SectionLabel`） */
   const shownSection = () => screen.getByText(/^§ /).textContent;
-
-  /** 1 章ぶんを box 2 で埋める */
-  const doneBoxes = (ids: readonly string[]) =>
-    Object.fromEntries(
-      ids.flatMap((id) => [
-        [`${id}:forward`, 2],
-        [`${id}:reverse`, 2],
-      ]),
-    );
-
-  const SKELETON_IDS = ["match", "optional-match", "where", "with", "return"];
 
   it("選んだ章の問題だけが出題され、進捗バーの残りもその章の分だけになる", async () => {
     await startWith("読み取りの骨格");
