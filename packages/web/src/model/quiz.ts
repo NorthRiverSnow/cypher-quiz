@@ -105,9 +105,19 @@ export const answersIn = (
   answers: readonly Answer[],
   keys: readonly QuestionKey[],
 ): readonly Answer[] => {
-  const own = new Set<QuestionKey>(keys);
+  const inRange = new Set<QuestionKey>(keys);
 
-  return answers.filter(({ key }) => own.has(key));
+  return answers.filter(({ key }) => inRange.has(key));
+};
+
+/** その範囲の**外**の問題への回答だけを残す。選ばなかった章の成績を持ち越すのに使う */
+export const answersOutside = (
+  answers: readonly Answer[],
+  keys: readonly QuestionKey[],
+): readonly Answer[] => {
+  const inRange = new Set<QuestionKey>(keys);
+
+  return answers.filter(({ key }) => !inRange.has(key));
 };
 
 /* why: 同じ問題を 2 回間違えても 1 つ。一覧はカード×方向の一覧で、回数の一覧ではない */

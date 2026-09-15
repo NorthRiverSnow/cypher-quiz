@@ -104,20 +104,6 @@ describe("進捗バー", () => {
   });
 });
 
-describe("もう一度", () => {
-  it("保存を消す", () => {
-    const { result, cleared, written } = setup({
-      boxes: { "match:forward": 2 },
-      answers: [{ key: "match:forward", correct: true, chosen: "あ" }],
-    });
-
-    act(() => result.current.restart());
-
-    expect(cleared()).toBe(1);
-    expect(written()).toEqual([]);
-  });
-});
-
 describe("不正解だけもう一度", () => {
   const MISSED: Saved = {
     boxes: { "match:forward": 2, "with:reverse": 2 },
@@ -150,6 +136,24 @@ describe("不正解だけもう一度", () => {
     act(() => result.current.retryMissed());
 
     expect(cleared()).toBe(0);
+  });
+
+  /* why: 保存は 1 つ。範囲を絞らないと、前に解いた章の box まで巻き戻る
+     （docs/01_spec.md#選んだ章に限るもの） */
+  it("選ばなかった章の box は戻さない", () => {
+    const { result, written } = setup(MISSED, ["skeleton"]);
+
+    act(() => result.current.retryMissed());
+
+    expect(written()[0]?.boxes).toEqual({ "match:forward": 2, "with:reverse": 2 });
+  });
+
+  it("選ばなかった章の回答は残す", () => {
+    const { result, written } = setup(MISSED, ["skeleton"]);
+
+    act(() => result.current.retryMissed());
+
+    expect(written()[0]?.answers).toEqual([{ key: "with:reverse", correct: false, chosen: "い" }]);
   });
 });
 

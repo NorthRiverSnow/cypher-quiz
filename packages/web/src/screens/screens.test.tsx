@@ -133,14 +133,15 @@ describe("結果", () => {
     expect(screen.getByRole("button", { name: /MATCH/ })).toBeDefined();
   });
 
-  it("もう一度で保存を消して出題へ戻る", async () => {
+  /* why: 消すのは章を選んで開始したとき（docs/01_spec.md#スタート画面--出す章を選ぶ） */
+  it("もう一度でスタートへ戻り、成績は消えない", async () => {
     window.localStorage.setItem(KEY, JSON.stringify(ALL_DONE));
     open("/result");
 
     await userEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
-    expect(window.localStorage.getItem(KEY)).toBeNull();
-    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    expect(screen.getByRole("button", { name: "開始" })).toBeDefined();
+    expect(saved()).toMatchObject(ALL_DONE);
   });
 
   /* why: 間違えた問題の box を 0 に戻して遷移する。次の画面はそれを読んで組み直す */
