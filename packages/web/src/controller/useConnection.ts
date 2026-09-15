@@ -3,7 +3,8 @@ import { err, isOk, ok } from "@cypher-quiz/shared";
 import { useCallback } from "react";
 import useSWR from "swr";
 
-import { HAS_API, type ApiClient, createApiClient } from "../api/client";
+import { type ApiClient, createApiClient } from "../api/client";
+import { HAS_API } from "../env";
 import { apiErrorOf, unwrap } from "./swr";
 import type { NoticeBody, Notices } from "./useNotices";
 
