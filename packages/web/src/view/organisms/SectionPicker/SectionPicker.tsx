@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react";
 
 import type { SectionId } from "../../../types";
-import { Text } from "../../atoms/Text/Text";
 import { SectionRow } from "../../molecules/SectionRow/SectionRow";
 
 export type SectionChoice = Readonly<{
@@ -38,9 +37,6 @@ export const SectionPicker = ({
   onToggleAll,
 }: SectionPickerProps) => (
   <div style={STACK}>
-    <Text variant="micro" tone="muted">
-      出す章
-    </Text>
     <SectionRow
       label="全て"
       status={allStatus}

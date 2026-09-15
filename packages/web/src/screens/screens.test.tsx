@@ -52,13 +52,21 @@ describe("スタート", () => {
   it("押すと接続画面へ進む", async () => {
     open("/");
 
-    await userEvent.click(screen.getByRole("button", { name: "クイズスタート！" }));
+    await userEvent.click(screen.getByRole("button", { name: "開始" }));
 
     expect(screen.getByRole("heading", { name: /接続/ })).toBeDefined();
   });
 });
 
 describe("出題", () => {
+  /* why: 結果へ送ると 0 問のサマリが出る（docs/01_spec.md#スタート画面--出す章を選ぶ） */
+  it("章を選んでいなければスタートへ返す", () => {
+    window.localStorage.removeItem(SECTIONS_KEY);
+    open("/quiz");
+
+    expect(screen.getByRole("button", { name: "開始" })).toBeDefined();
+  });
+
   it("4 択が出る", () => {
     open("/quiz");
 
@@ -206,6 +214,6 @@ describe("知らない URL", () => {
   it("スタートへ送る", () => {
     open("/nosuch");
 
-    expect(screen.getByRole("button", { name: "クイズスタート！" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "開始" })).toBeDefined();
   });
 });
