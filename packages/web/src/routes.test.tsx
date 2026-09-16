@@ -4,8 +4,10 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { AppRoutes } from "./routes";
+import { stubUnreachableApi } from "./testing";
 
 afterEach(cleanup);
+stubUnreachableApi();
 
 const renderAt = (path: string) =>
   render(
