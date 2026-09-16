@@ -1,6 +1,7 @@
 {
   "name": "cypher-quiz",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "api": "vp run db && vp -C packages/api run dev",
