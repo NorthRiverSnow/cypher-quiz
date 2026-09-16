@@ -4,9 +4,11 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { AppRoutes } from "../routes";
+import { stubUnreachableApi } from "../testing";
 import { SECTION_LABELS } from "../types";
 
 afterEach(cleanup);
+stubUnreachableApi();
 
 const KEY = "cypher-quiz:progress";
 const SECTIONS_KEY = "cypher-quiz:sections";
