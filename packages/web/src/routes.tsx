@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router";
 import { useGlobalErrors } from "./controller/useGlobalErrors";
 import { useNotices } from "./controller/useNotices";
 import { useTheme } from "./controller/useTheme";
+import { HAS_API } from "./env";
 import type { QuizOptions } from "./controller/useQuiz";
 import { ConnectScreen } from "./screens/ConnectScreen";
 import { QuizScreen } from "./screens/QuizScreen";
@@ -35,7 +36,12 @@ export const AppRoutes = ({ quiz }: AppRoutesProps = {}) => {
       </Corner>
       <Routes>
         <Route path="/" element={<StartScreen {...slot} />} />
-        <Route path="/connect" element={<ConnectScreen {...slot} />} />
+        {/* why: api が居なければ経路ごと塞ぐ。導線を消すだけでは、URL を直に開かれると
+            繋ぐ先の無い接続画面が出る（docs/01_spec.md#7-画面と導線） */}
+        <Route
+          path="/connect"
+          element={HAS_API ? <ConnectScreen {...slot} /> : <Navigate to="/" replace />}
+        />
         <Route path="/quiz" element={<QuizScreen {...slot} {...quiz} />} />
         <Route path="/result" element={<ResultScreen {...slot} />} />
         <Route path="/review/:cardId/:direction" element={<ReviewScreen {...slot} />} />
