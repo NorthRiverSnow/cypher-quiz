@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "storybook/test";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { AppRoutes } from "./routes";
 
@@ -47,5 +47,35 @@ describe("AppRoutes", () => {
     await userEvent.click(screen.getByRole("button", { name: "開始" }));
 
     expect(screen.getByText("予期しないエラーが起きました。壊れた")).toBeDefined();
+  });
+});
+
+/* why: 配布版（GitHub Pages）は api を持たない。導線を消すだけでは、URL を直に開かれると
+   繋ぐ先の無い接続画面が出る（docs/04_roadmap.md#フェーズ-f--配る） */
+describe("api が居ないビルド", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  /** `env.ts` は読み込みのときに 1 度だけ評価するので、積み直してから読む */
+  const renderWithoutApi = async (path: string) => {
+    vi.stubEnv("VITE_HAS_API", "false");
+    vi.resetModules();
+
+    const { AppRoutes } = await import("./routes");
+
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+  };
+
+  it("接続画面の URL を直に開くと、スタート画面へ送る", async () => {
+    await renderWithoutApi("/connect");
+
+    expect(screen.getByRole("button", { name: "開始" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "接続する" })).toBeNull();
   });
 });
